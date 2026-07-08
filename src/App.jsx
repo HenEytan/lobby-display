@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { VERSION, CHANGELOG } from "./version";
-import { gregDateHe, hebrewDate, dailyGreeting, todayHoliday } from "./lib/hebrew";
-import { eventsThisWeek, formatEventTime } from "./lib/events";
+import { gregDateHe, hebrewDate, dailyGreeting, todayHoliday, ilParts } from "./lib/hebrew";
+import { eventsThisWeek, formatEventTime, loadEvents } from "./lib/events";
 import { fetchWeather, weatherIcon, NEWS_HEADLINES } from "./lib/feeds";
 import "./App.css";
 
@@ -26,11 +26,18 @@ export default function App() {
   const [weather, setWeather] = useState(null);
   const [screenIdx, setScreenIdx] = useState(0);
   const [showVersion, setShowVersion] = useState(false);
+  const [rawEvents, setRawEvents] = useState(null);
   const holiday = todayHoliday(now);
 
   useEffect(() => {
     fetchWeather().then(setWeather);
     const t = setInterval(() => fetchWeather().then(setWeather), 30 * 60 * 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  useEffect(() => {
+    loadEvents().then(setRawEvents);
+    const t = setInterval(() => loadEvents().then(setRawEvents), 30 * 60 * 1000);
     return () => clearInterval(t);
   }, []);
 
@@ -46,7 +53,7 @@ export default function App() {
   }, [screenIdx, activeCycle.length]);
 
   const current = activeCycle[screenIdx % activeCycle.length];
-  const events = eventsThisWeek(now);
+  const events = eventsThisWeek(now, rawEvents);
   const greeting = dailyGreeting(now, holiday);
 
   return (
@@ -97,8 +104,7 @@ export default function App() {
 }
 
 function HomeScreen({ now, weather, greeting }) {
-  const hh = String(now.getHours()).padStart(2, "0");
-  const mm = String(now.getMinutes()).padStart(2, "0");
+  const { hour: hh, minute: mm } = ilParts(now);
   return (
     <div className="screen home fade">
       <div className="home-greeting">{greeting}</div>

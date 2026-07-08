@@ -1,15 +1,15 @@
 @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@200;300;400;500;700&family=Frank+Ruhl+Libre:wght@400;500;700&display=swap');
 
 :root {
-  --bg: #0d1117;
-  --bg2: #131a24;
-  --ink: #f2f5f8;
-  --muted: #9aa7b4;
-  --faint: #5c6b7a;
-  --accent: #3fb6a8;
-  --accent-soft: rgba(63, 182, 168, 0.14);
-  --card: rgba(255, 255, 255, 0.035);
-  --card-line: rgba(255, 255, 255, 0.07);
+  --bg: #f4f1ea;
+  --bg2: #fbf9f4;
+  --ink: #2b2724;
+  --muted: #6f675d;
+  --faint: #a79f92;
+  --accent: #b08341;
+  --accent-soft: rgba(176, 131, 65, 0.12);
+  --card: rgba(43, 39, 36, 0.03);
+  --card-line: rgba(43, 39, 36, 0.09);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -32,7 +32,7 @@ body {
   align-items: center;
   justify-content: center;
   background:
-    radial-gradient(120% 90% at 50% 0%, #16202c 0%, var(--bg) 55%),
+    radial-gradient(120% 90% at 50% 0%, #ffffff 0%, var(--bg) 60%),
     var(--bg);
 }
 
@@ -192,7 +192,7 @@ body {
   position: absolute;
   top: 12px;
   right: 12px;
-  background: rgba(13, 17, 23, 0.72);
+  background: rgba(251, 249, 244, 0.82);
   backdrop-filter: blur(6px);
   color: var(--accent);
   font-size: 13px;
@@ -261,7 +261,7 @@ body {
   font-size: clamp(48px, 8vw, 130px);
   font-weight: 700;
   letter-spacing: -0.01em;
-  background: linear-gradient(180deg, #ffffff, #bfeee8);
+  background: linear-gradient(180deg, #3a3430, var(--accent));
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -318,7 +318,7 @@ body {
 .verpanel {
   position: absolute;
   inset: 0;
-  background: rgba(6, 9, 13, 0.72);
+  background: rgba(244, 241, 234, 0.78);
   backdrop-filter: blur(8px);
   display: flex;
   align-items: center;

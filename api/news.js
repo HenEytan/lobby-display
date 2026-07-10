@@ -1,7 +1,5 @@
 // Vercel serverless — fetches Ynet RSS and local Hod HaSharon news
 
-export const config = { runtime: "nodejs20.x" };
-
 const YNET_RSS  = "https://www.ynet.co.il/Integration/StoryRss2.xml";
 const WALLA_RSS = "https://rss.walla.co.il/feed/1";
 

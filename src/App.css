@@ -1,19 +1,22 @@
-@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@200;300;400;500;700&family=Frank+Ruhl+Libre:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@200;300;400;500;600;700&family=Frank+Ruhl+Libre:wght@400;500;700;900&display=swap');
 
 :root {
-  --bg: #f4f1ea;
-  --bg2: #fbf9f4;
-  --ink: #2b2724;
-  --muted: #6f675d;
-  --faint: #a79f92;
-  --accent: #b08341;
-  --accent-soft: rgba(176, 131, 65, 0.12);
-  --card: rgba(43, 39, 36, 0.03);
-  --card-line: rgba(43, 39, 36, 0.09);
+  --bg: #faf7f2;
+  --bg-deep: #f3eee5;
+  --ink: #1a1815;
+  --ink-soft: #4a463f;
+  --muted: #8a8378;
+  --faint: #b8b0a3;
+  --gold: #b08d४6;
+  --gold: #b08d46;
+  --gold-soft: rgba(176, 141, 70, 0.12);
+  --gold-line: rgba(176, 141, 70, 0.26);
+  --card: #ffffff;
+  --card-line: rgba(26, 24, 21, 0.07);
+  --shadow: 0 2px 20px rgba(26, 24, 21, 0.05);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
-
 html, body, #root { height: 100%; }
 
 body {
@@ -21,42 +24,86 @@ body {
   background: var(--bg);
   color: var(--ink);
   overflow: hidden;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* אפקט "צף" — הילה היקפית עדינה מאחורי התוכן */
 .stage {
   position: relative;
   height: 100vh;
   width: 100vw;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
   background:
-    radial-gradient(120% 90% at 50% 0%, #ffffff 0%, var(--bg) 60%),
-    var(--bg);
+    radial-gradient(130% 100% at 50% 0%, #ffffff 0%, var(--bg) 45%, var(--bg-deep) 100%);
+  overflow: hidden;
 }
 
-.ambient {
+.grain {
   position: absolute;
-  inset: 6vh 8vw;
-  border-radius: 40px;
-  background: radial-gradient(60% 60% at 50% 40%, var(--accent-soft), transparent 70%);
-  filter: blur(60px);
+  inset: 0;
   pointer-events: none;
-  animation: breathe 12s ease-in-out infinite;
+  opacity: 0.5;
+  background-image: radial-gradient(rgba(26,24,21,0.035) 1px, transparent 1px);
+  background-size: 4px 4px;
+}
+
+.glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  pointer-events: none;
+  animation: breathe 16s ease-in-out infinite;
+}
+.glow-a {
+  width: 48vw; height: 48vw;
+  top: -14vh; right: -8vw;
+  background: radial-gradient(circle, rgba(176,141,70,0.16), transparent 68%);
+}
+.glow-b {
+  width: 40vw; height: 40vw;
+  bottom: -12vh; left: -6vw;
+  background: radial-gradient(circle, rgba(176,141,70,0.10), transparent 70%);
+  animation-delay: -8s;
 }
 @keyframes breathe {
-  0%, 100% { opacity: 0.55; }
-  50% { opacity: 0.9; }
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.08); }
 }
 
+/* ─── סרגל עליון ─── */
+.topbar {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2.6vh 4vw 0;
+}
+.topbar-brand {
+  font-family: 'Frank Ruhl Libre', serif;
+  font-size: clamp(15px, 1.4vw, 22px);
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  color: var(--gold);
+}
+.topbar-time {
+  font-size: clamp(15px, 1.4vw, 22px);
+  font-weight: 300;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+}
+
+/* ─── מסגרת תוכן ─── */
 .frame {
   position: relative;
-  width: min(88vw, 1500px);
-  height: min(84vh, 900px);
+  z-index: 5;
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 1vh 4vw;
+  min-height: 0;
 }
 
 .screen {
@@ -64,273 +111,410 @@ body {
   height: 100%;
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
-  text-align: center;
-  padding: 3vh 4vw;
 }
 
-.fade { animation: fadein 1.1s ease both; }
+.fade { animation: fadein 1s cubic-bezier(0.22, 1, 0.36, 1) both; }
 @keyframes fadein {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(14px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 /* ─── מסך הבית ─── */
+.home {
+  flex-direction: row;
+  align-items: center;
+  gap: 4vw;
+}
+.home-main { flex: 1; text-align: right; }
+
 .home-greeting {
-  font-size: clamp(22px, 2.6vw, 40px);
-  font-weight: 300;
-  letter-spacing: 0.04em;
-  color: var(--accent);
-  margin-bottom: 1vh;
+  font-family: 'Frank Ruhl Libre', serif;
+  font-size: clamp(24px, 2.8vw, 46px);
+  font-weight: 500;
+  color: var(--gold);
+  margin-bottom: 0.6vh;
 }
 .home-clock {
-  font-family: 'Heebo', sans-serif;
   font-weight: 200;
-  font-size: clamp(90px, 17vw, 260px);
-  line-height: 0.9;
-  letter-spacing: -0.02em;
+  font-size: clamp(80px, 13vw, 210px);
+  line-height: 0.92;
+  letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
   display: flex;
-  gap: 0.02em;
+  align-items: baseline;
+  gap: 0.01em;
+  color: var(--ink);
 }
 .home-clock .colon {
-  color: var(--accent);
+  color: var(--gold);
   animation: blink 2s steps(1) infinite;
 }
-@keyframes blink { 50% { opacity: 0.25; } }
+.home-clock .secs {
+  font-size: 0.26em;
+  color: var(--faint);
+  font-weight: 300;
+  margin-right: 0.4em;
+  letter-spacing: 0;
+}
+@keyframes blink { 50% { opacity: 0.2; } }
 
 .home-dates { margin-top: 2.4vh; }
 .hebdate {
   font-family: 'Frank Ruhl Libre', serif;
-  font-size: clamp(20px, 2.4vw, 38px);
+  font-size: clamp(19px, 2.2vw, 34px);
   font-weight: 500;
-  color: var(--ink);
+  color: var(--ink-soft);
 }
 .gregdate {
-  font-size: clamp(14px, 1.4vw, 20px);
+  font-size: clamp(13px, 1.3vw, 19px);
   color: var(--muted);
-  margin-top: 0.5vh;
+  margin-top: 0.6vh;
   font-weight: 300;
 }
 
-.home-weather {
-  margin-top: 4vh;
+.home-side {
+  width: clamp(240px, 26vw, 380px);
+  background: var(--card);
+  border: 1px solid var(--card-line);
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+  padding: 3vh 2vw;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 2.2vh;
+  gap: 2.6vh;
 }
 .wx-now {
   display: flex;
   align-items: center;
-  gap: 0.5em;
-  font-weight: 300;
+  gap: 1vw;
+  padding-bottom: 2.4vh;
+  border-bottom: 1px solid var(--card-line);
 }
-.wx-icon { font-size: clamp(28px, 3vw, 48px); }
-.wx-temp { font-size: clamp(30px, 3.4vw, 56px); font-weight: 200; }
-.wx-desc { font-size: clamp(16px, 1.6vw, 24px); color: var(--muted); }
+.wx-icon { font-size: clamp(34px, 3.6vw, 56px); line-height: 1; }
+.wx-now-text { display: flex; flex-direction: column; }
+.wx-temp {
+  font-size: clamp(32px, 3.4vw, 54px);
+  font-weight: 200;
+  line-height: 1;
+  color: var(--ink);
+}
+.wx-desc {
+  font-size: clamp(13px, 1.3vw, 18px);
+  color: var(--muted);
+  font-weight: 300;
+  margin-top: 0.4em;
+}
 
 .wx-forecast {
-  display: flex;
-  gap: clamp(14px, 2vw, 34px);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.6vw;
 }
 .wx-day {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.4em;
-  padding: 1.2vh 1.6vw;
-  background: var(--card);
-  border: 1px solid var(--card-line);
-  border-radius: 16px;
-  min-width: 88px;
+  gap: 0.5em;
 }
-.wx-day-name { font-size: clamp(13px, 1.2vw, 17px); color: var(--muted); }
-.wx-day-icon { font-size: clamp(20px, 2vw, 30px); }
-.wx-day-temp { font-size: clamp(13px, 1.2vw, 17px); font-weight: 300; }
-
-/* ─── כותרות משותפות ─── */
-.screen-eyebrow {
-  font-size: clamp(13px, 1.2vw, 17px);
-  letter-spacing: 0.22em;
-  color: var(--accent);
-  text-transform: none;
-  margin-bottom: 1vh;
+.wx-day-name { font-size: clamp(11px, 1vw, 15px); color: var(--muted); }
+.wx-day-icon { font-size: clamp(17px, 1.7vw, 26px); }
+.wx-day-temp {
+  font-size: clamp(11px, 1vw, 15px);
   font-weight: 400;
+  color: var(--ink-soft);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1em;
+}
+.wx-day-temp i { font-style: normal; color: var(--faint); font-weight: 300; }
+
+/* ─── כותרות מסך ─── */
+.screen-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 3vh;
+  padding-bottom: 2vh;
+  border-bottom: 1px solid var(--gold-line);
+}
+.screen-eyebrow {
+  font-size: clamp(11px, 1.1vw, 15px);
+  letter-spacing: 0.24em;
+  color: var(--gold);
+  font-weight: 500;
+  margin-bottom: 0.6vh;
 }
 .screen-title {
   font-family: 'Frank Ruhl Libre', serif;
-  font-size: clamp(34px, 4.4vw, 68px);
+  font-size: clamp(30px, 3.8vw, 58px);
   font-weight: 700;
-  margin-bottom: 4vh;
+  line-height: 1;
+  color: var(--ink);
+}
+.screen-count {
+  font-size: clamp(30px, 3.4vw, 52px);
+  font-weight: 200;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
 }
 
 /* ─── אירועים ─── */
-.ev-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: clamp(16px, 1.6vw, 26px);
-  width: 100%;
-}
-.ev-card {
-  background: var(--card);
-  border: 1px solid var(--card-line);
-  border-radius: 20px;
-  overflow: hidden;
-  text-align: right;
+.ev-list {
   display: flex;
   flex-direction: column;
+  gap: 1.2vh;
+  overflow: hidden;
 }
-.ev-img {
-  height: clamp(120px, 16vh, 200px);
-  background-size: cover;
-  background-position: center;
-  position: relative;
+.ev-row {
+  display: flex;
+  align-items: center;
+  gap: 1.6vw;
+  background: var(--card);
+  border: 1px solid var(--card-line);
+  border-radius: 16px;
+  padding: 1.6vh 1.6vw;
+  box-shadow: var(--shadow);
 }
-.ev-cat {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  background: rgba(251, 249, 244, 0.82);
-  backdrop-filter: blur(6px);
-  color: var(--accent);
-  font-size: 13px;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-weight: 400;
+.ev-date {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: clamp(58px, 5vw, 82px);
 }
-.ev-body { padding: 1.6vh 1.4vw; display: flex; flex-direction: column; gap: 0.5vh; }
+.ev-date-num {
+  font-family: 'Frank Ruhl Libre', serif;
+  font-size: clamp(19px, 1.9vw, 30px);
+  font-weight: 700;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.ev-date-day {
+  font-size: clamp(11px, 1vw, 14px);
+  color: var(--muted);
+  font-weight: 300;
+}
+.ev-line {
+  width: 1px;
+  align-self: stretch;
+  background: var(--gold-line);
+  flex-shrink: 0;
+}
+.ev-body { flex: 1; min-width: 0; }
 .ev-title {
-  font-size: clamp(16px, 1.5vw, 22px);
+  font-size: clamp(15px, 1.5vw, 23px);
   font-weight: 500;
   line-height: 1.3;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.ev-meta { font-size: clamp(13px, 1.2vw, 17px); color: var(--accent); font-weight: 300; }
-.ev-loc { font-size: clamp(13px, 1.1vw, 16px); color: var(--muted); font-weight: 300; }
+.ev-loc {
+  font-size: clamp(12px, 1.1vw, 16px);
+  color: var(--muted);
+  font-weight: 300;
+  margin-top: 0.3vh;
+}
+.ev-cat {
+  font-size: clamp(11px, 1vw, 14px);
+  font-weight: 500;
+  padding: 0.5em 1.1em;
+  border-radius: 100px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.cat-culture { background: rgba(176,141,70,0.12); color: #8a6d33; }
+.cat-music   { background: rgba(120,90,160,0.12); color: #6b4f8f; }
+.cat-fam     { background: rgba(80,150,130,0.13); color: #3d7a68; }
+.cat-cine    { background: rgba(90,110,170,0.12); color: #4a5d94; }
+.cat-know    { background: rgba(180,110,80,0.12); color: #96552f; }
+.cat-nature  { background: rgba(110,150,80,0.14); color: #557a33; }
 
-.empty { color: var(--muted); font-size: 22px; font-weight: 300; }
+.empty {
+  color: var(--muted);
+  font-size: clamp(16px, 1.6vw, 22px);
+  font-weight: 300;
+  text-align: center;
+  padding: 6vh 0;
+}
 
 /* ─── חדשות ─── */
 .news-list {
-  width: min(80%, 900px);
   display: flex;
   flex-direction: column;
-  gap: 2.4vh;
+  gap: 1.8vh;
+  overflow: hidden;
 }
 .news-item {
   display: flex;
-  align-items: flex-start;
-  gap: 1.2vw;
-  text-align: right;
+  align-items: baseline;
+  gap: 1.4vw;
+  padding-bottom: 1.8vh;
+  border-bottom: 1px solid var(--card-line);
 }
-.news-rule {
-  width: 3px;
-  align-self: stretch;
-  min-height: 40px;
-  background: var(--accent);
-  border-radius: 3px;
+.news-item:last-child { border-bottom: none; }
+.news-idx {
+  font-family: 'Frank Ruhl Libre', serif;
+  font-size: clamp(15px, 1.5vw, 22px);
+  font-weight: 700;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
   flex-shrink: 0;
+  min-width: 2ch;
 }
 .news-title {
-  font-size: clamp(18px, 1.8vw, 28px);
+  font-size: clamp(16px, 1.7vw, 27px);
   font-weight: 400;
-  line-height: 1.4;
-}
-.news-src {
-  font-size: clamp(12px, 1.1vw, 15px);
-  color: var(--faint);
-  margin-top: 0.4vh;
+  line-height: 1.42;
+  color: var(--ink);
 }
 
 /* ─── מסך ברכה ─── */
-.greeting { position: relative; }
+.greeting {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  position: relative;
+}
 .greeting-glow {
   position: absolute;
-  width: 60vw;
-  height: 60vw;
-  max-width: 700px;
-  max-height: 700px;
+  width: 56vw; height: 56vw;
+  max-width: 640px; max-height: 640px;
   border-radius: 50%;
-  background: radial-gradient(circle, var(--accent-soft), transparent 68%);
-  filter: blur(40px);
+  background: radial-gradient(circle, rgba(176,141,70,0.18), transparent 66%);
+  filter: blur(50px);
 }
 .greeting-text {
   position: relative;
   font-family: 'Frank Ruhl Libre', serif;
-  font-size: clamp(48px, 8vw, 130px);
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  background: linear-gradient(180deg, #3a3430, var(--accent));
+  font-size: clamp(44px, 7.5vw, 124px);
+  font-weight: 900;
+  letter-spacing: -0.015em;
+  line-height: 1.05;
+  background: linear-gradient(170deg, #2a251c 10%, #b08d46 90%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 .greeting-sub {
   position: relative;
-  margin-top: 3vh;
-  font-size: clamp(18px, 1.8vw, 26px);
+  margin-top: 2.6vh;
+  font-size: clamp(15px, 1.6vw, 24px);
   color: var(--muted);
   font-weight: 300;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.12em;
+}
+
+/* ─── רצועת חדשות ─── */
+.ticker {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  align-items: stretch;
+  background: var(--card);
+  border-top: 1px solid var(--gold-line);
+  height: clamp(42px, 5.4vh, 62px);
+  flex-shrink: 0;
+}
+.ticker-tag {
+  display: flex;
+  align-items: center;
+  padding: 0 1.6vw;
+  background: var(--gold);
+  color: #fff;
+  font-size: clamp(12px, 1.15vw, 16px);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.ticker-viewport {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+.ticker-track {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  animation: scroll-rtl 80s linear infinite;
+}
+.ticker-item {
+  font-size: clamp(13px, 1.25vw, 18px);
+  color: var(--ink-soft);
+  font-weight: 400;
+  padding: 0 0.6vw;
+}
+.ticker-sep { color: var(--gold); margin-right: 1.2vw; }
+@keyframes scroll-rtl {
+  from { transform: translateX(0); }
+  to { transform: translateX(50%); }
 }
 
 /* ─── מחוון מחזור ─── */
 .cyclebar {
   position: absolute;
-  bottom: 4vh;
+  bottom: calc(clamp(42px, 5.4vh, 62px) + 2.2vh);
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  gap: 10px;
+  gap: 8px;
+  z-index: 6;
 }
 .dot {
-  width: 8px; height: 8px;
+  width: 7px; height: 7px;
   border-radius: 50%;
   background: var(--faint);
-  opacity: 0.4;
-  transition: all 0.6s ease;
+  opacity: 0.5;
+  transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .dot.on {
   opacity: 1;
-  background: var(--accent);
-  width: 26px;
+  background: var(--gold);
+  width: 24px;
   border-radius: 4px;
 }
 
-/* ─── תגית גרסה + פאנל ─── */
+/* ─── תגית גרסה ─── */
 .ver {
   position: absolute;
-  bottom: 3vh;
-  left: 3vw;
-  background: var(--card);
+  bottom: calc(clamp(42px, 5.4vh, 62px) + 1.8vh);
+  left: 2vw;
+  background: transparent;
   border: 1px solid var(--card-line);
   color: var(--faint);
   font-family: inherit;
-  font-size: 13px;
-  padding: 6px 14px;
-  border-radius: 20px;
+  font-size: 11px;
+  padding: 4px 11px;
+  border-radius: 100px;
   cursor: pointer;
-  transition: color 0.3s, border-color 0.3s;
+  transition: all 0.3s;
+  z-index: 6;
 }
-.ver:hover { color: var(--accent); border-color: var(--accent); }
+.ver:hover { color: var(--gold); border-color: var(--gold-line); }
 
 .verpanel {
   position: absolute;
   inset: 0;
-  background: rgba(244, 241, 234, 0.78);
-  backdrop-filter: blur(8px);
+  background: rgba(250, 247, 242, 0.82);
+  backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 50;
 }
 .verpanel-inner {
-  background: var(--bg2);
+  background: var(--card);
   border: 1px solid var(--card-line);
   border-radius: 22px;
+  box-shadow: 0 8px 40px rgba(26,24,21,0.12);
   padding: 30px 34px;
-  width: min(90vw, 520px);
+  width: min(90vw, 540px);
   max-height: 76vh;
   overflow-y: auto;
   text-align: right;
@@ -341,14 +525,14 @@ body {
   align-items: baseline;
   margin-bottom: 20px;
   padding-bottom: 16px;
-  border-bottom: 1px solid var(--card-line);
+  border-bottom: 1px solid var(--gold-line);
 }
 .verpanel-head > span:first-child {
   font-family: 'Frank Ruhl Libre', serif;
-  font-size: 24px;
+  font-size: 23px;
   font-weight: 700;
 }
-.verpanel-now { font-size: 14px; color: var(--accent); }
+.verpanel-now { font-size: 13px; color: var(--gold); }
 .verrow { margin-bottom: 18px; }
 .verrow-top {
   display: flex;
@@ -356,150 +540,32 @@ body {
   align-items: baseline;
   margin-bottom: 8px;
 }
-.verrow-top b { font-size: 18px; color: var(--ink); }
-.verrow-top span { font-size: 13px; color: var(--faint); }
+.verrow-top b { font-size: 17px; color: var(--ink); }
+.verrow-top span { font-size: 12px; color: var(--faint); }
 .verrow ul { list-style: none; display: flex; flex-direction: column; gap: 6px; }
 .verrow li {
-  font-size: 15px;
-  color: var(--muted);
+  font-size: 14px;
+  color: var(--ink-soft);
   font-weight: 300;
-  padding-right: 16px;
+  padding-right: 15px;
   position: relative;
 }
 .verrow li::before {
   content: "";
   position: absolute;
   right: 0;
-  top: 0.6em;
+  top: 0.62em;
   width: 5px; height: 5px;
   border-radius: 50%;
-  background: var(--accent);
+  background: var(--gold);
 }
 
 @media (max-width: 900px) {
-  .ev-grid { grid-template-columns: 1fr; }
-  .frame { width: 92vw; }
+  .home { flex-direction: column; gap: 3vh; }
+  .home-side { width: 100%; }
+  .ev-row { gap: 3vw; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .fade, .ambient, .home-clock .colon { animation: none; }
-}
-
-/* ─── News ticker (bottom bar) ─── */
-.ticker-wrap {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 46px;
-  background: rgba(10, 14, 20, 0.92);
-  backdrop-filter: blur(12px);
-  border-top: 1px solid var(--card-line);
-  display: flex;
-  align-items: center;
-  overflow: hidden;
-  z-index: 40;
-}
-
-.ticker-label {
-  flex-shrink: 0;
-  background: var(--accent);
-  color: #000;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  padding: 0 16px;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  white-space: nowrap;
-}
-
-.ticker-track {
-  flex: 1;
-  overflow: hidden;
-  height: 100%;
-  display: flex;
-  align-items: center;
-}
-
-.ticker-content {
-  display: inline-flex;
-  align-items: center;
-  white-space: nowrap;
-  animation: ticker-scroll 80s linear infinite;
-  will-change: transform;
-}
-
-@keyframes ticker-scroll {
-  0%   { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-
-.ticker-content:hover { animation-play-state: paused; }
-
-.ticker-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6em;
-  font-size: clamp(13px, 1.3vw, 16px);
-  font-weight: 300;
-  color: var(--ink);
-  padding: 0 1.2em;
-}
-
-.ticker-tag {
-  display: inline-block;
-  background: var(--accent-soft);
-  border: 1px solid var(--accent);
-  color: var(--accent);
-  font-size: 11px;
-  font-weight: 500;
-  padding: 1px 8px;
-  border-radius: 10px;
-  flex-shrink: 0;
-}
-
-.ticker-sep {
-  color: var(--accent);
-  font-size: 10px;
-  opacity: 0.5;
-  margin-right: 0.4em;
-}
-
-.frame { padding-bottom: 50px; }
-.ver { bottom: 58px; }
-.cyclebar { bottom: 60px; }
-
-/* ─── v2.1.0: כותרת פתיחה + מחוון נתונים חיים ─── */
-.home-welcome {
-  font-family: 'Frank Ruhl Libre', serif;
-  font-size: clamp(15px, 1.4vw, 21px);
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  color: var(--faint);
-  margin-bottom: 1.6vh;
-  text-transform: none;
-}
-
-.screen-eyebrow { display: inline-flex; align-items: center; gap: 0.5em; }
-.data-dot {
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  background: var(--faint);
-  display: inline-block;
-  flex-shrink: 0;
-}
-.data-dot.live {
-  background: #4caf82;
-  box-shadow: 0 0 0 0 rgba(76, 175, 130, 0.5);
-  animation: data-pulse 2.4s ease-out infinite;
-}
-@keyframes data-pulse {
-  0%   { box-shadow: 0 0 0 0 rgba(76, 175, 130, 0.5); }
-  70%  { box-shadow: 0 0 0 7px rgba(76, 175, 130, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(76, 175, 130, 0); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .data-dot.live { animation: none; }
+  .fade, .glow, .home-clock .colon, .ticker-track { animation: none; }
 }

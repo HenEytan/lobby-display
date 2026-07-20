@@ -1,570 +1,260 @@
-@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@200;300;400;500;600;700&family=Frank+Ruhl+Libre:wght@400;500;700;900&display=swap');
+/* ═══ מסך לובי — ערכת פרימיום: קרם-לבן עם הדגשות זהב ═══ */
 
 :root {
-  --bg: #faf7f2;
-  --bg-deep: #f3eee5;
-  --ink: #1a1815;
-  --ink-soft: #4a463f;
-  --muted: #8a8378;
-  --faint: #b8b0a3;
-  --gold: #b08d46;
-  --gold-soft: rgba(176, 141, 70, 0.12);
-  --gold-line: rgba(176, 141, 70, 0.26);
-  --card: #ffffff;
-  --card-line: rgba(26, 24, 21, 0.07);
-  --shadow: 0 2px 20px rgba(26, 24, 21, 0.05);
+  --bg: #f7f3ea;
+  --panel: #fffdf8;
+  --ink: #2c2620;
+  --ink-soft: #6d6355;
+  --gold: #b08d3e;
+  --gold-soft: #d8c391;
+  --line: #e8dfcc;
+  --shadow: 0 10px 30px rgba(101, 84, 47, 0.10);
+  --radius: 22px;
+  font-family: "Segoe UI", "Helvetica Neue", "Arial Hebrew", Arial, sans-serif;
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
-html, body, #root { height: 100%; }
+body { background: var(--bg); color: var(--ink); overflow: hidden; }
 
-body {
-  font-family: 'Heebo', system-ui, sans-serif;
-  background: var(--bg);
-  color: var(--ink);
-  overflow: hidden;
-  -webkit-font-smoothing: antialiased;
-}
+.fade { animation: fadeIn 0.9s ease both; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
-.stage {
-  position: relative;
+/* ─── מבנה הלוח ─── */
+
+.board {
   height: 100vh;
-  width: 100vw;
   display: flex;
   flex-direction: column;
+  padding: 2.2vh 2vw 0;
+  gap: 1.6vh;
   background:
-    radial-gradient(130% 100% at 50% 0%, #ffffff 0%, var(--bg) 45%, var(--bg-deep) 100%);
-  overflow: hidden;
+    radial-gradient(1200px 500px at 85% -10%, rgba(216, 195, 145, 0.25), transparent 60%),
+    var(--bg);
 }
 
-.grain {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.5;
-  background-image: radial-gradient(rgba(26,24,21,0.035) 1px, transparent 1px);
-  background-size: 4px 4px;
+.preview-bar {
+  background: #2c2620; color: #f3e9d2;
+  padding: 8px 16px; border-radius: 12px;
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 15px;
 }
+.preview-bar a { color: var(--gold-soft); text-decoration: none; font-weight: 600; }
 
-.glow {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(90px);
-  pointer-events: none;
-  animation: breathe 16s ease-in-out infinite;
+/* כותרת */
+.board-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  padding: 0 6px;
 }
-.glow-a {
-  width: 48vw; height: 48vw;
-  top: -14vh; right: -8vw;
-  background: radial-gradient(circle, rgba(176,141,70,0.16), transparent 68%);
+.head-welcome { display: flex; align-items: baseline; gap: 14px; }
+.head-hello { font-size: clamp(18px, 2vw, 26px); color: var(--ink-soft); letter-spacing: 0.06em; }
+.head-name {
+  font-size: clamp(28px, 3.2vw, 44px); font-weight: 800; letter-spacing: 0.02em;
+  background: linear-gradient(120deg, #8a6a24, var(--gold) 40%, #d9b968);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
 }
-.glow-b {
-  width: 40vw; height: 40vw;
-  bottom: -12vh; left: -6vw;
-  background: radial-gradient(circle, rgba(176,141,70,0.10), transparent 70%);
-  animation-delay: -8s;
-}
-@keyframes breathe {
-  0%, 100% { opacity: 0.6; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.08); }
-}
+.head-greet { font-size: clamp(16px, 1.8vw, 24px); color: var(--ink-soft); }
 
-/* ─── סרגל עליון ─── */
-.topbar {
-  position: relative;
-  z-index: 5;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 2.6vh 4vw 0;
-}
-.topbar-brand {
-  font-family: 'Frank Ruhl Libre', serif;
-  font-size: clamp(15px, 1.4vw, 22px);
-  font-weight: 500;
-  letter-spacing: 0.18em;
-  color: var(--gold);
-}
-.topbar-time {
-  font-size: clamp(15px, 1.4vw, 22px);
-  font-weight: 300;
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.06em;
-}
-
-/* ─── מסגרת תוכן ─── */
-.frame {
-  position: relative;
-  z-index: 5;
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1vh 4vw;
-  min-height: 0;
-}
-
-.screen {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.fade { animation: fadein 1s cubic-bezier(0.22, 1, 0.36, 1) both; }
-@keyframes fadein {
-  from { opacity: 0; transform: translateY(14px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* ─── מסך הבית ─── */
-.home {
-  flex-direction: row;
-  align-items: center;
-  gap: 4vw;
-}
-.home-main { flex: 1; text-align: right; }
-
-.home-greeting {
-  font-family: 'Frank Ruhl Libre', serif;
-  font-size: clamp(24px, 2.8vw, 46px);
-  font-weight: 500;
-  color: var(--gold);
-  margin-bottom: 0.6vh;
-}
-.home-clock {
-  font-weight: 200;
-  font-size: clamp(80px, 13vw, 210px);
-  line-height: 0.92;
-  letter-spacing: -0.03em;
-  font-variant-numeric: tabular-nums;
-  display: flex;
-  align-items: baseline;
-  gap: 0.01em;
-  color: var(--ink);
-}
-.home-clock .colon {
-  color: var(--gold);
-  animation: blink 2s steps(1) infinite;
-}
-.home-clock .secs {
-  font-size: 0.26em;
-  color: var(--faint);
-  font-weight: 300;
-  margin-right: 0.4em;
-  letter-spacing: 0;
-}
-@keyframes blink { 50% { opacity: 0.2; } }
-
-.home-dates { margin-top: 2.4vh; }
-.hebdate {
-  font-family: 'Frank Ruhl Libre', serif;
-  font-size: clamp(19px, 2.2vw, 34px);
-  font-weight: 500;
-  color: var(--ink-soft);
-}
-.gregdate {
-  font-size: clamp(13px, 1.3vw, 19px);
-  color: var(--muted);
-  margin-top: 0.6vh;
-  font-weight: 300;
-}
-
-.home-side {
-  width: clamp(240px, 26vw, 380px);
-  background: var(--card);
-  border: 1px solid var(--card-line);
-  border-radius: 24px;
-  box-shadow: var(--shadow);
-  padding: 3vh 2vw;
-  display: flex;
-  flex-direction: column;
-  gap: 2.6vh;
-}
-.wx-now {
-  display: flex;
-  align-items: center;
-  gap: 1vw;
-  padding-bottom: 2.4vh;
-  border-bottom: 1px solid var(--card-line);
-}
-.wx-icon { font-size: clamp(34px, 3.6vw, 56px); line-height: 1; }
-.wx-now-text { display: flex; flex-direction: column; }
-.wx-temp {
-  font-size: clamp(32px, 3.4vw, 54px);
-  font-weight: 200;
-  line-height: 1;
-  color: var(--ink);
-}
-.wx-desc {
-  font-size: clamp(13px, 1.3vw, 18px);
-  color: var(--muted);
-  font-weight: 300;
-  margin-top: 0.4em;
-}
-
-.wx-forecast {
+/* גוף: אזור ראשי + עמודה */
+.board-body {
+  flex: 1; min-height: 0;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.6vw;
-}
-.wx-day {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5em;
-}
-.wx-day-name { font-size: clamp(11px, 1vw, 15px); color: var(--muted); }
-.wx-day-icon { font-size: clamp(17px, 1.7vw, 26px); }
-.wx-day-temp {
-  font-size: clamp(11px, 1vw, 15px);
-  font-weight: 400;
-  color: var(--ink-soft);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.1em;
-}
-.wx-day-temp i { font-style: normal; color: var(--faint); font-weight: 300; }
-
-/* ─── כותרות מסך ─── */
-.screen-head {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  margin-bottom: 3vh;
-  padding-bottom: 2vh;
-  border-bottom: 1px solid var(--gold-line);
-}
-.screen-eyebrow {
-  font-size: clamp(11px, 1.1vw, 15px);
-  letter-spacing: 0.24em;
-  color: var(--gold);
-  font-weight: 500;
-  margin-bottom: 0.6vh;
-}
-.screen-title {
-  font-family: 'Frank Ruhl Libre', serif;
-  font-size: clamp(30px, 3.8vw, 58px);
-  font-weight: 700;
-  line-height: 1;
-  color: var(--ink);
-}
-.screen-count {
-  font-size: clamp(30px, 3.4vw, 52px);
-  font-weight: 200;
-  color: var(--gold);
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-}
-
-/* ─── אירועים ─── */
-.ev-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1.2vh;
-  overflow: hidden;
-}
-.ev-row {
-  display: flex;
-  align-items: center;
+  grid-template-columns: 1fr minmax(280px, 27vw);
   gap: 1.6vw;
-  background: var(--card);
-  border: 1px solid var(--card-line);
-  border-radius: 16px;
-  padding: 1.6vh 1.6vw;
+}
+
+/* ─── האזור הראשי ─── */
+
+.main-area {
+  position: relative; min-height: 0;
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.slide { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 4vh 3vw; }
+
+.banner-slide { justify-content: flex-end; align-items: flex-start; text-align: right; }
+.banner-slide.has-img { background-size: cover; background-position: center; }
+.banner-slide.has-img::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(20, 16, 8, 0.62), rgba(20, 16, 8, 0.05) 55%);
+}
+.banner-text { position: relative; z-index: 1; padding: 1vh 1vw 2.4vh; }
+.banner-slide h2 { font-size: clamp(30px, 4vw, 58px); font-weight: 800; line-height: 1.15; }
+.banner-slide p { font-size: clamp(17px, 1.9vw, 26px); margin-top: 8px; color: var(--ink-soft); }
+.banner-slide.has-img h2 { color: #fff8ea; text-shadow: 0 2px 14px rgba(0,0,0,0.45); }
+.banner-slide.has-img p { color: #f0e6cf; text-shadow: 0 1px 8px rgba(0,0,0,0.45); }
+
+.welcome-slide h2 { font-size: clamp(30px, 3.6vw, 52px); font-weight: 800; }
+.welcome-slide p { font-size: clamp(17px, 1.8vw, 24px); color: var(--ink-soft); margin-top: 10px; }
+.welcome-mark { font-size: clamp(34px, 4vw, 60px); color: var(--gold); margin-bottom: 1.4vh; }
+
+.holiday-slide { background: linear-gradient(135deg, #fbf6e8, #f2e3bd); overflow: hidden; }
+.holiday-slide h2 { font-size: clamp(36px, 4.6vw, 66px); font-weight: 800; color: #7d5f1d; position: relative; }
+.holiday-slide p { font-size: clamp(17px, 2vw, 26px); color: var(--ink-soft); margin-top: 10px; position: relative; }
+.holiday-glow {
+  position: absolute; inset: -30%;
+  background: radial-gradient(circle at 50% 40%, rgba(217, 185, 104, 0.5), transparent 55%);
+  animation: pulse 4.5s ease-in-out infinite;
+}
+@keyframes pulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+
+/* אירועים */
+.events-slide { justify-content: flex-start; align-items: stretch; text-align: right; padding: 3vh 2.4vw; }
+.slide-eyebrow { color: var(--gold); font-weight: 700; letter-spacing: 0.12em; font-size: clamp(13px, 1.1vw, 16px); }
+.events-slide h3 { font-size: clamp(24px, 2.6vw, 38px); font-weight: 800; margin: 4px 0 2vh; }
+.ev-grid {
+  flex: 1; min-height: 0;
+  display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: 1fr; gap: 1.1vw;
+}
+.ev-card {
+  background: #fff; border: 1px solid var(--line); border-radius: 16px;
+  overflow: hidden; display: flex; flex-direction: column;
+  box-shadow: 0 4px 14px rgba(101, 84, 47, 0.07);
+}
+.ev-band { padding: 8px 12px; }
+.ev-cat { font-size: 13px; font-weight: 700; color: #574a2e; background: rgba(255,255,255,0.65); padding: 2px 10px; border-radius: 999px; }
+.ev-body { padding: 10px 14px 12px; display: flex; flex-direction: column; gap: 4px; }
+.ev-title { font-weight: 700; font-size: clamp(14px, 1.25vw, 19px); line-height: 1.25; }
+.ev-meta { color: var(--gold); font-weight: 600; font-size: clamp(12px, 1vw, 15px); }
+.ev-loc { color: var(--ink-soft); font-size: clamp(12px, 1vw, 15px); }
+
+.slide-dots { position: absolute; bottom: 12px; inset-inline-start: 0; inset-inline-end: 0; display: flex; justify-content: center; gap: 8px; z-index: 2; }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: rgba(101, 84, 47, 0.25); transition: 0.3s; }
+.dot.on { background: var(--gold); width: 22px; border-radius: 999px; }
+.dot.small { width: 7px; height: 7px; }
+.dot.small.on { width: 16px; }
+
+/* ─── עמודת מידע ─── */
+
+.side { display: flex; flex-direction: column; gap: 1.4vh; min-height: 0; }
+.card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow); padding: 2vh 1.4vw;
+}
+
+.clock-card { text-align: center; }
+.clock { font-size: clamp(44px, 5vw, 76px); font-weight: 800; letter-spacing: 0.03em; line-height: 1; }
+.clock .colon { color: var(--gold); animation: blink 2s step-end infinite; }
+@keyframes blink { 50% { opacity: 0.25; } }
+.hebdate { margin-top: 1vh; font-size: clamp(16px, 1.5vw, 22px); font-weight: 700; color: #7d5f1d; }
+.gregdate { font-size: clamp(13px, 1.15vw, 17px); color: var(--ink-soft); margin-top: 2px; }
+.shabbat-times { margin-top: 1vh; font-size: clamp(12px, 1vw, 15px); color: var(--ink-soft); background: #faf3df; border-radius: 10px; padding: 6px 10px; }
+
+.wx-card { }
+.wx-now { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.wx-icon { font-size: clamp(26px, 2.4vw, 40px); }
+.wx-temp { font-size: clamp(30px, 3vw, 48px); font-weight: 800; }
+.wx-desc { font-size: clamp(14px, 1.3vw, 19px); color: var(--ink-soft); }
+.wx-forecast { display: flex; justify-content: space-around; margin-top: 1.2vh; padding-top: 1.2vh; border-top: 1px dashed var(--line); }
+.wx-day { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: clamp(12px, 1vw, 15px); color: var(--ink-soft); }
+.wx-day-icon { font-size: clamp(16px, 1.4vw, 22px); }
+
+.anns-card { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.card-title { font-weight: 800; font-size: clamp(16px, 1.5vw, 22px); color: #7d5f1d; margin-bottom: 1.2vh; }
+.anns-empty { color: var(--ink-soft); text-align: center; padding: 3vh 0; }
+.anns-list { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 1.1vh; overflow: hidden; }
+.ann {
+  display: flex; gap: 10px; align-items: flex-start;
+  background: #fdfaf1; border: 1px solid var(--line); border-radius: 14px; padding: 1.1vh 12px;
+}
+.ann.pinned { border-color: var(--gold-soft); background: #fbf4e0; }
+.ann-ico { font-size: clamp(16px, 1.5vw, 22px); margin-top: 2px; }
+.ann-title { font-weight: 700; font-size: clamp(14px, 1.25vw, 18px); }
+.ann-body { color: var(--ink-soft); font-size: clamp(12px, 1.05vw, 15px); line-height: 1.4; margin-top: 2px; }
+.anns-pages { display: flex; justify-content: center; gap: 6px; padding-top: 1vh; }
+
+/* ─── טיקר ─── */
+
+.ticker {
+  display: flex; align-items: stretch; margin: 0 -2vw;
+  background: linear-gradient(90deg, #2c2620, #3a3226);
+  color: #f3e9d2; height: 6vh; min-height: 44px;
+}
+.ticker-brand {
+  display: flex; align-items: center; padding: 0 1.6vw;
+  background: var(--gold); color: #241c0c; font-weight: 800; white-space: nowrap;
+  font-size: clamp(14px, 1.3vw, 19px);
+}
+.ticker-viewport { flex: 1; overflow: hidden; display: flex; align-items: center; }
+.ticker-track {
+  display: inline-flex; white-space: nowrap;
+  animation: ticker linear infinite;
+  font-size: clamp(15px, 1.4vw, 21px);
+}
+.ticker-track span { padding-inline-end: 6vw; }
+@keyframes ticker { from { transform: translateX(-0%); } to { transform: translateX(50%); } }
+
+/* ─── כפתורים צפים ─── */
+
+.ver, .admin-link {
+  position: fixed; bottom: calc(6vh + 10px); font-size: 12px;
+  color: rgba(109, 99, 85, 0.55); background: none; border: none; cursor: pointer;
+  text-decoration: none; z-index: 5;
+}
+.ver { inset-inline-start: 14px; }
+.admin-link { inset-inline-end: 14px; }
+.admin-link.dim { bottom: 14px; color: rgba(255, 255, 255, 0.25); }
+.ver:hover, .admin-link:hover { color: var(--gold); }
+
+/* ─── מסכים מלאים ─── */
+
+.fullscreen {
+  height: 100vh; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center; padding: 4vh 6vw;
+  position: relative; overflow: hidden;
+}
+
+.night { background: #14120d; color: #e9dfc8; }
+.night-clock { font-size: clamp(70px, 12vw, 190px); font-weight: 800; opacity: 0.55; }
+.night-clock .colon { animation: blink 2s step-end infinite; }
+.night-name { font-size: clamp(18px, 2.4vw, 34px); color: rgba(216, 195, 145, 0.4); margin-top: 1vh; }
+
+.urgent { background: linear-gradient(150deg, #fff6f2, #ffe7dc); }
+.urgent-badge {
+  background: #c0392b; color: #fff; font-weight: 800; letter-spacing: 0.1em;
+  padding: 10px 26px; border-radius: 999px; font-size: clamp(16px, 1.8vw, 24px);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+.urgent h1 { font-size: clamp(36px, 5vw, 74px); margin-top: 3vh; color: #7a2318; }
+.urgent p { font-size: clamp(18px, 2.2vw, 32px); margin-top: 2vh; max-width: 60ch; color: #4c3b34; line-height: 1.5; }
+.urgent-clock { position: absolute; top: 3vh; inset-inline-end: 3vw; font-size: clamp(20px, 2vw, 30px); font-weight: 700; color: #7a2318; }
+
+.shabbat { background: linear-gradient(160deg, #fdf9ee, #f4e7c8); color: #5d4713; }
+.shabbat-glow {
+  position: absolute; inset: -20%;
+  background: radial-gradient(circle at 50% 35%, rgba(217, 185, 104, 0.55), transparent 55%);
+  animation: pulse 5s ease-in-out infinite;
+}
+.shabbat-candles { font-size: clamp(40px, 5vw, 76px); position: relative; }
+.shabbat h1 { font-size: clamp(50px, 7vw, 110px); font-weight: 800; position: relative; margin-top: 1vh; }
+.shabbat p { font-size: clamp(18px, 2.2vw, 32px); position: relative; margin-top: 1.5vh; color: #7d6636; }
+.shabbat-meta {
+  position: relative; margin-top: 4vh; font-size: clamp(15px, 1.6vw, 22px);
+  background: rgba(255, 253, 248, 0.75); border: 1px solid var(--gold-soft);
+  padding: 10px 26px; border-radius: 999px;
+}
+
+/* ─── מוזיקה ─── */
+.music-unblock {
+  position: fixed; bottom: calc(6vh + 46px); inset-inline-end: 14px; z-index: 6;
+  background: var(--gold); color: #241c0c; border: none; border-radius: 999px;
+  padding: 10px 20px; font-size: 15px; font-weight: 700; cursor: pointer;
   box-shadow: var(--shadow);
 }
-.ev-date {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-width: clamp(58px, 5vw, 82px);
-}
-.ev-date-num {
-  font-family: 'Frank Ruhl Libre', serif;
-  font-size: clamp(19px, 1.9vw, 30px);
-  font-weight: 700;
-  color: var(--gold);
-  font-variant-numeric: tabular-nums;
-  line-height: 1.1;
-}
-.ev-date-day {
-  font-size: clamp(11px, 1vw, 14px);
-  color: var(--muted);
-  font-weight: 300;
-}
-.ev-line {
-  width: 1px;
-  align-self: stretch;
-  background: var(--gold-line);
-  flex-shrink: 0;
-}
-.ev-body { flex: 1; min-width: 0; }
-.ev-title {
-  font-size: clamp(15px, 1.5vw, 23px);
-  font-weight: 500;
-  line-height: 1.3;
-  color: var(--ink);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.ev-loc {
-  font-size: clamp(12px, 1.1vw, 16px);
-  color: var(--muted);
-  font-weight: 300;
-  margin-top: 0.3vh;
-}
-.ev-cat {
-  font-size: clamp(11px, 1vw, 14px);
-  font-weight: 500;
-  padding: 0.5em 1.1em;
-  border-radius: 100px;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-.cat-culture { background: rgba(176,141,70,0.12); color: #8a6d33; }
-.cat-music   { background: rgba(120,90,160,0.12); color: #6b4f8f; }
-.cat-fam     { background: rgba(80,150,130,0.13); color: #3d7a68; }
-.cat-cine    { background: rgba(90,110,170,0.12); color: #4a5d94; }
-.cat-know    { background: rgba(180,110,80,0.12); color: #96552f; }
-.cat-nature  { background: rgba(110,150,80,0.14); color: #557a33; }
 
-.empty {
-  color: var(--muted);
-  font-size: clamp(16px, 1.6vw, 22px);
-  font-weight: 300;
-  text-align: center;
-  padding: 6vh 0;
-}
-
-/* ─── חדשות ─── */
-.news-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1.8vh;
-  overflow: hidden;
-}
-.news-item {
-  display: flex;
-  align-items: baseline;
-  gap: 1.4vw;
-  padding-bottom: 1.8vh;
-  border-bottom: 1px solid var(--card-line);
-}
-.news-item:last-child { border-bottom: none; }
-.news-idx {
-  font-family: 'Frank Ruhl Libre', serif;
-  font-size: clamp(15px, 1.5vw, 22px);
-  font-weight: 700;
-  color: var(--gold);
-  font-variant-numeric: tabular-nums;
-  flex-shrink: 0;
-  min-width: 2ch;
-}
-.news-title {
-  font-size: clamp(16px, 1.7vw, 27px);
-  font-weight: 400;
-  line-height: 1.42;
-  color: var(--ink);
-}
-
-/* ─── מסך ברכה ─── */
-.greeting {
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  position: relative;
-}
-.greeting-glow {
-  position: absolute;
-  width: 56vw; height: 56vw;
-  max-width: 640px; max-height: 640px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(176,141,70,0.18), transparent 66%);
-  filter: blur(50px);
-}
-.greeting-text {
-  position: relative;
-  font-family: 'Frank Ruhl Libre', serif;
-  font-size: clamp(44px, 7.5vw, 124px);
-  font-weight: 900;
-  letter-spacing: -0.015em;
-  line-height: 1.05;
-  background: linear-gradient(170deg, #2a251c 10%, #b08d46 90%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-.greeting-sub {
-  position: relative;
-  margin-top: 2.6vh;
-  font-size: clamp(15px, 1.6vw, 24px);
-  color: var(--muted);
-  font-weight: 300;
-  letter-spacing: 0.12em;
-}
-
-/* ─── רצועת חדשות ─── */
-.ticker {
-  position: relative;
-  z-index: 5;
-  display: flex;
-  align-items: stretch;
-  background: var(--card);
-  border-top: 1px solid var(--gold-line);
-  height: clamp(42px, 5.4vh, 62px);
-  flex-shrink: 0;
-}
-.ticker-tag {
-  display: flex;
-  align-items: center;
-  padding: 0 1.6vw;
-  background: var(--gold);
-  color: #fff;
-  font-size: clamp(12px, 1.15vw, 16px);
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-.ticker-viewport {
-  flex: 1;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-}
-.ticker-track {
-  display: flex;
-  align-items: center;
-  white-space: nowrap;
-  animation: scroll-rtl 80s linear infinite;
-}
-.ticker-item {
-  font-size: clamp(13px, 1.25vw, 18px);
-  color: var(--ink-soft);
-  font-weight: 400;
-  padding: 0 0.6vw;
-}
-.ticker-sep { color: var(--gold); margin-right: 1.2vw; }
-@keyframes scroll-rtl {
-  from { transform: translateX(0); }
-  to { transform: translateX(50%); }
-}
-
-/* ─── מחוון מחזור ─── */
-.cyclebar {
-  position: absolute;
-  bottom: calc(clamp(42px, 5.4vh, 62px) + 2.2vh);
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 8px;
-  z-index: 6;
-}
-.dot {
-  width: 7px; height: 7px;
-  border-radius: 50%;
-  background: var(--faint);
-  opacity: 0.5;
-  transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
-}
-.dot.on {
-  opacity: 1;
-  background: var(--gold);
-  width: 24px;
-  border-radius: 4px;
-}
-
-/* ─── תגית גרסה ─── */
-.ver {
-  position: absolute;
-  bottom: calc(clamp(42px, 5.4vh, 62px) + 1.8vh);
-  left: 2vw;
-  background: transparent;
-  border: 1px solid var(--card-line);
-  color: var(--faint);
-  font-family: inherit;
-  font-size: 11px;
-  padding: 4px 11px;
-  border-radius: 100px;
-  cursor: pointer;
-  transition: all 0.3s;
-  z-index: 6;
-}
-.ver:hover { color: var(--gold); border-color: var(--gold-line); }
-
+/* ─── פאנל גרסאות ─── */
 .verpanel {
-  position: absolute;
-  inset: 0;
-  background: rgba(250, 247, 242, 0.82);
-  backdrop-filter: blur(10px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 50;
+  position: fixed; inset: 0; background: rgba(30, 25, 15, 0.45); z-index: 20;
+  display: flex; align-items: center; justify-content: center;
 }
 .verpanel-inner {
-  background: var(--card);
-  border: 1px solid var(--card-line);
-  border-radius: 22px;
-  box-shadow: 0 8px 40px rgba(26,24,21,0.12);
-  padding: 30px 34px;
-  width: min(90vw, 540px);
-  max-height: 76vh;
-  overflow-y: auto;
-  text-align: right;
+  background: var(--panel); border-radius: 18px; padding: 26px 30px;
+  max-width: 640px; max-height: 76vh; overflow: auto; box-shadow: var(--shadow);
 }
-.verpanel-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--gold-line);
-}
-.verpanel-head > span:first-child {
-  font-family: 'Frank Ruhl Libre', serif;
-  font-size: 23px;
-  font-weight: 700;
-}
-.verpanel-now { font-size: 13px; color: var(--gold); }
-.verrow { margin-bottom: 18px; }
-.verrow-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 8px;
-}
-.verrow-top b { font-size: 17px; color: var(--ink); }
-.verrow-top span { font-size: 12px; color: var(--faint); }
-.verrow ul { list-style: none; display: flex; flex-direction: column; gap: 6px; }
-.verrow li {
-  font-size: 14px;
-  color: var(--ink-soft);
-  font-weight: 300;
-  padding-right: 15px;
-  position: relative;
-}
-.verrow li::before {
-  content: "";
-  position: absolute;
-  right: 0;
-  top: 0.62em;
-  width: 5px; height: 5px;
-  border-radius: 50%;
-  background: var(--gold);
-}
-
-@media (max-width: 900px) {
-  .home { flex-direction: column; gap: 3vh; }
-  .home-side { width: 100%; }
-  .ev-row { gap: 3vw; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .fade, .glow, .home-clock .colon, .ticker-track { animation: none; }
-}
+.verpanel-head { display: flex; justify-content: space-between; align-items: baseline; font-weight: 800; font-size: 19px; margin-bottom: 14px; }
+.verpanel-now { color: var(--gold); font-size: 14px; }
+.verrow { border-top: 1px solid var(--line); padding: 12px 0; }
+.verrow-top { display: flex; justify-content: space-between; color: var(--ink-soft); margin-bottom: 6px; }
+.verrow ul { padding-inline-start: 20px; color: var(--ink-soft); font-size: 14px; line-height: 1.7; }

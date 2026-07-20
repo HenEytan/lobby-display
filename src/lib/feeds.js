@@ -1,4 +1,5 @@
-// מקורות נתונים — מזג אוויר (Open-Meteo ישירות), חדשות ואירועים (דרך /api).
+// מזג אוויר — Open-Meteo (ללא מפתח API), עבור הוד השרון.
+// הקריאה החיצונית היחידה במערכת. בעת נפילת המקור מוחזר ערך אחרון שנשמר.
 
 const HOD_HASHARON = { lat: 32.15, lon: 34.89 };
 
@@ -10,16 +11,15 @@ const WMO = {
 };
 
 export async function fetchWeather() {
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${HOD_HASHARON.lat}&longitude=${HOD_HASHARON.lon}&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=Asia%2FJerusalem&forecast_days=5`;
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${HOD_HASHARON.lat}&longitude=${HOD_HASHARON.lon}&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=Asia%2FJerusalem&forecast_days=4`;
   try {
     const res = await fetch(url);
-    if (!res.ok) throw new Error("weather");
+    if (!res.ok) throw new Error("weather source error");
     const d = await res.json();
     const days = d.daily.time.map((t, i) => ({
-      date: new Date(t),
+      date: t,
       max: Math.round(d.daily.temperature_2m_max[i]),
       min: Math.round(d.daily.temperature_2m_min[i]),
-      desc: WMO[d.daily.weather_code[i]] || "—",
       code: d.daily.weather_code[i],
     }));
     const current = {
@@ -32,11 +32,7 @@ export async function fetchWeather() {
     return payload;
   } catch {
     const cached = localStorage.getItem("weather_cache");
-    if (cached) {
-      const p = JSON.parse(cached);
-      p.days = (p.days || []).map((d) => ({ ...d, date: new Date(d.date) }));
-      return p;
-    }
+    if (cached) { try { return JSON.parse(cached); } catch { /* ignore */ } }
     return { current: { temp: 28, desc: "בהיר", code: 0 }, days: [] };
   }
 }
@@ -49,18 +45,4 @@ export function weatherIcon(code) {
   if (code >= 71 && code <= 82) return "🌦";
   if (code >= 95) return "⛈";
   return "☀";
-}
-
-// חדשות — Ynet דרך serverless proxy, עם cache מקומי כגיבוי.
-export async function fetchNews() {
-  try {
-    const res = await fetch("/api/news");
-    const d = await res.json();
-    if (!d.ok || !d.items.length) throw new Error("news empty");
-    localStorage.setItem("news_cache", JSON.stringify(d.items));
-    return d.items;
-  } catch {
-    const cached = localStorage.getItem("news_cache");
-    return cached ? JSON.parse(cached) : [];
-  }
 }

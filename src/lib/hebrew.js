@@ -1,30 +1,7 @@
-import { HDate, HebrewCalendar, Location, gematriya, Event, flags } from "@hebcal/core";
+import { HDate, HebrewCalendar, Location } from "@hebcal/core";
 
-// שעון/תאריך לפי אזור הזמן של ישראל — בלתי תלוי בהגדרות המכשיר בלובי.
-const IL_TZ = "Asia/Jerusalem";
-
-// מחזיר { hour, minute, day, date, month, year, weekday } לפי שעון ישראל
-export function ilParts(d) {
-  const fmt = new Intl.DateTimeFormat("en-GB", {
-    timeZone: IL_TZ, hour12: false,
-    year: "numeric", month: "numeric", day: "numeric",
-    hour: "2-digit", minute: "2-digit", weekday: "short",
-  });
-  const p = {};
-  for (const part of fmt.formatToParts(d)) p[part.type] = part.value;
-  const wdMap = { Sun:0, Mon:1, Tue:2, Wed:3, Thu:4, Fri:5, Sat:6 };
-  return {
-    hour: p.hour, minute: p.minute,
-    day: Number(p.day), month: Number(p.month), year: Number(p.year),
-    weekday: wdMap[p.weekday],
-  };
-}
-
-// אובייקט Date המייצג את אותו רגע אך "מיושר" לשעון ישראל (לשימוש ב-@hebcal ובלוגיקת ימים)
-export function ilDate(d) {
-  const p = ilParts(d);
-  return new Date(p.year, p.month - 1, p.day, Number(p.hour), Number(p.minute));
-}
+// hebcal מחזיר מחרוזות עם ניקוד — מסירים אותו לפני התאמת ביטויים
+const stripNiqqud = (s) => s.replace(/[\u0591-\u05C7]/g, "");
 
 const HE_MONTHS = [
   "בינואר", "בפברואר", "במרץ", "באפריל", "במאי", "ביוני",
@@ -33,25 +10,22 @@ const HE_MONTHS = [
 const HE_DAYS = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
 
 export function gregDateHe(d) {
-  const p = ilParts(d);
-  return `יום ${HE_DAYS[p.weekday]}, ${p.day} ${HE_MONTHS[p.month - 1]} ${p.year}`;
+  return `יום ${HE_DAYS[d.getDay()]}, ${d.getDate()} ${HE_MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }
 
 export function hebrewDate(d) {
-  const hd = new HDate(ilDate(d));
-  // renderGematriya מפיק תאריך עברי מלא בעברית
+  const hd = new HDate(d);
   return hd.renderGematriya();
 }
 
 // ברכה יומית לפי היום בשבוע ולפי חג אם קיים
 export function dailyGreeting(d, holiday) {
   if (holiday) return holiday;
-  const p = ilParts(d);
-  const day = p.weekday;
+  const day = d.getDay();
   if (day === 6) return "שבת שלום";
   if (day === 5) return "שבת שלום וסופ״ש נעים";
   if (day === 0) return "שבוע טוב";
-  const h = Number(p.hour);
+  const h = d.getHours();
   if (h < 12) return "בוקר טוב";
   if (h < 18) return "צהריים טובים";
   return "ערב טוב";
@@ -75,16 +49,82 @@ const FESTIVE_MAP = [
 ];
 
 export function todayHoliday(d) {
-  const il = ilDate(d);
-  const events = HebrewCalendar.calendar({
-    start: il, end: il, il: true, noModern: false, sedrot: false, candlelighting: false,
-  });
-  for (const ev of events) {
-    const desc = ev.render("he");
-    if (SOLEMN.test(desc)) return null;
-    for (const [re, greeting] of FESTIVE_MAP) {
-      if (re.test(desc)) return greeting;
+  try {
+    const events = HebrewCalendar.calendar({
+      start: d, end: d, il: true, noModern: false, sedrot: false, candlelighting: false,
+    });
+    for (const ev of events) {
+      const desc = stripNiqqud(ev.render("he"));
+      if (SOLEMN.test(desc)) return null;
+      for (const [re, greeting] of FESTIVE_MAP) {
+        if (re.test(desc)) return greeting;
+      }
     }
+  } catch { /* חישוב לוח נכשל — אין ברכה */ }
+  return null;
+}
+
+// ─── מצב שבת ───
+// חלון שבת: מהדלקת נרות בשישי ועד הבדלה במוצ״ש, לפי חישוב מקומי (הוד השרון).
+// אם חישוב הזמנים נכשל — fallback לחלון קבוע: שישי 17:30 עד שבת 20:45.
+
+const HOD_HASHARON = new Location(32.15, 34.89, true, "Asia/Jerusalem", "Hod HaSharon", "IL");
+
+function fridayOf(d) {
+  const x = new Date(d);
+  x.setHours(12, 0, 0, 0);
+  x.setDate(x.getDate() + (5 - x.getDay()));
+  return x;
+}
+
+function shabbatWindow(d) {
+  // שישי של השבוע הנוכחי (או של אתמול אם היום שבת)
+  const base = new Date(d);
+  if (base.getDay() === 6) base.setDate(base.getDate() - 1);
+  const fri = fridayOf(base);
+  const sat = new Date(fri);
+  sat.setDate(fri.getDate() + 1);
+
+  let candles = null;
+  let havdalah = null;
+  try {
+    const events = HebrewCalendar.calendar({
+      start: fri, end: sat, il: true,
+      candlelighting: true, location: HOD_HASHARON,
+      sedrot: false, noHolidays: false,
+    });
+    for (const ev of events) {
+      const desc = stripNiqqud(ev.render("he"));
+      const time = ev.eventTime ? new Date(ev.eventTime) : null;
+      if (!time) continue;
+      if (/הדלקת נרות/.test(desc) && time.getDay() === 5) candles = time;
+      if (/הבדלה/.test(desc)) havdalah = time;
+    }
+  } catch { /* fallback למטה */ }
+
+  if (!candles) { candles = new Date(fri); candles.setHours(17, 30, 0, 0); }
+  if (!havdalah) { havdalah = new Date(sat); havdalah.setHours(20, 45, 0, 0); }
+  return { candles, havdalah };
+}
+
+const HE_TIME = (t) =>
+  `${String(t.getHours()).padStart(2, "0")}:${String(t.getMinutes()).padStart(2, "0")}`;
+
+// מחזיר null כשלא שבת, או אובייקט עם פרטי המסך כשמצב שבת פעיל
+export function shabbatInfo(now = new Date()) {
+  const day = now.getDay();
+  if (day !== 5 && day !== 6) return null;
+  const { candles, havdalah } = shabbatWindow(now);
+  if (now >= candles && now <= havdalah) {
+    return {
+      active: true,
+      candles: HE_TIME(candles),
+      havdalah: HE_TIME(havdalah),
+    };
+  }
+  // בשישי לפני הכניסה — נחזיר את הזמנים לתצוגה מקדימה בעמודת המידע
+  if (day === 5) {
+    return { active: false, candles: HE_TIME(candles), havdalah: HE_TIME(havdalah) };
   }
   return null;
 }

@@ -21,6 +21,20 @@ const VENUES = [
   "פארק השחר",
 ];
 
+function decodeEntities(s) {
+  return s
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(parseInt(n, 10)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, n) => String.fromCharCode(parseInt(n, 16)))
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&ndash;/g, "\u2013")
+    .replace(/&mdash;/g, "\u2014")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&");
+}
+
 function categorize(title, venue) {
   const t = title + " " + venue;
   if (/בית לגיל הרך|משחקי|תיאטרון החלומות|בייבי|שעת סיפור|ילד/.test(t)) return "משפחות";
@@ -75,10 +89,7 @@ export default async function handler(req, res) {
 
     for (const a of anchors) {
       const href = (a.match(/href="([^"]+)"/) || [])[1] || "";
-      const text = a
-        .replace(/<[^>]+>/g, " ")
-        .replace(/&nbsp;/g, " ")
-        .replace(/&amp;/g, "&")
+      const text = decodeEntities(a.replace(/<[^>]+>/g, " "))
         .replace(/\s+/g, " ")
         .trim();
       const ev = parseRow(text, href);

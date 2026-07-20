@@ -5,6 +5,10 @@ import { fetchAlumaEvents, eventsThisWeek, formatEventTime } from "./lib/events"
 import { fetchWeather, weatherIcon, fetchNews } from "./lib/feeds";
 import "./App.css";
 
+// שם הבניין לכותרת הפתיחה. השאירו ריק ("") כדי להסתיר את השורה.
+// לדוגמה: const BUILDING_NAME = "יסוד 9";
+const BUILDING_NAME = "";
+
 const CYCLE = [
   { id: "home",     secs: 18 },
   { id: "events",   secs: 22 },
@@ -26,6 +30,7 @@ export default function App() {
   const [screenIdx, setScreenIdx] = useState(0);
   const [showVersion, setShowVersion] = useState(false);
   const [liveEvents, setLiveEvents] = useState(null);
+  const [eventsLive, setEventsLive] = useState(false);
   const [tickerItems, setTickerItems] = useState([]);
   const holiday = todayHoliday(now);
 
@@ -36,7 +41,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const load = () => fetchAlumaEvents().then(e => { if (e) setLiveEvents(e); });
+    const load = () => fetchAlumaEvents().then(e => { if (e) { setLiveEvents(e); setEventsLive(true); } });
     load();
     const t = setInterval(load, 30 * 60 * 1000);
     return () => clearInterval(t);
@@ -76,7 +81,7 @@ export default function App() {
       <div className="ambient" />
       <div className="frame">
         {current.id === "home"     && <HomeScreen now={now} weather={weather} greeting={greeting} />}
-        {current.id === "events"   && <EventsScreen events={events} />}
+        {current.id === "events"   && <EventsScreen events={events} live={eventsLive} />}
         {current.id === "greeting" && <GreetingScreen text={holiday} />}
       </div>
 
@@ -117,6 +122,7 @@ function HomeScreen({ now, weather, greeting }) {
   const mm = String(now.getMinutes()).padStart(2, "0");
   return (
     <div className="screen home fade">
+      {BUILDING_NAME && <div className="home-welcome">ברוכים הבאים · {BUILDING_NAME}</div>}
       <div className="home-greeting">{greeting}</div>
       <div className="home-clock">
         <span>{hh}</span><span className="colon">:</span><span>{mm}</span>
@@ -151,10 +157,13 @@ function HomeScreen({ now, weather, greeting }) {
   );
 }
 
-function EventsScreen({ events }) {
+function EventsScreen({ events, live }) {
   return (
     <div className="screen events fade">
-      <div className="screen-eyebrow">אלומה · הוד השרון</div>
+      <div className="screen-eyebrow">
+        אלומה · הוד השרון
+        <span className={"data-dot" + (live ? " live" : "")} title={live ? "נתונים חיים" : "מטמון"} />
+      </div>
       <h2 className="screen-title">אירועי השבוע</h2>
       {events.length === 0 ? (
         <p className="empty">אין אירועים מתוזמנים לשבוע זה.</p>

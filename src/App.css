@@ -470,3 +470,36 @@ body {
 .frame { padding-bottom: 50px; }
 .ver { bottom: 58px; }
 .cyclebar { bottom: 60px; }
+
+/* ─── v2.1.0: כותרת פתיחה + מחוון נתונים חיים ─── */
+.home-welcome {
+  font-family: 'Frank Ruhl Libre', serif;
+  font-size: clamp(15px, 1.4vw, 21px);
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  color: var(--faint);
+  margin-bottom: 1.6vh;
+  text-transform: none;
+}
+
+.screen-eyebrow { display: inline-flex; align-items: center; gap: 0.5em; }
+.data-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--faint);
+  display: inline-block;
+  flex-shrink: 0;
+}
+.data-dot.live {
+  background: #4caf82;
+  box-shadow: 0 0 0 0 rgba(76, 175, 130, 0.5);
+  animation: data-pulse 2.4s ease-out infinite;
+}
+@keyframes data-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(76, 175, 130, 0.5); }
+  70%  { box-shadow: 0 0 0 7px rgba(76, 175, 130, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(76, 175, 130, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .data-dot.live { animation: none; }
+}

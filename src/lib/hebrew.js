@@ -128,3 +128,75 @@ export function shabbatInfo(now = new Date()) {
   }
   return null;
 }
+
+// ─── לוח חגים, מועדים וצומות לשנה הקרובה ───
+// חישוב מקומי מלא (ללא רשת) עבור 12 החודשים הבאים, לפי מנהג ישראל.
+
+const SKIP_YEAR = new RegExp([
+  "ערב ", "חול המועד", "אסרו חג", "שושן פורים", "פורים קטן", "ראש חודש",
+  "פסח שני", "סליחות", "למעשר", "לבהמ", "סיגד", "בן.?גוריון", "הרצל",
+  "רבין", "ז'בוטינסקי", "טרומפלדור", "יום העליה", "יום המשפחה",
+  "השפה העברית", "חג הבנות", "יום ירושלים ל", "שחרור והצלה",
+].join("|"));
+
+const FAST_RE = /צום|תענית|תשעה באב|עשרה בטבת|שבעה עשר בתמוז|י"ז בתמוז/;
+const MEMORIAL_RE = /יום הזכרון|יום הזיכרון|יום השואה/;
+
+function classifyYearEvent(desc) {
+  if (FAST_RE.test(desc)) return "tzom";
+  if (MEMORIAL_RE.test(desc)) return "memorial";
+  return "chag";
+}
+
+// איחוד ימי מועד מרובי-ימים לרשומה אחת ושמות תצוגה נקיים
+function normalizeName(desc) {
+  if (/חנוכה/.test(desc)) return "חנוכה";
+  if (/^ס(ו)?כות/.test(desc)) return "סוכות";
+  if (desc.startsWith("פסח")) return "פסח";
+  if (/ראש השנה/.test(desc)) return "ראש השנה";
+  if (/שמיני עצרת/.test(desc)) return "שמיני עצרת ושמחת תורה";
+  if (/יום כי?פור/.test(desc)) return "יום כיפור";
+  if (/יום הזכרון$|יום הזיכרון$/.test(desc)) return "יום הזיכרון לחללי מערכות ישראל";
+  if (/יום השואה/.test(desc)) return "יום הזיכרון לשואה ולגבורה";
+  return desc.replace(/\s*\(.*?\)\s*/g, "").trim();
+}
+
+export function yearEvents(now = new Date()) {
+  const start = new Date(now);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(start);
+  end.setFullYear(end.getFullYear() + 1);
+
+  let raw = [];
+  try {
+    raw = HebrewCalendar.calendar({
+      start, end, il: true,
+      noModern: false, sedrot: false, omer: false,
+      noRoshChodesh: true, noSpecialShabbat: true,
+      candlelighting: false,
+    });
+  } catch { return []; }
+
+  const out = [];
+  const lastByName = new Map();
+  for (const ev of raw) {
+    const desc = stripNiqqud(ev.render("he"));
+    if (SKIP_YEAR.test(desc)) continue;
+    const name = normalizeName(desc);
+    const date = ev.getDate().greg();
+    // רק היום הראשון של מועד מרובה-ימים (איחוד רצפים עד 45 יום)
+    const prev = lastByName.get(name);
+    lastByName.set(name, date);
+    if (prev && (date - prev) / 86400000 < 45) continue;
+    out.push({
+      name,
+      type: classifyYearEvent(desc),
+      date,
+      greg: `${date.getDate()}.${date.getMonth() + 1}.${String(date.getFullYear()).slice(2)}`,
+      heb: new HDate(date).renderGematriya().replace(/ [\u05D4]?׳?תש.*$/u, ""),
+      dow: HE_DAYS[date.getDay()],
+    });
+  }
+  out.sort((a, b) => a.date - b.date);
+  return out;
+}

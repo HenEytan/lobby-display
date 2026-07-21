@@ -3,6 +3,7 @@
 // ולחיצה על "פרסם" מעתיקה את כל הטיוטות ל-live בבת אחת.
 
 import { useEffect, useMemo, useState } from "react";
+import { ART_BG } from "./artwork.jsx";
 
 export const KEYS = ["settings", "banners", "announcements", "ticker", "music"];
 const LIVE = (k) => `lobby_${k}`;
@@ -11,17 +12,23 @@ const DRAFT = (k) => `lobby_draft_${k}`;
 // ─── ברירות מחדל ───
 
 export const DEFAULT_SETTINGS = {
-  buildingName: "יסוד 9",
+  buildingName: "יסוד המעלה 9",
+  city: "הוד השרון",
+  theme: "wood", // ערכת צבע — ראו lib/themes.js
   rotationSecs: 15,
   showTicker: true,
   showEvents: true,
+  showNews: true,     // מבזקי ynet בתחתית
+  showCalendar: true, // שקופית לוח חגים ומועדים
   tickerSpeed: 45, // שניות לסיבוב מלא
+  newsSpeed: 60,   // שניות לסיבוב מבזקים
   activeStart: "06:00",
   activeEnd: "23:00",
   pin: "1234",
 };
 
 export const BG_PRESETS = {
+  ...ART_BG,
   gold: "linear-gradient(135deg, #f7f1e3 0%, #eaddc0 45%, #d9c194 100%)",
   summer: "linear-gradient(135deg, #fdf6e3 0%, #ffe9c2 50%, #ffd9a0 100%)",
   green: "linear-gradient(135deg, #f3f7ee 0%, #dcead0 50%, #c2d8ae 100%)",
@@ -34,7 +41,7 @@ const DEFAULT_BANNERS = [
   {
     id: "b_summer",
     title: "קיץ נעים ובטוח",
-    subtitle: "לכל דיירי יסוד 9 — חופשה נהדרת!",
+    subtitle: "לכל דיירי יסוד המעלה 9 — חופשה נהדרת!",
     bg: "summer", image: null,
     start: "", end: "", active: true, order: 1,
   },
@@ -65,7 +72,7 @@ const DEFAULT_ANNOUNCEMENTS = [
 ];
 
 const DEFAULT_TICKER = [
-  { id: "t1", text: "ברוכים הבאים לבניין יסוד 9 — שיהיה לכם יום נעים!", active: true, order: 1 },
+  { id: "t1", text: "ברוכים הבאים לדיירי יסוד המעלה 9, הוד השרון — שיהיה לכם יום נעים!", active: true, order: 1 },
   { id: "t2", text: "הוועד מאחל לכל הדיירים שבוע מצוין", active: true, order: 2 },
 ];
 

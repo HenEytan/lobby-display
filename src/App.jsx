@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { VERSION, CHANGELOG } from "./version";
-import { gregDateHe, hebrewDate, dailyGreeting, todayHoliday, shabbatInfo } from "./lib/hebrew";
+import { gregDateHe, hebrewDate, dailyGreeting, todayHoliday, shabbatInfo, yearEvents } from "./lib/hebrew";
 import { eventsThisWeek, formatEventTime, CATEGORY_BG } from "./lib/events";
 import { fetchWeather, weatherIcon } from "./lib/feeds";
+import { fetchNews, NEWS_REFRESH_MS } from "./lib/news";
+import { applyTheme } from "./lib/themes";
+import { BuildingArt, OliveDivider } from "./lib/artwork.jsx";
 import {
   useLobbyData, activeBanners, activeAnnouncements, urgentAnnouncement,
   isNightMode, BG_PRESETS,
@@ -37,12 +40,14 @@ export default function App() {
   return <Display previewMode={route === "preview"} />;
 }
 
-// ═══════════════════════ תצוגת הלובי ═══════════════════════
+// ═══════════════════════ תצוגת הלובי ══════════════════════
 
 function Display({ previewMode }) {
   const now = useClock();
   const data = useLobbyData(previewMode);
   const { settings } = data;
+
+  useEffect(() => { applyTheme(settings.theme); }, [settings.theme]);
 
   const [weather, setWeather] = useState(null);
   useEffect(() => {
@@ -50,6 +55,14 @@ function Display({ previewMode }) {
     const t = setInterval(() => fetchWeather().then(setWeather), 30 * 60 * 1000);
     return () => clearInterval(t);
   }, []);
+
+  const [news, setNews] = useState({ items: [] });
+  useEffect(() => {
+    if (!settings.showNews) return;
+    fetchNews().then(setNews);
+    const t = setInterval(() => fetchNews().then(setNews), NEWS_REFRESH_MS);
+    return () => clearInterval(t);
+  }, [settings.showNews]);
 
   const holiday = useMemo(() => todayHoliday(now), [now.getDate(), now.getMonth()]);
   const shabbat = useMemo(() => shabbatInfo(now), [Math.floor(now.getTime() / 60000)]);
@@ -62,10 +75,11 @@ function Display({ previewMode }) {
   const slides = useMemo(() => {
     const s = activeBanners(data.banners, now).map((b) => ({ type: "banner", key: b.id, banner: b }));
     if (settings.showEvents && events.length > 0) s.push({ type: "events", key: "events" });
+    if (settings.showCalendar) s.push({ type: "calendar", key: "calendar" });
     if (holiday) s.push({ type: "holiday", key: "holiday" });
     if (s.length === 0) s.push({ type: "welcome", key: "welcome" });
     return s;
-  }, [data.rev, data.banners, events, holiday, settings.showEvents, now.getDate()]);
+  }, [data.rev, data.banners, events, holiday, settings.showEvents, settings.showCalendar, now.getDate()]);
 
   const [idx, setIdx] = useState(0);
   useEffect(() => {
@@ -98,6 +112,7 @@ function Display({ previewMode }) {
         <div className="head-welcome">
           <span className="head-hello">ברוכים הבאים</span>
           <span className="head-name">{settings.buildingName}</span>
+          {settings.city && <span className="head-city">{settings.city}</span>}
         </div>
         <div className="head-greet">{dailyGreeting(now, holiday)}</div>
       </header>
@@ -122,6 +137,7 @@ function Display({ previewMode }) {
       </div>
 
       {settings.showTicker && <Ticker lines={data.ticker} speed={settings.tickerSpeed} now={now} name={settings.buildingName} />}
+      {settings.showNews && news.items.length > 0 && <NewsTicker items={news.items} speed={settings.newsSpeed} />}
 
       <MusicPlayer music={data.music} night={night} />
 
@@ -138,6 +154,7 @@ function Display({ previewMode }) {
 function MainSlide({ slide, events, holiday, name }) {
   if (slide.type === "banner") return <BannerSlide banner={slide.banner} />;
   if (slide.type === "events") return <EventsSlide events={events} />;
+  if (slide.type === "calendar") return <CalendarSlide />;
   if (slide.type === "holiday") return <HolidaySlide text={holiday} />;
   return <WelcomeSlide name={name} />;
 }
@@ -168,9 +185,11 @@ function BannerSlide({ banner }) {
 function WelcomeSlide({ name }) {
   return (
     <div className="slide welcome-slide fade">
-      <div className="welcome-mark">✦</div>
-      <h2>ברוכים הבאים לבניין {name}</h2>
-      <p>שיהיה לכם יום נעים</p>
+      <BuildingArt className="welcome-art" />
+      <h2>ברוכים הבאים לדיירי {name}</h2>
+      <div className="welcome-city">הוד השרון</div>
+      <OliveDivider className="welcome-divider" />
+      <p>הוועד מאחל לכם יום נעים ומוצלח</p>
     </div>
   );
 }
@@ -204,6 +223,51 @@ function EventsSlide({ events }) {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+const YEAR_TYPE = {
+  chag: { label: "חג", cls: "chag" },
+  tzom: { label: "צום", cls: "tzom" },
+  memorial: { label: "יום זיכרון", cls: "memorial" },
+};
+
+function CalendarSlide() {
+  const items = useMemo(() => yearEvents(new Date()), []);
+  const PAGE = 8;
+  const pages = Math.max(1, Math.ceil(items.length / PAGE));
+  const [page, setPage] = useState(0);
+  useEffect(() => {
+    if (pages <= 1) return;
+    const t = setInterval(() => setPage((p) => (p + 1) % pages), 7000);
+    return () => clearInterval(t);
+  }, [pages]);
+
+  const shown = items.slice((page % pages) * PAGE, (page % pages) * PAGE + PAGE);
+  return (
+    <div className="slide calendar-slide fade">
+      <div className="slide-eyebrow">לוח השנה העברי · השנה הקרובה</div>
+      <h3>חגים, מועדים וצומות</h3>
+      <div className="cal-grid fade" key={page}>
+        {shown.map((e, i) => (
+          <div className={"cal-card " + YEAR_TYPE[e.type].cls} key={i}>
+            <div className="cal-badge">{YEAR_TYPE[e.type].label}</div>
+            <div className="cal-name">{e.name}</div>
+            <div className="cal-dates">
+              <span className="cal-heb">{e.heb}</span>
+              <span className="cal-greg">יום {e.dow} · {e.greg}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+      {pages > 1 && (
+        <div className="cal-pages">
+          {Array.from({ length: pages }).map((_, i) => (
+            <span key={i} className={"dot small" + (i === page % pages ? " on" : "")} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -309,6 +373,23 @@ function Ticker({ lines, speed, now, name }) {
       <div className="ticker-brand">{name} · {hh}:{mm}</div>
       <div className="ticker-viewport">
         <div className="ticker-track" style={{ animationDuration: `${Math.max(10, speed)}s` }}>
+          <span>{text}</span>
+          <span aria-hidden="true">{text}</span>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+// טיקר מבזקי ynet — שורה נפרדת בתחתית המסך
+function NewsTicker({ items, speed }) {
+  const text = items.map((i) => i.title).join("   •   ");
+  if (!text) return null;
+  return (
+    <footer className="news-ticker">
+      <div className="news-brand">מבזקים · ynet</div>
+      <div className="ticker-viewport">
+        <div className="ticker-track" style={{ animationDuration: `${Math.max(20, speed)}s` }}>
           <span>{text}</span>
           <span aria-hidden="true">{text}</span>
         </div>

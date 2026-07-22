@@ -8,7 +8,7 @@ import { applyTheme } from "./lib/themes";
 import { BuildingArt, OliveDivider } from "./lib/artwork.jsx";
 import {
   useLobbyData, activeBanners, activeAnnouncements, urgentAnnouncement,
-  isNightMode, BG_PRESETS,
+  BG_PRESETS,
 } from "./lib/store";
 import { mediaURL } from "./lib/media";
 import Admin from "./admin/Admin.jsx";
@@ -69,7 +69,6 @@ function Display({ previewMode }) {
   const events = useMemo(() => eventsThisWeek(now), [now.getDate()]);
   const anns = activeAnnouncements(data.announcements, now);
   const urgent = urgentAnnouncement(data.announcements, now);
-  const night = isNightMode(settings, now);
 
   // ─── בניית שקופיות האזור הראשי ───
   const slides = useMemo(() => {
@@ -95,7 +94,6 @@ function Display({ previewMode }) {
   const [showVersion, setShowVersion] = useState(false);
 
   // ─── מצבים שתופסים את המסך המלא ───
-  if (night && !previewMode) return <NightScreen now={now} name={settings.buildingName} />;
   if (urgent) return <UrgentScreen ann={urgent} now={now} />;
   if (shabbat?.active) return <ShabbatScreen shabbat={shabbat} name={settings.buildingName} />;
 
@@ -139,7 +137,7 @@ function Display({ previewMode }) {
       {settings.showTicker && <Ticker lines={data.ticker} speed={settings.tickerSpeed} now={now} name={settings.buildingName} />}
       {settings.showNews && news.items.length > 0 && <NewsTicker items={news.items} speed={settings.newsSpeed} />}
 
-      <MusicPlayer music={data.music} night={night} />
+      <MusicPlayer music={data.music} />
 
       <button className="ver" onClick={() => setShowVersion((v) => !v)}>גרסה {VERSION}</button>
       <a className="admin-link" href="#admin">כניסת מנהל</a>
@@ -400,18 +398,6 @@ function NewsTicker({ items, speed }) {
 
 // ─── מסכים מיוחדים ───
 
-function NightScreen({ now, name }) {
-  const hh = String(now.getHours()).padStart(2, "0");
-  const mm = String(now.getMinutes()).padStart(2, "0");
-  return (
-    <div className="fullscreen night" dir="rtl">
-      <div className="night-clock">{hh}<span className="colon">:</span>{mm}</div>
-      <div className="night-name">{name}</div>
-      <a className="admin-link dim" href="#admin">כניסת מנהל</a>
-    </div>
-  );
-}
-
 function UrgentScreen({ ann, now }) {
   const hh = String(now.getHours()).padStart(2, "0");
   const mm = String(now.getMinutes()).padStart(2, "0");
@@ -445,14 +431,14 @@ function ShabbatScreen({ shabbat, name }) {
 // דפדפנים חוסמים ניגון אוטומטי עם קול לפני מחוות משתמש; אם הניגון נחסם
 // יוצג כפתור עדין להפעלה בנגיעה אחת (רלוונטי רק לטעינה הראשונה של המסך).
 
-function MusicPlayer({ music, night }) {
+function MusicPlayer({ music }) {
   const audioRef = useRef(null);
   const [trackIdx, setTrackIdx] = useState(0);
   const [blocked, setBlocked] = useState(false);
   const [src, setSrc] = useState(null);
 
   const tracks = music.tracks || [];
-  const shouldPlay = music.enabled && tracks.length > 0 && !night;
+  const shouldPlay = music.enabled && tracks.length > 0;
 
   useEffect(() => { setTrackIdx(0); }, [tracks.length]);
 

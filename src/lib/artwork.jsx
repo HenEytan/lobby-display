@@ -139,14 +139,142 @@ const GEOMETRY_SVG = `
   </g>
 </svg>`;
 
+const POOL_SVG = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="p" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#cdeefc"/><stop offset="0.5" stop-color="#8fd6ee"/><stop offset="1" stop-color="#4fb8d8"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#p)"/>
+  <circle cx="670" cy="80" r="46" fill="#fff3c2" opacity="0.95"/>
+  <g fill="#ffffff" opacity="0.75">
+    <ellipse cx="130" cy="120" rx="55" ry="20"/><ellipse cx="175" cy="130" rx="40" ry="16"/>
+    <ellipse cx="560" cy="150" rx="60" ry="22"/><ellipse cx="610" cy="160" rx="38" ry="15"/>
+  </g>
+  <rect y="300" width="800" height="150" fill="#2f9fc4" opacity="0.55"/>
+  <path d="M0 300 Q 40 285 80 300 T 160 300 T 240 300 T 320 300 T 400 300 T 480 300 T 560 300 T 640 300 T 720 300 T 800 300 V450 H0 Z" fill="#3badd0" opacity="0.5"/>
+  <g>
+    <line x1="120" y1="300" x2="120" y2="180" stroke="#c94f4f" stroke-width="8" stroke-linecap="round"/>
+    <path d="M120 180 A70 70 0 0 1 190 250 L120 250 Z" fill="#e2665f"/>
+    <path d="M120 180 A70 70 0 0 0 50 250 L120 250 Z" fill="#f2f2f2"/>
+    <path d="M120 180 A70 70 0 0 1 50 180 L120 180 Z" fill="#e2665f" transform="rotate(180 120 215)"/>
+  </g>
+  <g fill="#e8f6fb" opacity="0.9">
+    <path d="M330 320 q10 -22 20 0 q10 -22 20 0 q10 -22 20 0 v20 h-60 z"/>
+    <path d="M600 340 q12 -26 24 0 q12 -26 24 0 v20 h-48 z"/>
+  </g>
+</svg>`;
+
+const CLEAN_SVG = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="c" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f4f9ee"/><stop offset="1" stop-color="#d9ead0"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#c)"/>
+  <g stroke="#8fae5c" stroke-width="4" fill="none" opacity="0.6" stroke-linecap="round">
+    <path d="M560 90 L620 150 M600 80 L680 160 M640 100 L700 160"/>
+    <path d="M120 60 L170 110 M150 50 L220 120"/>
+  </g>
+  <g transform="translate(330,150) rotate(-18)">
+    <rect x="-8" y="0" width="16" height="180" rx="7" fill="#a9784a"/>
+    <path d="M-60 170 L60 170 L40 260 L-40 260 Z" fill="#e7cf8a" stroke="#c9a84c" stroke-width="3"/>
+    <g stroke="#c9a84c" stroke-width="2">
+      <line x1="-46" y1="185" x2="-30" y2="255"/><line x1="-18" y1="185" x2="-10" y2="255"/>
+      <line x1="10" y1="185" x2="14" y2="255"/><line x1="38" y1="185" x2="34" y2="255"/>
+    </g>
+  </g>
+  <g fill="#c9a84c" opacity="0.85">
+    <circle cx="470" cy="120" r="4"/><circle cx="500" cy="150" r="5"/><circle cx="450" cy="165" r="3.5"/>
+  </g>
+  <rect y="410" width="800" height="40" fill="#9db35c" opacity="0.35"/>
+</svg>`;
+
 export const ART_BG = {
   art_sunset: `${svgURL(SUNSET_SVG)} center / cover no-repeat`,
   art_garden: `${svgURL(GARDEN_SVG)} center / cover no-repeat`,
   art_geometry: `${svgURL(GEOMETRY_SVG)} center / 220px repeat`,
+  art_pool: `${svgURL(POOL_SVG)} center / cover no-repeat`,
+  art_clean: `${svgURL(CLEAN_SVG)} center / cover no-repeat`,
 };
 
 export const ART_LABELS = {
   art_sunset: "שקיעה עירונית",
   art_garden: "גינה פורחת",
   art_geometry: "תבנית גיאומטרית",
+  art_pool: "קיץ ובריכה",
+  art_clean: "ניקיון ותחזוקה",
+};
+
+// ─── אייקוני קטגוריה לאירועים — כדי שגם כרטיסי אירוע יציגו איור ───
+const CATEGORY_ICON_PATHS = {
+  "מופעים": (
+    <>
+      <path d="M9 5c0 3 2 4 3 4s3-1 3-4" />
+      <path d="M9 5a3 3 0 0 1 6 0" />
+      <path d="M6 11c2 2 3 2.5 6 2.5s4-0.5 6-2.5" />
+      <circle cx="8.5" cy="7" r="0.6" fill="currentColor" stroke="none" />
+      <circle cx="15.5" cy="7" r="0.6" fill="currentColor" stroke="none" />
+    </>
+  ),
+  "משפחות": (
+    <>
+      <circle cx="8" cy="7" r="2.2" />
+      <circle cx="16" cy="7" r="2.2" />
+      <path d="M4 18c0-3 1.8-5 4-5s4 2 4 5" />
+      <path d="M12 18c0-3 1.8-5 4-5s4 2 4 5" />
+    </>
+  ),
+  "תרבות": (
+    <>
+      <circle cx="7" cy="16" r="2.3" />
+      <circle cx="16" cy="14" r="2.3" />
+      <path d="M9.3 16V6l9-2v10" />
+    </>
+  ),
+  "קהילה": (
+    <>
+      <circle cx="8" cy="8" r="2.2" />
+      <circle cx="16" cy="8" r="2.2" />
+      <circle cx="12" cy="13" r="2.2" />
+      <path d="M4 19c0-2.6 1.7-4.4 4-4.4M20 19c0-2.6-1.7-4.4-4-4.4M8 19c0-2.6 1.8-4.4 4-4.4s4 1.8 4 4.4" />
+    </>
+  ),
+  "default": (
+    <>
+      <rect x="4.5" y="5.5" width="15" height="14" rx="2" />
+      <path d="M4.5 9.5h15M8 4v3M16 4v3" />
+    </>
+  ),
+};
+
+export function CategoryIcon({ category, className }) {
+  const paths = CATEGORY_ICON_PATHS[category] || CATEGORY_ICON_PATHS.default;
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      role="img"
+      aria-hidden="true"
+    >
+      {paths}
+    </svg>
+  );
+}
+
+// ─── שדרוג אוטומטי: כל באנר עם רקע צבע שטוח יקבל איור תואם ───
+export const LEGACY_ART_MAP = {
+  gold: "art_sunset",
+  summer: "art_pool",
+  green: "art_clean",
+  sky: "art_pool",
+  rose: "art_garden",
+  night: "art_geometry",
 };

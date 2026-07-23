@@ -223,16 +223,12 @@ function BannerCard({ banner, onChange, onDelete, onUp, onDown }) {
           onChange={(e) => onChange({ subtitle: e.target.value })} />
         <div className="f-row">
           <label>רקע:
-            <select value={banner.bg || "gold"} onChange={(e) => onChange({ bg: e.target.value })}>
-              <option value="gold">זהב</option>
-              <option value="summer">קיץ</option>
-              <option value="green">ירוק</option>
-              <option value="sky">תכלת</option>
-              <option value="rose">ורדרד</option>
-              <option value="night">לילה</option>
+            <select value={banner.bg || "art_sunset"} onChange={(e) => onChange({ bg: e.target.value })}>
               <option value="art_sunset">🖼 שקיעה עירונית</option>
               <option value="art_garden">🖼 גינה פורחת</option>
               <option value="art_geometry">🖼 תבנית גיאומטרית</option>
+              <option value="art_pool">🖼 קיץ ובריכה</option>
+              <option value="art_clean">🖼 ניקיון ותחזוקה</option>
             </select>
           </label>
           {banner.image && (

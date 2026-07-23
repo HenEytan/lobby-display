@@ -5,7 +5,7 @@ import { eventsThisWeek, formatEventTime, CATEGORY_BG } from "./lib/events";
 import { fetchWeather, weatherIcon } from "./lib/feeds";
 import { fetchNews, NEWS_REFRESH_MS } from "./lib/news";
 import { applyTheme } from "./lib/themes";
-import { BuildingArt, OliveDivider } from "./lib/artwork.jsx";
+import { BuildingArt, OliveDivider, CategoryIcon, LEGACY_ART_MAP } from "./lib/artwork.jsx";
 import {
   useLobbyData, activeBanners, activeAnnouncements, urgentAnnouncement,
   BG_PRESETS,
@@ -139,8 +139,16 @@ function Display({ previewMode }) {
 
       <MusicPlayer music={data.music} />
 
-      <button className="ver" onClick={() => setShowVersion((v) => !v)}>גרסה {VERSION}</button>
-      <a className="admin-link" href="#admin">כניסת מנהל</a>
+      {(() => {
+        const tickerVh = (settings.showTicker ? 6 : 0) + (settings.showNews && news.items.length > 0 ? 5 : 0);
+        const floatStyle = tickerVh > 0 ? { bottom: `calc(${tickerVh}vh + 16px)` } : undefined;
+        return (
+          <>
+            <button className="ver" style={floatStyle} onClick={() => setShowVersion((v) => !v)}>גרסה {VERSION}</button>
+            <a className="admin-link" style={floatStyle} href="#admin">כניסת מנהל</a>
+          </>
+        );
+      })()}
 
       {showVersion && <VersionPanel onClose={() => setShowVersion(false)} />}
     </div>
@@ -166,9 +174,10 @@ function BannerSlide({ banner }) {
     return () => { alive = false; };
   }, [banner.image]);
 
+  const bgKey = banner.bg && banner.bg.startsWith("art_") ? banner.bg : (LEGACY_ART_MAP[banner.bg] || "art_sunset");
   const style = img
     ? { backgroundImage: `url(${img})` }
-    : { background: BG_PRESETS[banner.bg] || BG_PRESETS.gold };
+    : { background: BG_PRESETS[bgKey] || BG_PRESETS.art_sunset };
 
   return (
     <div className={"slide banner-slide fade" + (img ? " has-img" : "")} style={style}>
@@ -211,6 +220,7 @@ function EventsSlide({ events }) {
         {events.slice(0, 6).map((e, i) => (
           <div className="ev-card" key={i}>
             <div className="ev-band" style={{ background: CATEGORY_BG[e.category] || CATEGORY_BG.default }}>
+              <CategoryIcon category={e.category} className="ev-icon" />
               <span className="ev-cat">{e.category}</span>
             </div>
             <div className="ev-body">

@@ -42,14 +42,14 @@ const DEFAULT_BANNERS = [
     id: "b_summer",
     title: "קיץ נעים ובטוח",
     subtitle: "לכל דיירי יסוד המעלה 9 — חופשה נהדרת!",
-    bg: "summer", image: null,
+    bg: "art_pool", image: null,
     start: "", end: "", active: true, order: 1,
   },
   {
     id: "b_clean",
     title: "כשהבניין נקי — כולנו מרוויחים",
     subtitle: "שומרים יחד על לובי מטופח ונעים",
-    bg: "green", image: null,
+    bg: "art_clean", image: null,
     start: "", end: "", active: true, order: 2,
   },
 ];

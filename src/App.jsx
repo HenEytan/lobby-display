@@ -5,7 +5,7 @@ import { eventsThisWeek, formatEventTime, CATEGORY_BG } from "./lib/events";
 import { fetchWeather, weatherIcon } from "./lib/feeds";
 import { fetchNews, NEWS_REFRESH_MS } from "./lib/news";
 import { applyTheme } from "./lib/themes";
-import { BuildingArt, OliveDivider, CategoryIcon, LEGACY_ART_MAP } from "./lib/artwork.jsx";
+import { BuildingArt, OliveDivider, CategoryIcon, AnnouncementIcon, rotatingArt } from "./lib/artwork.jsx";
 import {
   useLobbyData, activeBanners, activeAnnouncements, urgentAnnouncement,
   BG_PRESETS,
@@ -70,15 +70,23 @@ function Display({ previewMode }) {
   const anns = activeAnnouncements(data.announcements, now);
   const urgent = urgentAnnouncement(data.announcements, now);
 
+  // ─── מוזיקת רקע — מצב משותף כדי שגם שקופייה ייעודית תדע מה מתנגן ───
+  const musicTracks = data.music.tracks || [];
+  const musicOn = data.music.enabled && musicTracks.length > 0;
+  const [trackIdx, setTrackIdx] = useState(0);
+  useEffect(() => { setTrackIdx(0); }, [musicTracks.length]);
+  const currentTrack = musicOn ? musicTracks[trackIdx % musicTracks.length] : null;
+
   // ─── בניית שקופיות האזור הראשי ───
   const slides = useMemo(() => {
     const s = activeBanners(data.banners, now).map((b) => ({ type: "banner", key: b.id, banner: b }));
     if (settings.showEvents && events.length > 0) s.push({ type: "events", key: "events" });
     if (settings.showCalendar) s.push({ type: "calendar", key: "calendar" });
     if (holiday) s.push({ type: "holiday", key: "holiday" });
+    if (musicOn) s.push({ type: "music", key: "music" });
     if (s.length === 0) s.push({ type: "welcome", key: "welcome" });
     return s;
-  }, [data.rev, data.banners, events, holiday, settings.showEvents, settings.showCalendar, now.getDate()]);
+  }, [data.rev, data.banners, events, holiday, settings.showEvents, settings.showCalendar, musicOn, now.getDate()]);
 
   const [idx, setIdx] = useState(0);
   useEffect(() => {
@@ -117,7 +125,7 @@ function Display({ previewMode }) {
 
       <div className="board-body">
         <main className="main-area">
-          <MainSlide slide={slide} events={events} holiday={holiday} name={settings.buildingName} />
+          <MainSlide slide={slide} events={events} holiday={holiday} name={settings.buildingName} currentTrack={currentTrack} />
           {slides.length > 1 && (
             <div className="slide-dots">
               {slides.map((s, i) => (
@@ -137,16 +145,13 @@ function Display({ previewMode }) {
       {settings.showTicker && <Ticker lines={data.ticker} speed={settings.tickerSpeed} now={now} name={settings.buildingName} />}
       {settings.showNews && news.items.length > 0 && <NewsTicker items={news.items} speed={settings.newsSpeed} />}
 
-      <MusicPlayer music={data.music} />
+      <MusicPlayer music={data.music} trackIdx={trackIdx} setTrackIdx={setTrackIdx} />
 
       {(() => {
         const tickerVh = (settings.showTicker ? 6 : 0) + (settings.showNews && news.items.length > 0 ? 5 : 0);
         const floatStyle = tickerVh > 0 ? { bottom: `calc(${tickerVh}vh + 16px)` } : undefined;
         return (
-          <>
-            <button className="ver" style={floatStyle} onClick={() => setShowVersion((v) => !v)}>גרסה {VERSION}</button>
-            <a className="admin-link" style={floatStyle} href="#admin">כניסת מנהל</a>
-          </>
+          <button className="ver" style={floatStyle} onClick={() => setShowVersion((v) => !v)}>גרסה {VERSION}</button>
         );
       })()}
 
@@ -157,11 +162,12 @@ function Display({ previewMode }) {
 
 // ─── האזור הראשי ───
 
-function MainSlide({ slide, events, holiday, name }) {
+function MainSlide({ slide, events, holiday, name, currentTrack }) {
   if (slide.type === "banner") return <BannerSlide banner={slide.banner} />;
   if (slide.type === "events") return <EventsSlide events={events} />;
   if (slide.type === "calendar") return <CalendarSlide />;
   if (slide.type === "holiday") return <HolidaySlide text={holiday} />;
+  if (slide.type === "music") return <MusicSlide track={currentTrack} />;
   return <WelcomeSlide name={name} />;
 }
 
@@ -174,7 +180,7 @@ function BannerSlide({ banner }) {
     return () => { alive = false; };
   }, [banner.image]);
 
-  const bgKey = banner.bg && banner.bg.startsWith("art_") ? banner.bg : (LEGACY_ART_MAP[banner.bg] || "art_sunset");
+  const bgKey = banner.bg && banner.bg.startsWith("art_") ? banner.bg : rotatingArt(banner.id || banner.title);
   const style = img
     ? { backgroundImage: `url(${img})` }
     : { background: BG_PRESETS[bgKey] || BG_PRESETS.art_sunset };
@@ -197,6 +203,19 @@ function WelcomeSlide({ name }) {
       <div className="welcome-city">הוד השרון</div>
       <OliveDivider className="welcome-divider" />
       <p>הוועד מאחל לכם יום נעים ומוצלח</p>
+    </div>
+  );
+}
+
+function MusicSlide({ track }) {
+  return (
+    <div className="slide music-slide fade">
+      <div className="music-eq" aria-hidden="true">
+        {[0, 1, 2, 3, 4].map((i) => <span key={i} style={{ animationDelay: `${i * 0.12}s` }} />)}
+      </div>
+      <div className="slide-eyebrow">מנגן כעת</div>
+      <h2>{track ? track.name : "מוזיקת רקע"}</h2>
+      <p>מוזיקת רקע נעימה ללובי הבניין</p>
     </div>
   );
 }
@@ -326,8 +345,6 @@ function WeatherCard({ weather }) {
   );
 }
 
-const CAT_ICON = { "ועד": "🏛", "תחזוקה": "🔧", "קהילה": "🤝", "חגיגי": "🎉" };
-
 function AnnouncementsCard({ anns }) {
   const PAGE = 3;
   const pages = Math.max(1, Math.ceil(anns.length / PAGE));
@@ -348,7 +365,7 @@ function AnnouncementsCard({ anns }) {
         <div className="anns-list fade" key={page}>
           {shown.map((a) => (
             <div className={"ann" + (a.pinned ? " pinned" : "")} key={a.id}>
-              <span className="ann-ico">{CAT_ICON[a.category] || "📣"}</span>
+              <span className="ann-ico"><AnnouncementIcon category={a.category} className="ann-icon-svg" /></span>
               <div>
                 <div className="ann-title">{a.title}</div>
                 <div className="ann-body">{a.body}</div>
@@ -417,7 +434,6 @@ function UrgentScreen({ ann, now }) {
       <h1>{ann.title}</h1>
       <p>{ann.body}</p>
       <div className="urgent-clock">{hh}:{mm}</div>
-      <a className="admin-link dim" href="#admin">כניסת מנהל</a>
     </div>
   );
 }
@@ -432,7 +448,6 @@ function ShabbatScreen({ shabbat, name }) {
       <div className="shabbat-meta">
         הדלקת נרות {shabbat.candles} · צאת השבת {shabbat.havdalah}
       </div>
-      <a className="admin-link dim" href="#admin">כניסת מנהל</a>
     </div>
   );
 }
@@ -441,16 +456,13 @@ function ShabbatScreen({ shabbat, name }) {
 // דפדפנים חוסמים ניגון אוטומטי עם קול לפני מחוות משתמש; אם הניגון נחסם
 // יוצג כפתור עדין להפעלה בנגיעה אחת (רלוונטי רק לטעינה הראשונה של המסך).
 
-function MusicPlayer({ music }) {
+function MusicPlayer({ music, trackIdx, setTrackIdx }) {
   const audioRef = useRef(null);
-  const [trackIdx, setTrackIdx] = useState(0);
   const [blocked, setBlocked] = useState(false);
   const [src, setSrc] = useState(null);
 
   const tracks = music.tracks || [];
   const shouldPlay = music.enabled && tracks.length > 0;
-
-  useEffect(() => { setTrackIdx(0); }, [tracks.length]);
 
   useEffect(() => {
     let alive = true;

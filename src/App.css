@@ -99,6 +99,21 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 }
 @keyframes pulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
 
+/* מסך מוזיקת רקע */
+.music-slide h2 { font-size: clamp(28px, 3.4vw, 48px); font-weight: 800; margin-top: 6px; }
+.music-slide p { font-size: clamp(15px, 1.6vw, 22px); color: var(--ink-soft); margin-top: 8px; }
+.music-eq {
+  display: flex; align-items: flex-end; gap: 6px; height: 60px; margin-bottom: 1.4vh;
+}
+.music-eq span {
+  width: 8px; border-radius: 4px; background: linear-gradient(180deg, var(--gold), var(--gold-soft));
+  animation: eqbounce 1.1s ease-in-out infinite;
+}
+@keyframes eqbounce {
+  0%, 100% { height: 14px; }
+  50% { height: 56px; }
+}
+
 /* אירועים */
 .events-slide { justify-content: flex-start; align-items: stretch; text-align: right; padding: 3vh 2.4vw; }
 .slide-eyebrow { color: var(--gold); font-weight: 700; letter-spacing: 0.12em; font-size: clamp(13px, 1.1vw, 16px); }
@@ -160,7 +175,8 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
   background: #fdfaf1; border: 1px solid var(--line); border-radius: 14px; padding: 1.1vh 12px;
 }
 .ann.pinned { border-color: var(--gold-soft); background: #fbf4e0; }
-.ann-ico { font-size: clamp(16px, 1.5vw, 22px); margin-top: 2px; }
+.ann-ico { display: flex; align-items: center; justify-content: center; margin-top: 2px; flex-shrink: 0; }
+.ann-icon-svg { width: 24px; height: 24px; color: var(--gold); }
 .ann-title { font-weight: 700; font-size: clamp(14px, 1.25vw, 18px); }
 .ann-body { color: var(--ink-soft); font-size: clamp(12px, 1.05vw, 15px); line-height: 1.4; margin-top: 2px; }
 .anns-pages { display: flex; justify-content: center; gap: 6px; padding-top: 1vh; }

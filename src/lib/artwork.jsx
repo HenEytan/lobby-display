@@ -278,3 +278,81 @@ export const LEGACY_ART_MAP = {
   rose: "art_garden",
   night: "art_geometry",
 };
+
+// ─── סבב יומי בין איורי הרקע — כדי שבאנרים ללא רקע נבחר ידנית יתחלפו מדי כמה ימים ───
+export const ART_POOL = ["art_sunset", "art_garden", "art_geometry", "art_pool", "art_clean"];
+
+function hashSeed(str) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
+
+function dayOfYear(d) {
+  const start = new Date(d.getFullYear(), 0, 0);
+  return Math.floor((d - start) / 86400000);
+}
+
+// כל 3 ימים מתחלף האיור; ה-seed (למשל מזהה הבאנר) שומר על התחלה שונה לכל פריט.
+export function rotatingArt(seed, now = new Date()) {
+  const cycle = Math.floor(dayOfYear(now) / 3);
+  const idx = (cycle + hashSeed(String(seed))) % ART_POOL.length;
+  return ART_POOL[idx];
+}
+
+// ─── אייקוני קטגוריה להודעות דיירים ───
+const ANN_ICON_PATHS = {
+  "ועד": (
+    <>
+      <path d="M4 10.5 12 5l8 5.5" />
+      <path d="M5.5 10.5V19h13v-8.5" />
+      <path d="M9 19v-5h6v5" />
+    </>
+  ),
+  "תחזוקה": (
+    <>
+      <path d="M14.5 6.5a3.5 3.5 0 0 1-4.6 4.6L5 16l2.5 2.5L12.4 13.6a3.5 3.5 0 0 1 4.6-4.6l-2.5 2.5-1.5-1.5 2.5-2.5z" />
+    </>
+  ),
+  "קהילה": (
+    <>
+      <circle cx="8" cy="8" r="2.2" />
+      <circle cx="16" cy="8" r="2.2" />
+      <circle cx="12" cy="13" r="2.2" />
+      <path d="M4 19c0-2.6 1.7-4.4 4-4.4M20 19c0-2.6-1.7-4.4-4-4.4M8 19c0-2.6 1.8-4.4 4-4.4s4 1.8 4 4.4" />
+    </>
+  ),
+  "חגיגי": (
+    <>
+      <path d="M5 19 8 9l9 3-3 9z" />
+      <path d="M9 10 8 6M12 8.5l1-3.5M15 10l2-3" />
+      <circle cx="10.5" cy="13.5" r="0.7" fill="currentColor" stroke="none" />
+      <circle cx="13" cy="15" r="0.7" fill="currentColor" stroke="none" />
+    </>
+  ),
+  "default": (
+    <>
+      <path d="M12 4c-4 0-6 3-6 6.5V15l-1.5 2.5h15L18 15v-4.5C18 7 16 4 12 4z" />
+      <path d="M10.3 19a1.8 1.8 0 0 0 3.4 0" />
+    </>
+  ),
+};
+
+export function AnnouncementIcon({ category, className }) {
+  const paths = ANN_ICON_PATHS[category] || ANN_ICON_PATHS.default;
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      role="img"
+      aria-hidden="true"
+    >
+      {paths}
+    </svg>
+  );
+}

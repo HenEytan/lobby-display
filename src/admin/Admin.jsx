@@ -9,6 +9,7 @@ import {
 } from "../lib/media";
 import { VERSION } from "../version";
 import { THEMES, THEME_IDS, applyTheme } from "../lib/themes";
+import { holidayBannerSchedule } from "../lib/hebrew";
 import "./admin.css";
 
 // ═══════════════ כניסת מנהל (PIN) ═══════════════
@@ -52,6 +53,7 @@ function PinGate({ onOk }) {
 
 const TABS = [
   ["banners", "🖼 באנרים"],
+  ["holidays", "🎉 חגים"],
   ["announcements", "📢 הודעות"],
   ["ticker", "📰 טיקר"],
   ["music", "🎵 מוזיקה"],
@@ -103,6 +105,7 @@ function AdminPanel({ onLogout }) {
 
       <main className="admin-main">
         {tab === "banners" && <BannersTab data={data} />}
+        {tab === "holidays" && <HolidaysTab data={data} />}
         {tab === "announcements" && <AnnouncementsTab data={data} />}
         {tab === "ticker" && <TickerTab data={data} />}
         {tab === "music" && <MusicTab data={data} />}
@@ -261,6 +264,60 @@ function BannerCard({ banner, onChange, onDelete, onUp, onDown }) {
 // ═══════════════ הודעות ═══════════════
 
 const CATEGORIES = ["ועד", "תחזוקה", "קהילה", "חגיגי"];
+
+// ═══════════════ חגים ═══════════════
+
+function HolidaysTab({ data }) {
+  const s = data.settings;
+  const save = (patch) => writeDraft("settings", { ...s, ...patch });
+  const list = holidayBannerSchedule(new Date());
+
+  const fmt = (iso) => {
+    const [y, m, d] = iso.split("-");
+    return `${Number(d)}.${Number(m)}.${y}`;
+  };
+
+  return (
+    <section>
+      <div className="sec-head">
+        <div>
+          <h2>באנרי חגים לאורך השנה</h2>
+          <p>
+            מוכן מראש ומתעדכן אוטומטית לפי הלוח העברי — כל חג מקבל באנר עם איור משלו,
+            ומוצג במסך הראשי החל מיום לפני תחילתו ועד סופו. אין צורך לתחזק תאריכים ידנית.
+          </p>
+        </div>
+      </div>
+
+      <div className="item-card" style={{ marginBottom: "16px" }}>
+        <label className="switch big">
+          <input
+            type="checkbox"
+            checked={s.showHolidayBanners !== false}
+            onChange={(e) => save({ showHolidayBanners: e.target.checked })}
+          />
+          <span>{s.showHolidayBanners !== false ? "🎉 באנרי חגים פעילים" : "⏸ באנרי חגים כבויים"}</span>
+        </label>
+      </div>
+
+      <div className="cards">
+        {list.map((h) => (
+          <div className="item-card holiday-card" key={h.id}>
+            <div className="thumb" style={{ background: BG_PRESETS[h.bg] }} />
+            <div className="item-fields">
+              <div className="f-title">{h.title}</div>
+              <div style={{ color: "#6d6355", fontSize: "13px" }}>{h.subtitle}</div>
+              <div style={{ color: "#8a7f6d", fontSize: "12px", marginTop: "4px" }}>
+                מוצג: {fmt(h.start)} – {fmt(h.end)}
+              </div>
+            </div>
+          </div>
+        ))}
+        {list.length === 0 && <div className="empty">לא נמצאו חגים ב-12 החודשים הקרובים</div>}
+      </div>
+    </section>
+  );
+}
 
 function AnnouncementsTab({ data }) {
   const anns = data.announcements;

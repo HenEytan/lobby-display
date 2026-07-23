@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { VERSION, CHANGELOG } from "./version";
-import { gregDateHe, hebrewDate, dailyGreeting, todayHoliday, shabbatInfo, yearEvents } from "./lib/hebrew";
+import { gregDateHe, hebrewDate, dailyGreeting, todayHoliday, shabbatInfo, yearEvents, holidayBannerSchedule } from "./lib/hebrew";
 import { eventsThisWeek, formatEventTime, CATEGORY_BG } from "./lib/events";
 import { fetchWeather, weatherIcon } from "./lib/feeds";
 import { fetchNews, NEWS_REFRESH_MS } from "./lib/news";
@@ -84,15 +84,21 @@ function Display({ previewMode }) {
     : musicTracks[trackIdx % musicTracks.length];
 
   // ─── בניית שקופיות האזור הראשי ───
+  const holidayBanners = useMemo(
+    () => (settings.showHolidayBanners ? holidayBannerSchedule(now) : []),
+    [settings.showHolidayBanners, now.getDate()]
+  );
   const slides = useMemo(() => {
-    const s = activeBanners(data.banners, now).map((b) => ({ type: "banner", key: b.id, banner: b }));
+    const regular = activeBanners(data.banners, now).map((b) => ({ type: "banner", key: b.id, banner: b }));
+    const holidayNow = activeBanners(holidayBanners, now).map((b) => ({ type: "banner", key: b.id, banner: b }));
+    const s = [...regular, ...holidayNow];
     if (settings.showEvents && events.length > 0) s.push({ type: "events", key: "events" });
     if (settings.showCalendar) s.push({ type: "calendar", key: "calendar" });
     if (holiday) s.push({ type: "holiday", key: "holiday" });
     if (musicOn) s.push({ type: "music", key: "music" });
     if (s.length === 0) s.push({ type: "welcome", key: "welcome" });
     return s;
-  }, [data.rev, data.banners, events, holiday, settings.showEvents, settings.showCalendar, musicOn, now.getDate()]);
+  }, [data.rev, data.banners, holidayBanners, events, holiday, settings.showEvents, settings.showCalendar, musicOn, now.getDate()]);
 
   const [idx, setIdx] = useState(0);
   useEffect(() => {
@@ -154,8 +160,8 @@ function Display({ previewMode }) {
       <MusicPlayer music={data.music} trackIdx={trackIdx} setTrackIdx={setTrackIdx} />
 
       {(() => {
-        const tickerVh = (settings.showTicker ? 6 : 0) + (settings.showNews && news.items.length > 0 ? 5 : 0);
-        const floatStyle = tickerVh > 0 ? { bottom: `calc(${tickerVh}vh + 16px)` } : undefined;
+        const tickerVh = (settings.showTicker ? 6 : 0) + (settings.showNews && news.items.length > 0 ? 6.2 : 0);
+        const floatStyle = tickerVh > 0 ? { bottom: `calc(${tickerVh}vh + 10px)` } : undefined;
         return (
           <button className="ver" style={floatStyle} onClick={() => setShowVersion((v) => !v)}>גרסה {VERSION}</button>
         );
@@ -186,7 +192,7 @@ function BannerSlide({ banner }) {
     return () => { alive = false; };
   }, [banner.image]);
 
-  const bgKey = banner.bg && banner.bg.startsWith("art_") ? banner.bg : rotatingArt(banner.id || banner.title);
+  const bgKey = banner.bg && (banner.bg.startsWith("art_") || banner.bg.startsWith("holiday_")) ? banner.bg : rotatingArt(banner.id || banner.title);
   const style = img
     ? { backgroundImage: `url(${img})` }
     : { background: BG_PRESETS[bgKey] || BG_PRESETS.art_sunset };
@@ -249,6 +255,7 @@ function EventsSlide({ events }) {
               <span className="ev-cat">{e.category}</span>
             </div>
             <div className="ev-body">
+              <CategoryIcon category={e.category} className="ev-body-icon" />
               <div className="ev-title">{e.title}</div>
               <div className="ev-meta">{formatEventTime(e.date)}</div>
               <div className="ev-loc">{e.location}</div>

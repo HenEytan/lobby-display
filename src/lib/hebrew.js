@@ -200,3 +200,79 @@ export function yearEvents(now = new Date()) {
   out.sort((a, b) => a.date - b.date);
   return out;
 }
+
+// ─── באנרים לחגים לאורך השנה ───
+// מוכן ומעודכן תמיד לפי הלוח העברי — אין צורך לתחזק תאריכים ידנית.
+// כל באנר מופיע החל מיום לפני תחילת החג ועד סופו (כולל ימי חוה"מ).
+
+const HOLIDAY_BANNER_DEFS = [
+  { key: "rosh_hashana", re: /ראש השנה/, title: "שנה טובה ומתוקה", subtitle: "לכל דיירי הבניין — שנה של בריאות, שמחה ושלווה", bg: "holiday_rosh_hashana" },
+  { key: "yom_kippur", re: /יום כי?פור/, title: "גמר חתימה טובה", subtitle: "צום קל וגמר חתימה טובה לכל דיירי הבניין", bg: "holiday_yom_kippur" },
+  { key: "sukkot", re: /^ס(ו)?כות|שמיני עצרת|שמחת תורה/, title: "חג סוכות שמח", subtitle: "מועדים לשמחה לכל דיירי הבניין", bg: "holiday_sukkot" },
+  { key: "chanukah", re: /חנוכה/, title: "חנוכה שמח", subtitle: "אור וחום לכל בתי הבניין", bg: "holiday_chanukah" },
+  { key: "purim", re: /^פורים(?! קטן)/, title: "פורים שמח", subtitle: "חג שמח ומחופש לכל המשפחה", bg: "holiday_purim" },
+  { key: "pesach", re: /^פסח(?! שני)/, title: "חג פסח שמח", subtitle: "חג כשר ושמח לכל דיירי הבניין", bg: "holiday_pesach" },
+  { key: "shavuot", re: /שבועות/, title: "חג שבועות שמח", subtitle: "חג מתן תורה שמח לכולם", bg: "holiday_shavuot" },
+  { key: "atzmaut", re: /יום העצמאות/, title: "יום עצמאות שמח", subtitle: "חוגגים ביחד את עצמאות ישראל", bg: "holiday_atzmaut" },
+  { key: "tu_bishvat", re: /ט״ו בשבט|טו בשבט/, title: "ט״ו בשבט שמח", subtitle: "חג האילנות — נטיעות ופריחה", bg: "holiday_tu_bishvat" },
+  { key: "lag_baomer", re: /ל״ג בעומר|לג בעומר/, title: "ל״ג בעומר שמח", subtitle: "מדורות ושמחה לכל המשפחה", bg: "holiday_lag_baomer" },
+];
+
+function ymdLocal(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+export function holidayBannerSchedule(now = new Date()) {
+  const start = new Date(now);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(start);
+  end.setFullYear(end.getFullYear() + 1);
+
+  let raw = [];
+  try {
+    raw = HebrewCalendar.calendar({
+      start, end, il: true, noModern: false, sedrot: false, omer: false,
+      noRoshChodesh: true, noSpecialShabbat: true, candlelighting: false,
+    });
+  } catch { return []; }
+
+  const ranges = new Map();
+  for (const ev of raw) {
+    const desc = stripNiqqud(ev.render("he"));
+    for (const def of HOLIDAY_BANNER_DEFS) {
+      if (!def.re.test(desc)) continue;
+      const date = ev.getDate().greg();
+      const r = ranges.get(def.key);
+      if (!r) ranges.set(def.key, { first: date, last: date });
+      else {
+        if (date < r.first) r.first = date;
+        if (date > r.last) r.last = date;
+      }
+      break;
+    }
+  }
+
+  const out = [];
+  for (const def of HOLIDAY_BANNER_DEFS) {
+    const r = ranges.get(def.key);
+    if (!r) continue;
+    const startDate = new Date(r.first);
+    startDate.setDate(startDate.getDate() - 1);
+    out.push({
+      id: `hb_${def.key}`,
+      title: def.title,
+      subtitle: def.subtitle,
+      bg: def.bg,
+      image: null,
+      start: ymdLocal(startDate),
+      end: ymdLocal(r.last),
+      active: true,
+      firstDate: r.first,
+    });
+  }
+  out.sort((a, b) => a.firstDate - b.firstDate);
+  return out.map(({ firstDate, ...rest }) => rest);
+}

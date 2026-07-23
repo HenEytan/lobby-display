@@ -356,3 +356,38 @@ export function AnnouncementIcon({ category, className }) {
     </svg>
   );
 }
+
+// ─── רקעי חג — תג עגול עם סמל צבעוני על גרדיאנט תואם, לכל חג בלוח השנה ───
+const HOLIDAY_ART_DEFS = {
+  holiday_rosh_hashana: { grad: ["#fff3d6", "#f3c463"], emoji: "🍎" },
+  holiday_yom_kippur:   { grad: ["#f4f7f8", "#cfd9e0"], emoji: "🕊️" },
+  holiday_sukkot:       { grad: ["#eef6df", "#bcd88e"], emoji: "🌿" },
+  holiday_chanukah:     { grad: ["#1c2540", "#33406e"], emoji: "🕎", dark: true },
+  holiday_purim:        { grad: ["#fde2f0", "#cf9bea"], emoji: "🎭" },
+  holiday_pesach:       { grad: ["#f5f8ea", "#bfe0ab"], emoji: "🍽️" },
+  holiday_shavuot:      { grad: ["#fff8e0", "#e6cf83"], emoji: "🌾" },
+  holiday_atzmaut:      { grad: ["#eaf3fb", "#a9d1ee"], emoji: "🇮🇱" },
+  holiday_tu_bishvat:   { grad: ["#eef7e2", "#a9d488"], emoji: "🌳" },
+  holiday_lag_baomer:   { grad: ["#fff0dc", "#f3b26b"], emoji: "🔥" },
+};
+
+function holidayArtSVG({ grad, emoji, dark }) {
+  return `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <radialGradient id="hg" cx="50%" cy="38%" r="75%">
+      <stop offset="0" stop-color="${grad[0]}"/>
+      <stop offset="1" stop-color="${grad[1]}"/>
+    </radialGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#hg)"/>
+  <circle cx="400" cy="195" r="128" fill="${dark ? "rgba(255,255,255,0.07)" : "rgba(255,255,255,0.5)"}"/>
+  <circle cx="400" cy="195" r="128" fill="none" stroke="${dark ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.8)"}" stroke-width="3"/>
+  <text x="400" y="215" font-size="120" text-anchor="middle" dominant-baseline="middle">${emoji}</text>
+</svg>`;
+}
+
+export const HOLIDAY_ART = Object.fromEntries(
+  Object.entries(HOLIDAY_ART_DEFS).map(([k, v]) => [k, `${svgURL(holidayArtSVG(v))} center / cover no-repeat`])
+);
+export const HOLIDAY_ART_KEYS = Object.keys(HOLIDAY_ART_DEFS);

@@ -369,11 +369,30 @@ function TickerTab({ data }) {
 
 // ═══════════════ מוזיקה ═══════════════
 
+function extractYouTubeId(input) {
+  if (!input) return "";
+  const s = input.trim();
+  // תומך ב-youtu.be/ID, youtube.com/watch?v=ID, youtube.com/embed/ID, וגם מזהה גולמי (11 תווים)
+  const patterns = [
+    /youtu\.be\/([\w-]{6,})/,
+    /[?&]v=([\w-]{6,})/,
+    /youtube\.com\/embed\/([\w-]{6,})/,
+    /youtube\.com\/shorts\/([\w-]{6,})/,
+  ];
+  for (const re of patterns) {
+    const m = s.match(re);
+    if (m) return m[1];
+  }
+  if (/^[\w-]{10,15}$/.test(s)) return s; // כבר מזהה גולמי
+  return "";
+}
+
 function MusicTab({ data }) {
   const music = data.music;
   const save = (patch) => writeDraft("music", { ...music, ...patch });
   const fileRef = useRef(null);
   const [busy, setBusy] = useState(false);
+  const [ytInput, setYtInput] = useState(music.youtubeId || "");
 
   const addFiles = async (files) => {
     const audio = [...files].filter((f) => f.type.startsWith("audio/"));
@@ -408,18 +427,16 @@ function MusicTab({ data }) {
     save({ tracks: list });
   };
 
+  const source = music.source || "youtube";
+  const parsedId = extractYouTubeId(ytInput);
+
   return (
     <section>
       <div className="sec-head">
         <div>
           <h2>מוזיקת רקע</h2>
-          <p>העלו קבצי אודיו (MP3) לפלייליסט — מתנגן ברצף במסך הלובי, ללא שום שרת. הקבצים נשמרים על מכשיר המסך.</p>
+          <p>נגנו מוזיקה מיוטיוב בלולאה, או העלו קבצי MP3 משלכם — הבחירה שלכם.</p>
         </div>
-        <button className="btn primary" disabled={busy} onClick={() => fileRef.current?.click()}>
-          {busy ? "מעלה..." : "+ העלאת קבצים"}
-        </button>
-        <input ref={fileRef} type="file" accept="audio/*" multiple hidden
-          onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
       </div>
 
       <div className="music-controls item-card">
@@ -435,25 +452,73 @@ function MusicTab({ data }) {
         </label>
       </div>
 
-      <div className="cards">
-        {music.tracks.map((t, i) => (
-          <div className="item-card ticker-row" key={t.id}>
-            <span className="trk-name">🎵 {t.name}</span>
-            <div className="item-actions">
-              <div className="order-btns">
-                <button onClick={() => move(i, -1)}>▲</button>
-                <button onClick={() => move(i, 1)}>▼</button>
-              </div>
-              <button className="btn tiny danger" onClick={() => removeTrack(t)}>הסר</button>
+      <div className="item-card">
+        <div className="f-row" style={{ marginBottom: "10px" }}>
+          <label className="switch">
+            <input type="radio" name="music-source" checked={source === "youtube"}
+              onChange={() => save({ source: "youtube" })} />
+            <span>▶️ יוטיוב</span>
+          </label>
+          <label className="switch">
+            <input type="radio" name="music-source" checked={source === "upload"}
+              onChange={() => save({ source: "upload" })} />
+            <span>📁 קבצים שהועלו</span>
+          </label>
+        </div>
+
+        {source === "youtube" ? (
+          <>
+            <label>קישור וידאו יוטיוב (ינוגן בלולאה אינסופית)
+              <input
+                value={ytInput}
+                placeholder="https://www.youtube.com/watch?v=..."
+                onChange={(e) => setYtInput(e.target.value)}
+                onBlur={() => save({ youtubeId: extractYouTubeId(ytInput) })}
+              />
+            </label>
+            <label>שם תצוגה (אופציונלי, יופיע בשקופיית "מנגן כעת")
+              <input
+                value={music.youtubeTitle || ""}
+                placeholder="לדוגמה: פלייליסט רקע ללובי"
+                onChange={(e) => save({ youtubeTitle: e.target.value })}
+              />
+            </label>
+            {ytInput && (
+              <p className="hint">
+                {parsedId ? `✅ זוהה מזהה סרטון: ${parsedId}` : "⚠️ לא זוהה מזהה סרטון תקין מהקישור"}
+              </p>
+            )}
+          </>
+        ) : (
+          <>
+            <button className="btn primary" disabled={busy} onClick={() => fileRef.current?.click()}>
+              {busy ? "מעלה..." : "+ העלאת קבצים"}
+            </button>
+            <input ref={fileRef} type="file" accept="audio/*" multiple hidden
+              onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
+
+            <div className="cards" style={{ marginTop: "12px" }}>
+              {music.tracks.map((t, i) => (
+                <div className="item-card ticker-row" key={t.id}>
+                  <span className="trk-name">🎵 {t.name}</span>
+                  <div className="item-actions">
+                    <div className="order-btns">
+                      <button onClick={() => move(i, -1)}>▲</button>
+                      <button onClick={() => move(i, 1)}>▼</button>
+                    </div>
+                    <button className="btn tiny danger" onClick={() => removeTrack(t)}>הסר</button>
+                  </div>
+                </div>
+              ))}
+              {music.tracks.length === 0 && <div className="empty">הפלייליסט ריק — העלו קבצי אודיו</div>}
             </div>
-          </div>
-        ))}
-        {music.tracks.length === 0 && <div className="empty">הפלייליסט ריק — העלו קבצי אודיו</div>}
+          </>
+        )}
       </div>
 
       <p className="hint">
-        💡 המוזיקה מכבדת את שעות הפעילות (נפסקת במצב לילה). בטעינה ראשונה של המסך ייתכן
-        שהדפדפן ידרוש נגיעה אחת במסך להפעלת הקול — יופיע כפתור "הפעל מוזיקה".
+        💡 בטעינה ראשונה של המסך ייתכן שהדפדפן ידרוש נגיעה אחת במסך להפעלת הקול —
+        יופיע כפתור "הפעל מוזיקה" בפינה. במצב יוטיוב הסרטון מתנגן בלולאה אינסופית ברקע.
       </p>
     </section>
   );

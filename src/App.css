@@ -264,6 +264,10 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
   padding: 10px 20px; font-size: 15px; font-weight: 700; cursor: pointer;
   box-shadow: var(--shadow);
 }
+.yt-audio-frame {
+  position: fixed; bottom: 0; inset-inline-start: 0;
+  width: 2px; height: 2px; opacity: 0.01; border: none; pointer-events: none; z-index: 1;
+}
 
 /* ─── פאנל גרסאות ─── */
 .verpanel {

@@ -71,11 +71,17 @@ function Display({ previewMode }) {
   const urgent = urgentAnnouncement(data.announcements, now);
 
   // ─── מוזיקת רקע — מצב משותף כדי שגם שקופייה ייעודית תדע מה מתנגן ───
+  const musicSource = data.music.source || "youtube";
   const musicTracks = data.music.tracks || [];
-  const musicOn = data.music.enabled && musicTracks.length > 0;
+  const musicOn = data.music.enabled && (
+    (musicSource === "youtube" && !!data.music.youtubeId) ||
+    (musicSource === "upload" && musicTracks.length > 0)
+  );
   const [trackIdx, setTrackIdx] = useState(0);
   useEffect(() => { setTrackIdx(0); }, [musicTracks.length]);
-  const currentTrack = musicOn ? musicTracks[trackIdx % musicTracks.length] : null;
+  const currentTrack = !musicOn ? null
+    : musicSource === "youtube" ? { name: data.music.youtubeTitle || "פלייליסט יוטיוב" }
+    : musicTracks[trackIdx % musicTracks.length];
 
   // ─── בניית שקופיות האזור הראשי ───
   const slides = useMemo(() => {
@@ -460,30 +466,56 @@ function MusicPlayer({ music, trackIdx, setTrackIdx }) {
   const audioRef = useRef(null);
   const [blocked, setBlocked] = useState(false);
   const [src, setSrc] = useState(null);
+  const [ytKey, setYtKey] = useState(0);
 
+  const source = music.source || "youtube";
   const tracks = music.tracks || [];
-  const shouldPlay = music.enabled && tracks.length > 0;
+  const hasYoutube = source === "youtube" && !!music.youtubeId;
+  const hasUpload = source === "upload" && tracks.length > 0;
+  const shouldPlay = music.enabled && (hasYoutube || hasUpload);
 
   useEffect(() => {
     let alive = true;
-    if (!shouldPlay) { setSrc(null); return; }
+    if (!hasUpload || !music.enabled) { setSrc(null); return; }
     const t = tracks[trackIdx % tracks.length];
     mediaURL(t.mediaId).then((u) => alive && setSrc(u));
     return () => { alive = false; };
-  }, [shouldPlay, trackIdx, tracks]);
+  }, [hasUpload, music.enabled, trackIdx, tracks]);
 
   useEffect(() => {
     const a = audioRef.current;
-    if (!a) return;
+    if (!a || !hasUpload) return;
     a.volume = Math.min(1, Math.max(0, music.volume ?? 0.4));
-    if (shouldPlay && src) {
+    if (music.enabled && src) {
       a.play().then(() => setBlocked(false)).catch(() => setBlocked(true));
     } else {
       a.pause();
     }
-  }, [shouldPlay, src, music.volume]);
+  }, [hasUpload, music.enabled, src, music.volume]);
 
   if (!shouldPlay) return null;
+
+  if (hasYoutube) {
+    const embedUrl =
+      `https://www.youtube.com/embed/${music.youtubeId}` +
+      `?autoplay=1&loop=1&playlist=${music.youtubeId}` +
+      `&controls=0&modestbranding=1&playsinline=1&rel=0&iv_load_policy=3&fs=0`;
+    return (
+      <>
+        <iframe
+          key={ytKey}
+          title="lobby-music"
+          src={embedUrl}
+          allow="autoplay; encrypted-media"
+          className="yt-audio-frame"
+        />
+        <button className="music-unblock" onClick={() => setYtKey((k) => k + 1)}>
+          🎵 הפעל מוזיקה
+        </button>
+      </>
+    );
+  }
+
   return (
     <>
       <audio

@@ -52,24 +52,16 @@ const DEFAULT_BANNERS = [
     bg: "art_clean", image: null,
     start: "", end: "", active: true, order: 2,
   },
+  {
+    id: "b_gizum",
+    title: "פינוי גזם וגרוטאות",
+    subtitle: "בימי חמישי — נא להוציא לרחוב רק ביום רביעי בערב",
+    bg: "art_clean", image: null,
+    start: "", end: "", active: true, order: 3,
+  },
 ];
 
-const DEFAULT_ANNOUNCEMENTS = [
-  {
-    id: "a_gizum",
-    title: "פינוי גזם וגרוטאות",
-    body: "פינוי גזם בימי חמישי. נא להוציא לרחוב רק ביום רביעי בערב.",
-    category: "תחזוקה", pinned: false, urgent: false,
-    start: "", end: "",
-  },
-  {
-    id: "a_vaad",
-    title: "אסיפת דיירים",
-    body: "אסיפת הדיירים הקרובה תתקיים בלובי. פרטים במייל הוועד.",
-    category: "ועד", pinned: true, urgent: false,
-    start: "", end: "",
-  },
-];
+const DEFAULT_ANNOUNCEMENTS = [];
 
 const DEFAULT_TICKER = [
   { id: "t1", text: "ברוכים הבאים לדיירי יסוד המעלה 9, הוד השרון — שיהיה לכם יום נעים!", active: true, order: 1 },
@@ -79,7 +71,10 @@ const DEFAULT_TICKER = [
 const DEFAULT_MUSIC = {
   enabled: false,
   volume: 0.4,
-  tracks: [], // { id, name, mediaId }
+  source: "youtube", // "youtube" | "upload"
+  youtubeId: "",      // מזהה וידאו יוטיוב (מחולץ מהקישור)
+  youtubeTitle: "",   // שם תצוגה אופציונלי לשקופיית "מנגן כעת"
+  tracks: [], // { id, name, mediaId } — קבצי MP3 שהועלו (מצב חלופי)
 };
 
 const DEFAULTS = {
@@ -142,6 +137,54 @@ export function discardDrafts() {
   for (const k of KEYS) localStorage.removeItem(DRAFT(k));
   notify();
 }
+
+// ─── שדרוג נתונים חד-פעמי למשתמשים קיימים ───
+// כשמעדכנים ברירות מחדל (למשל הפיכת הודעה לבאנר), זה לא משפיע על מכשירים
+// שכבר יש להם נתונים שמורים ב-localStorage. הפונקציה הזו מתקנת זאת בפעם הראשונה.
+const MIGRATION_FLAG = "lobby_migration_v2";
+
+function migrateOnce() {
+  if (typeof window === "undefined") return;
+  if (localStorage.getItem(MIGRATION_FLAG) === "1") return;
+  let touched = false;
+
+  for (const scope of [LIVE, DRAFT]) {
+    // הסרת הודעת "אסיפת דיירים" הישנה, והפיכת "פינוי גזם" מהודעה לבאנר
+    try {
+      const raw = localStorage.getItem(scope("announcements"));
+      if (raw) {
+        const anns = JSON.parse(raw);
+        const filtered = anns.filter((a) => a.id !== "a_vaad" && a.id !== "a_gizum");
+        if (filtered.length !== anns.length) {
+          localStorage.setItem(scope("announcements"), JSON.stringify(filtered));
+          touched = true;
+        }
+      }
+    } catch { /* ignore corrupt data */ }
+
+    try {
+      const raw = localStorage.getItem(scope("banners"));
+      const banners = raw ? JSON.parse(raw) : structuredClone(DEFAULT_BANNERS);
+      if (!banners.some((b) => b.id === "b_gizum")) {
+        const maxOrder = banners.reduce((m, b) => Math.max(m, b.order || 0), 0);
+        banners.push({
+          id: "b_gizum",
+          title: "פינוי גזם וגרוטאות",
+          subtitle: "בימי חמישי — נא להוציא לרחוב רק ביום רביעי בערב",
+          bg: "art_clean", image: null,
+          start: "", end: "", active: true, order: maxOrder + 1,
+        });
+        localStorage.setItem(scope("banners"), JSON.stringify(banners));
+        touched = true;
+      }
+    } catch { /* ignore corrupt data */ }
+  }
+
+  localStorage.setItem(MIGRATION_FLAG, "1");
+  if (touched) notify();
+}
+
+migrateOnce();
 
 // ─── Hook לנתוני התצוגה (חי או טיוטה-לתצוגה-מקדימה) ───
 

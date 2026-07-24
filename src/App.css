@@ -102,6 +102,20 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 }
 @keyframes pulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
 
+/* מסך סוף שבוע — שישי ביום ומוצ״ש */
+.weekend-slide {
+  background: linear-gradient(160deg, #f7f9fb 0%, #e7edf3 60%, #d9e3ec 100%);
+}
+.weekend-slide h2 { font-size: clamp(36px, 4.6vw, 66px); font-weight: 800; color: #3f5670; position: relative; margin-top: 8px; }
+.weekend-slide p { font-size: clamp(17px, 2vw, 26px); color: var(--ink-soft); margin-top: 10px; position: relative; }
+.weekend-candles { font-size: clamp(30px, 3.6vw, 48px); position: relative; letter-spacing: 0.3em; }
+.weekend-divider { width: min(28vw, 280px); height: 22px; margin-top: 2.2vh; opacity: 0.85; }
+.weekend-glow {
+  position: absolute; inset: -30%;
+  background: radial-gradient(circle at 50% 40%, rgba(122, 158, 196, 0.35), transparent 55%);
+  animation: pulse 5.5s ease-in-out infinite;
+}
+
 /* מסך מוזיקת רקע */
 .music-slide h2 { font-size: clamp(28px, 3.4vw, 48px); font-weight: 800; margin-top: 6px; }
 .music-slide p { font-size: clamp(15px, 1.6vw, 22px); color: var(--ink-soft); margin-top: 8px; }

@@ -88,6 +88,9 @@ function Display({ previewMode }) {
     () => (settings.showHolidayBanners ? holidayBannerSchedule(now) : []),
     [settings.showHolidayBanners, now.getDate()]
   );
+  const isWeekend = now.getDay() === 5 || now.getDay() === 6;
+  const showWeekendSlide = isWeekend && !shabbat?.active;
+
   const slides = useMemo(() => {
     const regular = activeBanners(data.banners, now).map((b) => ({ type: "banner", key: b.id, banner: b }));
     const holidayNow = activeBanners(holidayBanners, now).map((b) => ({ type: "banner", key: b.id, banner: b }));
@@ -95,10 +98,11 @@ function Display({ previewMode }) {
     if (settings.showEvents && events.length > 0) s.push({ type: "events", key: "events" });
     if (settings.showCalendar) s.push({ type: "calendar", key: "calendar" });
     if (holiday) s.push({ type: "holiday", key: "holiday" });
+    if (showWeekendSlide) s.push({ type: "weekend", key: "weekend" });
     if (musicOn) s.push({ type: "music", key: "music" });
     if (s.length === 0) s.push({ type: "welcome", key: "welcome" });
     return s;
-  }, [data.rev, data.banners, holidayBanners, events, holiday, settings.showEvents, settings.showCalendar, musicOn, now.getDate()]);
+  }, [data.rev, data.banners, holidayBanners, events, holiday, settings.showEvents, settings.showCalendar, showWeekendSlide, musicOn, now.getDate()]);
 
   const [idx, setIdx] = useState(0);
   useEffect(() => {
@@ -137,7 +141,7 @@ function Display({ previewMode }) {
 
       <div className="board-body">
         <main className="main-area">
-          <MainSlide slide={slide} events={events} holiday={holiday} name={settings.buildingName} currentTrack={currentTrack} />
+          <MainSlide slide={slide} events={events} holiday={holiday} name={settings.buildingName} currentTrack={currentTrack} isSaturday={now.getDay() === 6} />
           {slides.length > 1 && (
             <div className="slide-dots">
               {slides.map((s, i) => (
@@ -174,11 +178,12 @@ function Display({ previewMode }) {
 
 // ─── האזור הראשי ───
 
-function MainSlide({ slide, events, holiday, name, currentTrack }) {
+function MainSlide({ slide, events, holiday, name, currentTrack, isSaturday }) {
   if (slide.type === "banner") return <BannerSlide banner={slide.banner} />;
   if (slide.type === "events") return <EventsSlide events={events} />;
   if (slide.type === "calendar") return <CalendarSlide />;
   if (slide.type === "holiday") return <HolidaySlide text={holiday} />;
+  if (slide.type === "weekend") return <WeekendSlide isSaturday={isSaturday} />;
   if (slide.type === "music") return <MusicSlide track={currentTrack} />;
   return <WelcomeSlide name={name} />;
 }
@@ -238,6 +243,18 @@ function HolidaySlide({ text }) {
       <div className="holiday-glow" />
       <h2>{text}</h2>
       <p>מכל דיירי הבניין</p>
+    </div>
+  );
+}
+
+function WeekendSlide({ isSaturday }) {
+  return (
+    <div className="slide weekend-slide fade">
+      <div className="weekend-glow" />
+      <div className="weekend-candles" aria-hidden="true">🕯️ 🕯️</div>
+      <h2>שבת שלום</h2>
+      <p>{isSaturday ? "סוף שבוע נעים ומרגיע לכל דיירי הבניין" : "לכולנו — סוף שבוע מהנה ושבת שלום"}</p>
+      <OliveDivider className="weekend-divider" />
     </div>
   );
 }

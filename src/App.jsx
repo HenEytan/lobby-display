@@ -92,6 +92,13 @@ function Display({ previewMode }) {
   const isWeekend = now.getDay() === 5 || now.getDay() === 6;
   const showWeekendSlide = isWeekend && !shabbat?.active;
 
+  // תזכורת דמי ועד — מופיעה ביום האחרון של כל חודש
+  const isLastDayOfMonth = useMemo(() => {
+    const t = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    return now.getDate() === t.getDate();
+  }, [now.getDate(), now.getMonth(), now.getFullYear()]);
+  const showVaadSlide = isLastDayOfMonth && settings.showVaadReminder !== false;
+
   const slides = useMemo(() => {
     const regular = activeBanners(data.banners, now).map((b) => ({ type: "banner", key: b.id, banner: b }));
     const holidayNow = activeBanners(holidayBanners, now).map((b) => ({ type: "banner", key: b.id, banner: b }));
@@ -99,11 +106,12 @@ function Display({ previewMode }) {
     if (settings.showEvents && events.length > 0) s.push({ type: "events", key: "events" });
     if (settings.showCalendar && monthHolidays.length > 0) s.push({ type: "calendar", key: "calendar" });
     if (holiday) s.push({ type: "holiday", key: "holiday" });
+    if (showVaadSlide) s.push({ type: "vaad", key: "vaad" });
     if (showWeekendSlide) s.push({ type: "weekend", key: "weekend" });
     if (musicOn) s.push({ type: "music", key: "music" });
     if (s.length === 0) s.push({ type: "welcome", key: "welcome" });
     return s;
-  }, [data.rev, data.banners, holidayBanners, events, holiday, monthHolidays, settings.showEvents, settings.showCalendar, showWeekendSlide, musicOn, now.getDate()]);
+  }, [data.rev, data.banners, holidayBanners, events, holiday, monthHolidays, settings.showEvents, settings.showCalendar, showWeekendSlide, showVaadSlide, musicOn, now.getDate()]);
 
   const [idx, setIdx] = useState(0);
   useEffect(() => {
@@ -184,6 +192,7 @@ function MainSlide({ slide, events, holiday, name, currentTrack, isSaturday, mon
   if (slide.type === "events") return <EventsSlide events={events} />;
   if (slide.type === "calendar") return <CalendarSlide items={monthHolidays} />;
   if (slide.type === "holiday") return <HolidaySlide text={holiday} />;
+  if (slide.type === "vaad") return <VaadSlide />;
   if (slide.type === "weekend") return <WeekendSlide isSaturday={isSaturday} />;
   if (slide.type === "music") return <MusicSlide track={currentTrack} />;
   return <WelcomeSlide name={name} />;
@@ -244,6 +253,20 @@ function HolidaySlide({ text }) {
       <div className="holiday-glow" />
       <h2>{text}</h2>
       <p>מכל דיירי הבניין</p>
+    </div>
+  );
+}
+
+function VaadSlide() {
+  const now = new Date();
+  const monthName = ["ינואר","פברואר","מרץ","אפריל","מאי","יוני","יולי","אוגוסט","ספטמבר","אוקטובר","נובמבר","דצמבר"][now.getMonth()];
+  return (
+    <div className="slide vaad-slide fade" style={{ background: BG_PRESETS.vaad }}>
+      <div className="vaad-text">
+        <div className="vaad-eyebrow">תזכורת · סוף חודש {monthName}</div>
+        <h2>תשלום דמי ועד הבית</h2>
+        <p>נשמח שתסדירו את התשלום החודשי — תודה על שיתוף הפעולה!</p>
+      </div>
     </div>
   );
 }

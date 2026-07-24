@@ -391,3 +391,44 @@ export const HOLIDAY_ART = Object.fromEntries(
   Object.entries(HOLIDAY_ART_DEFS).map(([k, v]) => [k, `${svgURL(holidayArtSVG(v))} center / cover no-repeat`])
 );
 export const HOLIDAY_ART_KEYS = Object.keys(HOLIDAY_ART_DEFS);
+
+// ─── רקע תזכורת דמי ועד — לוח שנה עם מטבעות, מופיע ביום האחרון של החודש ───
+const VAAD_SVG = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="vg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fdf6e6"/><stop offset="1" stop-color="#eddcb4"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#vg)"/>
+  <g opacity="0.5" stroke="#c9a84c" stroke-width="2" fill="none">
+    <circle cx="690" cy="80" r="34"/><circle cx="740" cy="140" r="20"/><circle cx="640" cy="150" r="14"/>
+    <circle cx="110" cy="360" r="26"/><circle cx="60" cy="300" r="16"/>
+  </g>
+  <g transform="translate(400,225)">
+    <rect x="-118" y="-104" width="236" height="208" rx="20" fill="#fffdf8" stroke="#c9a84c" stroke-width="4"/>
+    <rect x="-118" y="-104" width="236" height="52" rx="20" fill="#c9a84c"/>
+    <rect x="-118" y="-74" width="236" height="22" fill="#c9a84c"/>
+    <rect x="-74" y="-124" width="16" height="40" rx="8" fill="#a9884a"/>
+    <rect x="58" y="-124" width="16" height="40" rx="8" fill="#a9884a"/>
+    <g fill="#e3d6b4">
+      <rect x="-92" y="-30" width="34" height="26" rx="5"/><rect x="-42" y="-30" width="34" height="26" rx="5"/>
+      <rect x="8" y="-30" width="34" height="26" rx="5"/><rect x="58" y="-30" width="34" height="26" rx="5"/>
+      <rect x="-92" y="8" width="34" height="26" rx="5"/><rect x="-42" y="8" width="34" height="26" rx="5"/>
+      <rect x="8" y="8" width="34" height="26" rx="5"/>
+    </g>
+    <rect x="58" y="8" width="34" height="26" rx="5" fill="#d97b57"/>
+    <g fill="#e3d6b4">
+      <rect x="-92" y="46" width="34" height="26" rx="5"/><rect x="-42" y="46" width="34" height="26" rx="5"/>
+    </g>
+  </g>
+  <g transform="translate(578,318)">
+    <ellipse cx="0" cy="34" rx="62" ry="17" fill="#b8912f" opacity="0.28"/>
+    <circle cx="-22" cy="6" r="34" fill="#e8c65f" stroke="#b8912f" stroke-width="3.5"/>
+    <text x="-22" y="14" font-size="34" text-anchor="middle" fill="#8a6c1f" font-weight="bold">₪</text>
+    <circle cx="30" cy="18" r="26" fill="#f0d582" stroke="#b8912f" stroke-width="3"/>
+    <text x="30" y="27" font-size="26" text-anchor="middle" fill="#8a6c1f" font-weight="bold">₪</text>
+  </g>
+</svg>`;
+
+export const VAAD_BG = `${svgURL(VAAD_SVG)} center / cover no-repeat`;

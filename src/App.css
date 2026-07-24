@@ -102,6 +102,22 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 }
 @keyframes pulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
 
+/* תזכורת דמי ועד — יום אחרון בחודש */
+.vaad-slide { background-size: cover !important; background-position: center !important; }
+.vaad-text {
+  position: relative; z-index: 1; text-align: center;
+  padding: 3.2vh 4.2vw; max-width: min(74%, 820px);
+  background: rgba(255, 253, 248, 0.9); border-radius: 28px;
+  border: 1px solid rgba(201, 168, 76, 0.35);
+  box-shadow: 0 14px 34px rgba(101, 84, 47, 0.18);
+}
+.vaad-eyebrow {
+  color: #a9884a; font-weight: 700; letter-spacing: 0.14em;
+  font-size: clamp(13px, 1.15vw, 17px); margin-bottom: 8px;
+}
+.vaad-slide h2 { font-size: clamp(30px, 4vw, 56px); font-weight: 800; color: #6f5518; line-height: 1.2; }
+.vaad-slide p { font-size: clamp(17px, 1.9vw, 25px); color: var(--ink-soft); margin-top: 12px; }
+
 /* מסך סוף שבוע — שישי ביום ומוצ״ש */
 .weekend-slide {
   background: linear-gradient(160deg, #f7f9fb 0%, #e7edf3 60%, #d9e3ec 100%);

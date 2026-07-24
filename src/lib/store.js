@@ -3,7 +3,7 @@
 // ולחיצה על "פרסם" מעתיקה את כל הטיוטות ל-live בבת אחת.
 
 import { useEffect, useMemo, useState } from "react";
-import { ART_BG, HOLIDAY_ART } from "./artwork.jsx";
+import { ART_BG, HOLIDAY_ART, VAAD_BG } from "./artwork.jsx";
 
 export const KEYS = ["settings", "banners", "announcements", "ticker", "music"];
 const LIVE = (k) => `lobby_${k}`;
@@ -21,6 +21,7 @@ export const DEFAULT_SETTINGS = {
   showNews: true,     // מבזקי ynet בתחתית
   showCalendar: true, // שקופית לוח חגים ומועדים
   showHolidayBanners: true, // באנרים אוטומטיים לחגים לאורך השנה
+  showVaadReminder: true,   // תזכורת דמי ועד ביום האחרון של כל חודש
   tickerSpeed: 45, // שניות לסיבוב מלא
   newsSpeed: 60,   // שניות לסיבוב מבזקים
   activeStart: "06:00",
@@ -31,6 +32,7 @@ export const DEFAULT_SETTINGS = {
 export const BG_PRESETS = {
   ...ART_BG,
   ...HOLIDAY_ART,
+  vaad: VAAD_BG,
   gold: "linear-gradient(135deg, #f7f1e3 0%, #eaddc0 45%, #d9c194 100%)",
   summer: "linear-gradient(135deg, #fdf6e3 0%, #ffe9c2 50%, #ffd9a0 100%)",
   green: "linear-gradient(135deg, #f3f7ee 0%, #dcead0 50%, #c2d8ae 100%)",

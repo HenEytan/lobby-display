@@ -638,7 +638,11 @@ function SettingsTab({ data }) {
           </label>
           <label className="switch">
             <input type="checkbox" checked={s.showCalendar !== false} onChange={(e) => save({ showCalendar: e.target.checked })} />
-            <span>שקופית לוח חגים ומועדים לשנה הקרובה</span>
+            <span>שקופית לוח חגים ומועדים לחודש הקרוב</span>
+          </label>
+          <label className="switch">
+            <input type="checkbox" checked={s.showVaadReminder !== false} onChange={(e) => save({ showVaadReminder: e.target.checked })} />
+            <span>תזכורת דמי ועד ביום האחרון של כל חודש</span>
           </label>
         </div>
 

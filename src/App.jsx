@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { VERSION, CHANGELOG } from "./version";
-import { gregDateHe, hebrewDate, dailyGreeting, todayHoliday, shabbatInfo, yearEvents, holidayBannerSchedule } from "./lib/hebrew";
+import { gregDateHe, hebrewDate, dailyGreeting, todayHoliday, shabbatInfo, upcomingHolidays, holidayBannerSchedule } from "./lib/hebrew";
 import { eventsThisWeek, formatEventTime, CATEGORY_BG } from "./lib/events";
 import { fetchWeather, weatherIcon } from "./lib/feeds";
 import { fetchNews, NEWS_REFRESH_MS } from "./lib/news";
@@ -67,6 +67,7 @@ function Display({ previewMode }) {
   const holiday = useMemo(() => todayHoliday(now), [now.getDate(), now.getMonth()]);
   const shabbat = useMemo(() => shabbatInfo(now), [Math.floor(now.getTime() / 60000)]);
   const events = useMemo(() => eventsThisWeek(now), [now.getDate()]);
+  const monthHolidays = useMemo(() => upcomingHolidays(now, 30), [now.getDate()]);
   const anns = activeAnnouncements(data.announcements, now);
   const urgent = urgentAnnouncement(data.announcements, now);
 
@@ -96,13 +97,13 @@ function Display({ previewMode }) {
     const holidayNow = activeBanners(holidayBanners, now).map((b) => ({ type: "banner", key: b.id, banner: b }));
     const s = [...regular, ...holidayNow];
     if (settings.showEvents && events.length > 0) s.push({ type: "events", key: "events" });
-    if (settings.showCalendar) s.push({ type: "calendar", key: "calendar" });
+    if (settings.showCalendar && monthHolidays.length > 0) s.push({ type: "calendar", key: "calendar" });
     if (holiday) s.push({ type: "holiday", key: "holiday" });
     if (showWeekendSlide) s.push({ type: "weekend", key: "weekend" });
     if (musicOn) s.push({ type: "music", key: "music" });
     if (s.length === 0) s.push({ type: "welcome", key: "welcome" });
     return s;
-  }, [data.rev, data.banners, holidayBanners, events, holiday, settings.showEvents, settings.showCalendar, showWeekendSlide, musicOn, now.getDate()]);
+  }, [data.rev, data.banners, holidayBanners, events, holiday, monthHolidays, settings.showEvents, settings.showCalendar, showWeekendSlide, musicOn, now.getDate()]);
 
   const [idx, setIdx] = useState(0);
   useEffect(() => {
@@ -141,7 +142,7 @@ function Display({ previewMode }) {
 
       <div className="board-body">
         <main className="main-area">
-          <MainSlide slide={slide} events={events} holiday={holiday} name={settings.buildingName} currentTrack={currentTrack} isSaturday={now.getDay() === 6} />
+          <MainSlide slide={slide} events={events} holiday={holiday} name={settings.buildingName} currentTrack={currentTrack} isSaturday={now.getDay() === 6} monthHolidays={monthHolidays} />
           {slides.length > 1 && (
             <div className="slide-dots">
               {slides.map((s, i) => (
@@ -178,10 +179,10 @@ function Display({ previewMode }) {
 
 // ─── האזור הראשי ───
 
-function MainSlide({ slide, events, holiday, name, currentTrack, isSaturday }) {
+function MainSlide({ slide, events, holiday, name, currentTrack, isSaturday, monthHolidays }) {
   if (slide.type === "banner") return <BannerSlide banner={slide.banner} />;
   if (slide.type === "events") return <EventsSlide events={events} />;
-  if (slide.type === "calendar") return <CalendarSlide />;
+  if (slide.type === "calendar") return <CalendarSlide items={monthHolidays} />;
   if (slide.type === "holiday") return <HolidaySlide text={holiday} />;
   if (slide.type === "weekend") return <WeekendSlide isSaturday={isSaturday} />;
   if (slide.type === "music") return <MusicSlide track={currentTrack} />;
@@ -290,8 +291,7 @@ const YEAR_TYPE = {
   memorial: { label: "יום זיכרון", cls: "memorial" },
 };
 
-function CalendarSlide() {
-  const items = useMemo(() => yearEvents(new Date()), []);
+function CalendarSlide({ items = [] }) {
   const PAGE = 8;
   const pages = Math.max(1, Math.ceil(items.length / PAGE));
   const [page, setPage] = useState(0);
@@ -304,7 +304,7 @@ function CalendarSlide() {
   const shown = items.slice((page % pages) * PAGE, (page % pages) * PAGE + PAGE);
   return (
     <div className="slide calendar-slide fade">
-      <div className="slide-eyebrow">לוח השנה העברי · השנה הקרובה</div>
+      <div className="slide-eyebrow">לוח השנה העברי · החודש הקרוב</div>
       <h3>חגים, מועדים וצומות</h3>
       <div className="cal-grid fade" key={page}>
         {shown.map((e, i) => (

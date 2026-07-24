@@ -161,12 +161,7 @@ function normalizeName(desc) {
   return desc.replace(/\s*\(.*?\)\s*/g, "").trim();
 }
 
-export function yearEvents(now = new Date()) {
-  const start = new Date(now);
-  start.setHours(0, 0, 0, 0);
-  const end = new Date(start);
-  end.setFullYear(end.getFullYear() + 1);
-
+function computeHolidayList(start, end) {
   let raw = [];
   try {
     raw = HebrewCalendar.calendar({
@@ -199,6 +194,23 @@ export function yearEvents(now = new Date()) {
   }
   out.sort((a, b) => a.date - b.date);
   return out;
+}
+
+export function yearEvents(now = new Date()) {
+  const start = new Date(now);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(start);
+  end.setFullYear(end.getFullYear() + 1);
+  return computeHolidayList(start, end);
+}
+
+// חגים/מועדים/צומות בחלון הקרוב בלבד (ברירת מחדל: 30 יום) — לשקופיית "לוח החודש הקרוב".
+export function upcomingHolidays(now = new Date(), days = 30) {
+  const start = new Date(now);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(start);
+  end.setDate(end.getDate() + days);
+  return computeHolidayList(start, end);
 }
 
 // ─── באנרים לחגים לאורך השנה ───

@@ -662,15 +662,15 @@ function SettingsTab({ data }) {
             <input type="checkbox" checked={s.showNews !== false} onChange={(e) => save({ showNews: e.target.checked })} />
             <span>שורת מבזקי ynet בתחתית המסך</span>
           </label>
-          <label>מהירות מבזקים (שניות לסיבוב)
-            <input type="number" min="20" max="240" value={s.newsSpeed || 60}
-              onChange={(e) => save({ newsSpeed: Number(e.target.value) || 60 })} />
+          <label>מהירות מבזקים (שניות לסיבוב — גבוה יותר = איטי יותר)
+            <input type="number" min="90" max="300" value={s.newsSpeed || 140}
+              onChange={(e) => save({ newsSpeed: Number(e.target.value) || 140 })} />
           </label>
         </div>
 
         <div className="item-card">
           <h3>שעות פעילות</h3>
-          <p className="hint">מחוץ לשעות אלו המסך עובר למצב לילה מעומעם והמוזיקה נפסקת.</p>
+          <p className="hint">שעות אלו משמשות את המוזיקה בלבד. המסך עצמו פעיל 24/7.</p>
           <label>התחלה
             <input type="time" value={s.activeStart} onChange={(e) => save({ activeStart: e.target.value })} />
           </label>

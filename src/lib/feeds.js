@@ -11,7 +11,7 @@ const WMO = {
 };
 
 export async function fetchWeather() {
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${HOD_HASHARON.lat}&longitude=${HOD_HASHARON.lon}&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=Asia%2FJerusalem&forecast_days=4`;
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${HOD_HASHARON.lat}&longitude=${HOD_HASHARON.lon}&current=temperature_2m,weather_code,uv_index&daily=temperature_2m_max,temperature_2m_min,weather_code,uv_index_max&timezone=Asia%2FJerusalem&forecast_days=4`;
   try {
     const res = await fetch(url);
     if (!res.ok) throw new Error("weather source error");
@@ -22,10 +22,17 @@ export async function fetchWeather() {
       min: Math.round(d.daily.temperature_2m_min[i]),
       code: d.daily.weather_code[i],
     }));
+    // מדד UV: העדפה לערך הנוכחי; אם חסר — שיא היום. מתעדכן בכל רענון מזג אוויר.
+    let uv = d.current && typeof d.current.uv_index === "number" ? d.current.uv_index : null;
+    if (uv == null && d.daily && Array.isArray(d.daily.uv_index_max)) {
+      const v = d.daily.uv_index_max[0];
+      if (typeof v === "number") uv = v;
+    }
     const current = {
       temp: Math.round(d.current.temperature_2m),
       desc: WMO[d.current.weather_code] || "—",
       code: d.current.weather_code,
+      uv: uv == null ? null : Math.round(uv * 10) / 10,
     };
     const payload = { current, days };
     localStorage.setItem("weather_cache", JSON.stringify(payload));
@@ -45,4 +52,14 @@ export function weatherIcon(code) {
   if (code >= 71 && code <= 82) return "🌦";
   if (code >= 95) return "⛈";
   return "☀";
+}
+
+// ─── מדד קרינה UV — סיווג לפי המלצות ארגון הבריאות העולמי ───
+export function uvLevel(uv) {
+  if (uv == null) return null;
+  if (uv < 3) return { label: "נמוך", cls: "uv-low", advice: "אין צורך בהגנה" };
+  if (uv < 6) return { label: "בינוני", cls: "uv-mod", advice: "מומלץ כובע ומסנן קרינה" };
+  if (uv < 8) return { label: "גבוה", cls: "uv-high", advice: "הימנעו משהייה ממושכת בשמש" };
+  if (uv < 11) return { label: "גבוה מאוד", cls: "uv-vhigh", advice: "הגנה מלאה — עדיף בצל" };
+  return { label: "קיצוני", cls: "uv-ext", advice: "הימנעו מחשיפה לשמש" };
 }

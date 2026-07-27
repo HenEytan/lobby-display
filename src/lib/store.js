@@ -23,7 +23,7 @@ export const DEFAULT_SETTINGS = {
   showHolidayBanners: true, // באנרים אוטומטיים לחגים לאורך השנה
   showVaadReminder: true,   // תזכורת דמי ועד ביום האחרון של כל חודש
   tickerSpeed: 45, // שניות לסיבוב מלא
-  newsSpeed: 60,   // שניות לסיבוב מבזקים
+  newsSpeed: 140,  // שניות לסיבוב מבזקים (גבוה יותר = איטי יותר)
   activeStart: "06:00",
   activeEnd: "23:00",
   pin: "1234",

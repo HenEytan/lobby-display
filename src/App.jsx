@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { VERSION, CHANGELOG } from "./version";
 import { gregDateHe, hebrewDate, dailyGreeting, todayHoliday, shabbatInfo, upcomingHolidays, holidayBannerSchedule } from "./lib/hebrew";
 import { eventsThisWeek, formatEventTime, CATEGORY_BG } from "./lib/events";
-import { fetchWeather, weatherIcon } from "./lib/feeds";
+import { fetchWeather, weatherIcon, uvLevel } from "./lib/feeds";
+import { syncTime, israelNow, TIME_SYNC_MS } from "./lib/time";
 import { fetchNews, NEWS_REFRESH_MS } from "./lib/news";
 import { applyTheme } from "./lib/themes";
 import { BuildingArt, OliveDivider, CategoryIcon, AnnouncementIcon, rotatingArt } from "./lib/artwork.jsx";
@@ -96,11 +97,16 @@ function useHashRoute() {
   return hash.replace("#", "");
 }
 
+// שעון מסונכרן מול השרת (שעון ישראל) — לא תלוי בשעון המכשיר, שלעיתים שגוי.
 function useClock() {
-  const [now, setNow] = useState(new Date());
+  const [now, setNow] = useState(() => israelNow());
   useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(t);
+    let alive = true;
+    const tick = () => { if (alive) setNow(israelNow()); };
+    syncTime().then(tick);
+    const t = setInterval(tick, 1000);
+    const s = setInterval(() => { syncTime().then(tick); }, TIME_SYNC_MS);
+    return () => { alive = false; clearInterval(t); clearInterval(s); };
   }, []);
   return now;
 }
@@ -212,12 +218,17 @@ function Display({ previewMode }) {
       )}
 
       <header className="board-head">
-        <div className="head-welcome">
+        <div className="head-brand">
           <span className="head-hello">ברוכים הבאים</span>
-          <span className="head-name">{settings.buildingName}</span>
-          {settings.city && <span className="head-city">{settings.city}</span>}
+          <div className="head-title">
+            <h1 className="head-name">{settings.buildingName}</h1>
+            {settings.city && <span className="head-city">{settings.city}</span>}
+          </div>
         </div>
-        <div className="head-greet">{dailyGreeting(now, holiday)}</div>
+        <div className="head-greet">
+          <span className="head-greet-text">{dailyGreeting(now, holiday)}</span>
+          <OliveDivider className="head-divider" />
+        </div>
       </header>
 
       <div className="board-body">
@@ -245,7 +256,7 @@ function Display({ previewMode }) {
       <MusicPlayer music={data.music} trackIdx={trackIdx} setTrackIdx={setTrackIdx} />
 
       {(() => {
-        const tickerVh = (settings.showTicker ? 6 : 0) + (settings.showNews && news.items.length > 0 ? 6.2 : 0);
+        const tickerVh = (settings.showTicker ? 6 : 0) + (settings.showNews && news.items.length > 0 ? 7.2 : 0);
         const floatStyle = tickerVh > 0 ? { bottom: `calc(${tickerVh}vh + 10px)` } : undefined;
         return (
           <>
@@ -478,6 +489,19 @@ function WeatherCard({ weather }) {
         <span className="wx-temp">{weather.current.temp}°</span>
         <span className="wx-desc">{weather.current.desc}</span>
       </div>
+      {(() => {
+        const uv = weather.current.uv;
+        const lvl = uvLevel(uv);
+        if (!lvl) return null;
+        return (
+          <div className={"wx-uv " + lvl.cls}>
+            <span className="uv-tag">UV</span>
+            <span className="uv-val">{uv}</span>
+            <span className="uv-label">{lvl.label}</span>
+            <span className="uv-advice">{lvl.advice}</span>
+          </div>
+        );
+      })()}
       {weather.days.length > 1 && (
         <div className="wx-forecast">
           {weather.days.slice(1, 4).map((d, i) => (
@@ -562,7 +586,7 @@ function NewsTicker({ items, speed }) {
     <footer className="news-ticker">
       <div className="news-brand">מבזקים · ynet</div>
       <div className="ticker-viewport">
-        <div className="ticker-track" style={{ animationDuration: `${Math.max(20, speed)}s` }}>
+        <div className="ticker-track" style={{ animationDuration: `${Math.max(90, speed || 140)}s` }}>
           <span>{text}</span>
           <span aria-hidden="true">{text}</span>
         </div>

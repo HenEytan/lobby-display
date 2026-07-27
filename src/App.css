@@ -283,6 +283,14 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 .ann-body { color: var(--ink-soft); font-size: clamp(12px, 1.05vw, 17px); line-height: 1.4; margin-top: 2px; }
 .anns-pages { display: flex; justify-content: center; gap: 6px; padding-top: 1vh; }
 
+/* רצועות תחתונות מעוגנות — תמיד גלויות, בלי תלות בגובה התוכן */
+.board-strips {
+  position: fixed; inset-inline: 0; bottom: 0; z-index: 40;
+  display: flex; flex-direction: column;
+}
+.board-strips .ticker,
+.board-strips .news-ticker { margin: 0; }
+
 /* ─── טיקר ─── */
 
 .ticker {

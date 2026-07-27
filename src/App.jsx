@@ -218,7 +218,13 @@ function Display({ previewMode }) {
   if (shabbat?.active) return <ShabbatScreen shabbat={shabbat} name={settings.buildingName} />;
 
   return (
-    <div className="board" dir="rtl">
+    <div
+      className="board"
+      dir="rtl"
+      style={{
+        paddingBottom: `max(${(settings.showTicker ? 6 : 0) + (settings.showNews && news.items.length > 0 ? 7.2 : 0)}vh, ${(settings.showTicker ? 44 : 0) + (settings.showNews && news.items.length > 0 ? 56 : 0)}px)`,
+      }}
+    >
       {previewMode && (
         <div className="preview-bar">
           מצב תצוגה מקדימה — כך ייראה המסך לאחר פרסום
@@ -259,8 +265,11 @@ function Display({ previewMode }) {
         </aside>
       </div>
 
-      {settings.showTicker && <Ticker lines={data.ticker} speed={settings.tickerSpeed} now={now} name={settings.buildingName} />}
-      {settings.showNews && news.items.length > 0 && <NewsTicker items={news.items} speed={settings.newsSpeed} />}
+      {/* הרצועות מעוגנות לתחתית המסך — כך שגובה התוכן לעולם לא יכול לדחוף אותן החוצה */}
+      <div className="board-strips">
+        {settings.showTicker && <Ticker lines={data.ticker} speed={settings.tickerSpeed} now={now} name={settings.buildingName} />}
+        {settings.showNews && news.items.length > 0 && <NewsTicker items={news.items} speed={settings.newsSpeed} />}
+      </div>
 
       <MusicPlayer music={data.music} trackIdx={trackIdx} setTrackIdx={setTrackIdx} allowed={musicHoursOk} />
 

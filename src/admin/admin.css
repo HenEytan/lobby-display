@@ -164,3 +164,12 @@
   width: 22px; height: 22px; border-radius: 6px; display: inline-block;
   border: 1px solid rgba(0, 0, 0, 0.12);
 }
+
+/* ─── חיווי מצב מוזיקה ─── */
+.music-status {
+  border-radius: 14px; padding: 14px 18px; margin-bottom: 14px;
+  font-size: 15px; line-height: 1.6; border: 1px solid;
+}
+.music-status.off  { background: #f3f1ec; border-color: #e0dbd0; color: #6d6355; }
+.music-status.bad  { background: #fff2e4; border-color: #e8c39a; color: #a8501f; font-weight: 600; }
+.music-status.good { background: #eef7ea; border-color: #bcd9b0; color: #3f6b35; }

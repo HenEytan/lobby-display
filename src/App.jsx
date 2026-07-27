@@ -749,6 +749,15 @@ function MusicPlayer({ music, trackIdx, setTrackIdx }) {
     if (a) a.play().then(() => setBlocked(false)).catch(() => { /* ignore */ });
   };
 
+  // מוזיקה סומנה כפעילה אך אין מקור מוגדר — חיווי במקום שקט מוחלט בלי הסבר
+  if (music.enabled && !hasYoutube && !hasUpload) {
+    return (
+      <div className="music-chip warn">
+        ♪ מוזיקה מופעלת — לא הוגדר מקור בניהול
+      </div>
+    );
+  }
+
   if (!shouldPlay) return null;
 
   return (
@@ -761,10 +770,12 @@ function MusicPlayer({ music, trackIdx, setTrackIdx }) {
           onEnded={() => setTrackIdx((i) => (i + 1) % tracks.length)}
         />
       )}
-      {blocked && (
+      {blocked ? (
         <button className="music-unblock" onClick={unblock}>
           🎵 לחצו להפעלת המוזיקה
         </button>
+      ) : (
+        <div className="music-chip">♪ מתנגן</div>
       )}
     </>
   );

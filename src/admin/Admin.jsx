@@ -498,6 +498,29 @@ function MusicTab({ data }) {
         </div>
       </div>
 
+      {(() => {
+        const src = music.source || "youtube";
+        const ready = src === "youtube" ? !!music.youtubeId : (music.tracks || []).length > 0;
+        if (!music.enabled) {
+          return <div className="music-status off">⏸ המוזיקה כבויה — הפעילו את המתג למטה.</div>;
+        }
+        if (!ready) {
+          return (
+            <div className="music-status bad">
+              ⚠ המוזיקה מסומנת כפעילה אך <b>אין מקור מוגדר</b>.{" "}
+              {src === "youtube" ? "הדביקו קישור יוטיוב למטה." : "העלו קובץ אודיו למטה."}
+            </div>
+          );
+        }
+        return (
+          <div className="music-status good">
+            ✅ מוגדר ומוכן{src === "youtube" ? ` — יוטיוב (${music.youtubeId})` : ` — ${(music.tracks || []).length} קבצים`}.
+            <br />
+            חשוב: השינוי ייכנס לתוקף במסך רק אחרי לחיצה על <b>“פרסם שינויים”</b> בתחתית הדף.
+          </div>
+        );
+      })()}
+
       <div className="music-controls item-card">
         <label className="switch big">
           <input type="checkbox" checked={music.enabled} onChange={(e) => save({ enabled: e.target.checked })} />

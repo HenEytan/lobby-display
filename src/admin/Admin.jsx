@@ -240,6 +240,7 @@ function BannerCard({ banner, onChange, onDelete, onUp, onDown }) {
               <option value="art_pool">🖼 קיץ ובריכה</option>
               <option value="art_clean">🖼 ניקיון ותחזוקה</option>
               <option value="camera">🖼 מוגן במצלמות</option>
+              <option value="gizum">🖼 פינוי גזם וגרוטאות</option>
               <option value="vaad">🖼 תזכורת דמי ועד</option>
             </select>
           </label>

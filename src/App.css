@@ -41,9 +41,9 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 /* כותרת — כל הטקסט באותו גודל, הבחנה רק בעובי ובצבע */
 .board-head {
   --head-fs: clamp(15px, 1.5vw, 22px);
-  --head-track: 0.2em;
-  display: flex; align-items: center; justify-content: space-between; gap: 4.5vw;
-  padding: 1vh 2.6vw 1vh 2.2vw;
+  --head-track: 0.3em;
+  display: flex; align-items: center; justify-content: space-between; gap: 6vw;
+  padding: 1vh 3.4vw 1vh 3vw;
   background: linear-gradient(100deg, var(--panel) 65%, rgba(216, 195, 145, 0.14));
   border: 1px solid var(--line);
   border-radius: 16px;
@@ -55,9 +55,9 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
   width: 5px; background: linear-gradient(180deg, var(--gold), var(--gold-soft));
 }
 
-.head-brand { display: flex; align-items: center; gap: 34px; flex-wrap: nowrap; min-width: 0; }
-.head-title { display: flex; align-items: center; gap: 24px; flex-wrap: nowrap; min-width: 0; }
-.head-greet { display: flex; align-items: center; gap: 26px; flex-shrink: 0; }
+.head-brand { display: flex; align-items: center; gap: 48px; flex-wrap: nowrap; min-width: 0; }
+.head-title { display: flex; align-items: center; gap: 34px; flex-wrap: nowrap; min-width: 0; }
+.head-greet { display: flex; align-items: center; gap: 34px; flex-shrink: 0; }
 
 .head-hello,
 .head-name,
@@ -77,7 +77,7 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 .head-city {
   font-weight: 600; color: #7d5f1d;
   background: rgba(176, 141, 62, 0.12); border: 1px solid var(--gold-soft);
-  padding: 3px 16px; border-radius: 999px;
+  padding: 4px 20px; border-radius: 999px;
 }
 
 .head-divider { width: clamp(46px, 5vw, 78px); height: 10px; opacity: 0.55; }

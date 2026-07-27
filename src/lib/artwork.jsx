@@ -476,3 +476,54 @@ const CAMERA_SVG = `
 </svg>`;
 
 export const CAMERA_BG = `${svgURL(CAMERA_SVG)} center / cover no-repeat`;
+
+// ─── רקע פינוי גזם וגרוטאות — פח ירוק, ענפים גזומים ומזמרה ───
+const GIZUM_SVG = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="gz" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f2f7ea"/><stop offset="1" stop-color="#d3e3c2"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#gz)"/>
+  <rect y="360" width="800" height="90" fill="#a8c188" opacity="0.45"/>
+
+  <g stroke="#7fa055" stroke-width="7" fill="none" stroke-linecap="round" opacity="0.9">
+    <path d="M120 360 C 150 300, 130 260, 165 215"/>
+    <path d="M150 300 C 185 288, 200 262, 205 238"/>
+    <path d="M137 268 C 108 258, 96 236, 92 214"/>
+  </g>
+  <g fill="#8fb862">
+    <ellipse cx="205" cy="232" rx="26" ry="13" transform="rotate(-28 205 232)"/>
+    <ellipse cx="92" cy="208" rx="24" ry="12" transform="rotate(28 92 208)"/>
+    <ellipse cx="166" cy="208" rx="22" ry="11" transform="rotate(-8 166 208)"/>
+  </g>
+
+  <g transform="translate(520,196)">
+    <rect x="-104" y="-26" width="208" height="34" rx="12" fill="#4f7a3a"/>
+    <rect x="-20" y="-42" width="40" height="20" rx="8" fill="#3f6630"/>
+    <path d="M-92 10 L92 10 L74 176 L-74 176 Z" fill="#5f8f45"/>
+    <g stroke="#4f7a3a" stroke-width="6" stroke-linecap="round">
+      <line x1="-46" y1="34" x2="-56" y2="152"/>
+      <line x1="0" y1="34" x2="0" y2="152"/>
+      <line x1="46" y1="34" x2="56" y2="152"/>
+    </g>
+    <rect x="-96" y="176" width="30" height="16" rx="6" fill="#3f6630"/>
+    <rect x="66" y="176" width="30" height="16" rx="6" fill="#3f6630"/>
+  </g>
+
+  <g transform="translate(300,352) rotate(-14)">
+    <path d="M0 0 L58 -30" stroke="#b0563f" stroke-width="11" stroke-linecap="round"/>
+    <path d="M0 10 L58 40" stroke="#b0563f" stroke-width="11" stroke-linecap="round"/>
+    <path d="M52 -34 L104 -50" stroke="#9aa3ab" stroke-width="13" stroke-linecap="round"/>
+    <path d="M52 44 L104 30" stroke="#9aa3ab" stroke-width="13" stroke-linecap="round"/>
+    <circle cx="34" cy="5" r="9" fill="#7c8890"/>
+  </g>
+
+  <g stroke="#8a6a3f" stroke-width="6" stroke-linecap="round" opacity="0.75">
+    <path d="M600 392 L692 380"/>
+    <path d="M614 408 L682 402"/>
+  </g>
+</svg>`;
+
+export const GIZUM_BG = `${svgURL(GIZUM_SVG)} center / cover no-repeat`;

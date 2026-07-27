@@ -6,7 +6,15 @@ const REFRESH_MS = 10 * 60 * 1000; // רענון כל 10 דקות
 
 export async function fetchNews() {
   try {
-    const res = await fetch("/api/ynet", { signal: AbortSignal.timeout(10000) });
+    // AbortController במקום AbortSignal.timeout — נתמך גם בדפדפני טלוויזיה/מכשירים ישנים
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 12000);
+    let res;
+    try {
+      res = await fetch("/api/ynet", { signal: ctrl.signal });
+    } finally {
+      clearTimeout(timer);
+    }
     if (!res.ok) throw new Error("news source error");
     const d = await res.json();
     if (d.ok && Array.isArray(d.items) && d.items.length > 0) {

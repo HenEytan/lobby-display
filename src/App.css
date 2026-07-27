@@ -228,7 +228,7 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 /* ─── טיקר ─── */
 
 .ticker {
-  display: flex; align-items: stretch; margin: 0 -2vw;
+  display: flex; align-items: stretch; margin: 0 -2vw; flex-shrink: 0;
   background: var(--ticker-bg, #2c2620);
   color: var(--ticker-ink, #f3e9d2); height: 6vh; min-height: 44px;
 }
@@ -395,7 +395,7 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 
 /* טיקר מבזקי ynet */
 .news-ticker {
-  display: flex; align-items: stretch; margin: -1vh -2vw 0;
+  display: flex; align-items: stretch; margin: -1vh -2vw 0; flex-shrink: 0;
   background: var(--panel);
   border-top: 1px solid var(--line);
   height: 6.2vh; min-height: 48px;

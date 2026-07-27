@@ -202,7 +202,7 @@ export async function pullFromServer() {
     if (!d.ok) return false;
 
     // אין עדיין נתונים בשרת — מעלים את המצב המקומי כבסיס
-    if (!d.data) { await pushToServer(); return false; }
+    if (!d.data || Object.keys(d.data).length === 0) { await pushToServer(); return false; }
 
     if (d.updatedAt && localStorage.getItem(SYNC_STAMP) === d.updatedAt) return false;
     const changed = applySnapshot(d.data);

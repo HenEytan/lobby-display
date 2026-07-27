@@ -1,9 +1,16 @@
 // ניהול גרסאות — מקור אמת יחיד לגרסת המערכת.
 // כל שינוי משמעותי: הוסיפו רשומה לראש CHANGELOG והעלו את VERSION בהתאם (semver).
 
-export const VERSION = "3.3.0";
+export const VERSION = "3.4.0";
 
 export const CHANGELOG = [
+  {
+    version: "3.4.0",
+    date: "2026-07-27",
+    notes: [
+      "עדכון אוטומטי: המסך מזהה פריסת גרסה חדשה ב-Vercel ומתרענן לבד — ללא ריענון ידני",
+    ],
+  },
   {
     version: "3.3.0",
     date: "2026-07-25",

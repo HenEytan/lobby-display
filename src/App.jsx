@@ -9,7 +9,7 @@ import { applyTheme } from "./lib/themes";
 import { BuildingArt, OliveDivider, CategoryIcon, AnnouncementIcon, rotatingArt } from "./lib/artwork.jsx";
 import {
   useLobbyData, activeBanners, activeAnnouncements, urgentAnnouncement,
-  BG_PRESETS, pullFromServer, SYNC_POLL_MS,
+  BG_PRESETS, pullFromServer, SYNC_POLL_MS, isMusicHour,
 } from "./lib/store";
 import { mediaURL } from "./lib/media";
 import Admin from "./admin/Admin.jsx";
@@ -158,7 +158,9 @@ function Display({ previewMode }) {
   // ─── מוזיקת רקע — מצב משותף כדי שגם שקופייה ייעודית תדע מה מתנגן ───
   const musicSource = data.music.source || "youtube";
   const musicTracks = data.music.tracks || [];
-  const musicOn = data.music.enabled && (
+  // המוזיקה מנוגנת רק בתוך חלון השעות שהוגדר בניהול
+  const musicHoursOk = isMusicHour(settings, now);
+  const musicOn = data.music.enabled && musicHoursOk && (
     (musicSource === "youtube" && !!data.music.youtubeId) ||
     (musicSource === "upload" && musicTracks.length > 0)
   );
@@ -260,7 +262,7 @@ function Display({ previewMode }) {
       {settings.showTicker && <Ticker lines={data.ticker} speed={settings.tickerSpeed} now={now} name={settings.buildingName} />}
       {settings.showNews && news.items.length > 0 && <NewsTicker items={news.items} speed={settings.newsSpeed} />}
 
-      <MusicPlayer music={data.music} trackIdx={trackIdx} setTrackIdx={setTrackIdx} />
+      <MusicPlayer music={data.music} trackIdx={trackIdx} setTrackIdx={setTrackIdx} allowed={musicHoursOk} />
 
       {(() => {
         const tickerVh = (settings.showTicker ? 6 : 0) + (settings.showNews && news.items.length > 0 ? 7.2 : 0);
@@ -635,7 +637,7 @@ function ShabbatScreen({ shabbat, name }) {
 // דפדפנים חוסמים ניגון אוטומטי עם קול לפני מחוות משתמש; אם הניגון נחסם
 // יוצג כפתור עדין להפעלה בנגיעה אחת (רלוונטי רק לטעינה הראשונה של המסך).
 
-function MusicPlayer({ music, trackIdx, setTrackIdx }) {
+function MusicPlayer({ music, trackIdx, setTrackIdx, allowed = true }) {
   const audioRef = useRef(null);
   const [playing, setPlaying] = useState(false);
   const [src, setSrc] = useState(null);
@@ -648,33 +650,33 @@ function MusicPlayer({ music, trackIdx, setTrackIdx }) {
   const tracks = music.tracks || [];
   const hasYoutube = source === "youtube" && !!music.youtubeId;
   const hasUpload = source === "upload" && tracks.length > 0;
-  const shouldPlay = music.enabled && (hasYoutube || hasUpload);
+  const shouldPlay = allowed && music.enabled && (hasYoutube || hasUpload);
   const vol100 = () => Math.round(Math.min(1, Math.max(0, music.volume == null ? 0.4 : music.volume)) * 100);
 
   // ─── קבצים שהועלו ───
   useEffect(() => {
     let alive = true;
-    if (!hasUpload || !music.enabled) { setSrc(null); return; }
+    if (!allowed || !hasUpload || !music.enabled) { setSrc(null); return; }
     const t = tracks[trackIdx % tracks.length];
     mediaURL(t.mediaId).then((u) => alive && setSrc(u));
     return () => { alive = false; };
-  }, [hasUpload, music.enabled, trackIdx, tracks]);
+  }, [allowed, hasUpload, music.enabled, trackIdx, tracks]);
 
   useEffect(() => {
     const a = audioRef.current;
     if (!a || !hasUpload) return;
     a.volume = Math.min(1, Math.max(0, music.volume == null ? 0.4 : music.volume));
-    if (music.enabled && src) {
+    if (allowed && music.enabled && src) {
       a.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
     } else {
       a.pause();
       setPlaying(false);
     }
-  }, [hasUpload, music.enabled, src, music.volume]);
+  }, [allowed, hasUpload, music.enabled, src, music.volume]);
 
   // ─── יוטיוב דרך IFrame Player API, עם נפילה חלקה ל-iframe רגיל ───
   useEffect(() => {
-    if (!hasYoutube || !music.enabled || ytApiFailed) return;
+    if (!allowed || !hasYoutube || !music.enabled || ytApiFailed) return;
     let cancelled = false;
 
     // אם ה-API של יוטיוב לא נטען (רשת איטית/חסימה) — עוברים ל-embed פשוט
@@ -736,7 +738,7 @@ function MusicPlayer({ music, trackIdx, setTrackIdx }) {
       ytPlayerRef.current = null;
       if (ytHostRef.current) ytHostRef.current.innerHTML = "";
     };
-  }, [hasYoutube, music.enabled, music.youtubeId, ytApiFailed]);
+  }, [allowed, hasYoutube, music.enabled, music.youtubeId, ytApiFailed]);
 
   useEffect(() => {
     const p = ytPlayerRef.current;
@@ -760,7 +762,7 @@ function MusicPlayer({ music, trackIdx, setTrackIdx }) {
   };
 
   // מוזיקה סומנה כפעילה אך אין מקור מוגדר — חיווי במקום שקט בלי הסבר
-  if (music.enabled && !hasYoutube && !hasUpload) {
+  if (allowed && music.enabled && !hasYoutube && !hasUpload) {
     return <div className="music-chip warn">♪ מוזיקה מופעלת — לא הוגדר מקור בניהול</div>;
   }
 
@@ -792,9 +794,7 @@ function MusicPlayer({ music, trackIdx, setTrackIdx }) {
           onEnded={() => setTrackIdx((i) => (i + 1) % tracks.length)}
         />
       )}
-      {playing ? (
-        <div className="music-chip">♪ מתנגן</div>
-      ) : (
+      {!playing && (
         <button className="music-unblock" onClick={start}>
           🎵 לחצו להפעלת המוזיקה
         </button>

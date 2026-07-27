@@ -24,8 +24,8 @@ export const DEFAULT_SETTINGS = {
   showVaadReminder: true,   // תזכורת דמי ועד ביום האחרון של כל חודש
   tickerSpeed: 45, // שניות לסיבוב מלא
   newsSpeed: 140,  // שניות לסיבוב מבזקים (גבוה יותר = איטי יותר)
-  activeStart: "06:00",
-  activeEnd: "23:00",
+  musicStart: "08:00", // שעת התחלת מוזיקת רקע
+  musicEnd: "20:00",   // שעת הפסקת מוזיקת רקע
   pin: "1234",
 };
 
@@ -338,13 +338,14 @@ function toMinutes(hhmm) {
   return h * 60 + (m || 0);
 }
 
-export function isNightMode(settings, now = new Date()) {
+// חלון שעות המוזיקה — מנוגן רק בין musicStart ל-musicEnd (תומך גם בטווח שחוצה חצות)
+export function isMusicHour(settings, now = new Date()) {
   const cur = now.getHours() * 60 + now.getMinutes();
-  const start = toMinutes(settings.activeStart);
-  const end = toMinutes(settings.activeEnd);
-  if (start === end) return false;
-  if (start < end) return cur < start || cur >= end;
-  return cur >= end && cur < start; // טווח שחוצה חצות
+  const start = toMinutes(settings.musicStart || "08:00");
+  const end = toMinutes(settings.musicEnd || "20:00");
+  if (start === end) return true; // אין הגבלה
+  if (start < end) return cur >= start && cur < end;
+  return cur >= start || cur < end; // טווח שחוצה חצות
 }
 
 export function newId(prefix) {

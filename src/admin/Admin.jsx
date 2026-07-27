@@ -456,7 +456,9 @@ function extractYouTubeId(input) {
 
 function MusicTab({ data }) {
   const music = data.music;
+  const s = data.settings;
   const save = (patch) => writeDraft("music", { ...music, ...patch });
+  const saveSettings = (patch) => writeDraft("settings", { ...s, ...patch });
   const fileRef = useRef(null);
   const [busy, setBusy] = useState(false);
   const [ytInput, setYtInput] = useState(music.youtubeId || "");
@@ -555,6 +557,24 @@ function MusicTab({ data }) {
         );
       })()}
 
+      <div className="item-card music-hours">
+        <h3>שעות ניגון</h3>
+        <p className="hint">
+          המוזיקה תתנגן רק בין השעות האלה ותיפסק אוטומטית מחוצה להן.
+          המסך עצמו ממשיך לפעול 24/7.
+        </p>
+        <div className="f-row">
+          <label>מתחילה ב-
+            <input type="time" value={s.musicStart || "08:00"}
+              onChange={(e) => saveSettings({ musicStart: e.target.value })} />
+          </label>
+          <label>נפסקת ב-
+            <input type="time" value={s.musicEnd || "20:00"}
+              onChange={(e) => saveSettings({ musicEnd: e.target.value })} />
+          </label>
+        </div>
+      </div>
+
       <div className="music-controls item-card">
         <label className="switch big">
           <input type="checkbox" checked={music.enabled} onChange={(e) => save({ enabled: e.target.checked })} />
@@ -651,7 +671,7 @@ function SettingsTab({ data }) {
       <div className="sec-head">
         <div>
           <h2>הגדרות מסך</h2>
-          <p>תצוגה, תזמונים, שעות פעילות וקוד הכניסה.</p>
+          <p>תצוגה, תזמונים וקוד הכניסה. שעות ניגון המוזיקה נמצאות בלשונית “מוזיקה”.</p>
         </div>
       </div>
 
@@ -725,18 +745,7 @@ function SettingsTab({ data }) {
           </label>
         </div>
 
-        <div className="item-card">
-          <h3>שעות פעילות</h3>
-          <p className="hint">שעות אלו משמשות את המוזיקה בלבד. המסך עצמו פעיל 24/7.</p>
-          <label>התחלה
-            <input type="time" value={s.activeStart} onChange={(e) => save({ activeStart: e.target.value })} />
-          </label>
-          <label>סיום
-            <input type="time" value={s.activeEnd} onChange={(e) => save({ activeEnd: e.target.value })} />
-          </label>
-        </div>
-
-        <div className="item-card">
+                <div className="item-card">
           <h3>אבטחה</h3>
           <label>קוד PIN לכניסת מנהל
             <input value={s.pin} onChange={(e) => save({ pin: e.target.value })} />

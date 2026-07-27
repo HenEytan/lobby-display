@@ -207,7 +207,9 @@ function BannerSlide({ banner }) {
     return () => { alive = false; };
   }, [banner.image]);
 
-  const bgKey = banner.bg && (banner.bg.startsWith("art_") || banner.bg.startsWith("holiday_")) ? banner.bg : rotatingArt(banner.id || banner.title);
+  const LEGACY_FLAT = new Set(["gold", "summer", "green", "sky", "rose", "night"]);
+  const chosen = banner.bg && !LEGACY_FLAT.has(banner.bg) && BG_PRESETS[banner.bg] ? banner.bg : null;
+  const bgKey = chosen || rotatingArt(banner.id || banner.title);
   const style = img
     ? { backgroundImage: `url(${img})` }
     : { background: BG_PRESETS[bgKey] || BG_PRESETS.art_sunset };

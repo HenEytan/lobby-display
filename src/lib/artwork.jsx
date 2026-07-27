@@ -432,3 +432,42 @@ const VAAD_SVG = `
 </svg>`;
 
 export const VAAD_BG = `${svgURL(VAAD_SVG)} center / cover no-repeat`;
+
+// ─── רקע "המקום מוגן במצלמות" — מצלמת אבטחה עם חרוט שדה ראייה ומגן ───
+const CAMERA_SVG = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#eef3f8"/><stop offset="1" stop-color="#c9d7e4"/>
+    </linearGradient>
+    <linearGradient id="cone" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.75"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#cg)"/>
+  <g stroke="#93a8bd" stroke-width="1.5" opacity="0.3">
+    <path d="M0 120 H800 M0 210 H800 M0 300 H800"/>
+  </g>
+  <g transform="translate(210,110)">
+    <path d="M28 26 L300 190 L74 268 Z" fill="url(#cone)"/>
+    <rect x="-14" y="-16" width="20" height="86" rx="8" fill="#7b8ea3"/>
+    <rect x="-40" y="-30" width="72" height="20" rx="8" fill="#5f7286"/>
+    <g transform="rotate(28)">
+      <rect x="0" y="0" width="128" height="52" rx="16" fill="#4a5c6f"/>
+      <rect x="10" y="9" width="72" height="34" rx="10" fill="#67798c"/>
+      <circle cx="122" cy="26" r="24" fill="#2f3d4c"/>
+      <circle cx="122" cy="26" r="13" fill="#8fd2f0"/>
+      <circle cx="117" cy="21" r="5" fill="#ffffff" opacity="0.85"/>
+      <circle cx="22" cy="-8" r="6" fill="#e05a4f"/>
+    </g>
+  </g>
+  <g transform="translate(596,268)">
+    <path d="M0 -66 L58 -42 V6 C58 44 30 68 0 78 C-30 68 -58 44 -58 6 V-42 Z"
+          fill="#ffffff" fill-opacity="0.9" stroke="#5f7286" stroke-width="5"/>
+    <path d="M-24 4 L-6 24 L26 -18" fill="none" stroke="#3f9d6a" stroke-width="11"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>`;
+
+export const CAMERA_BG = `${svgURL(CAMERA_SVG)} center / cover no-repeat`;

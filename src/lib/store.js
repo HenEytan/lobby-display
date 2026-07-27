@@ -3,7 +3,7 @@
 // ולחיצה על "פרסם" מעתיקה את כל הטיוטות ל-live בבת אחת.
 
 import { useEffect, useMemo, useState } from "react";
-import { ART_BG, HOLIDAY_ART, VAAD_BG } from "./artwork.jsx";
+import { ART_BG, HOLIDAY_ART, VAAD_BG, CAMERA_BG } from "./artwork.jsx";
 
 export const KEYS = ["settings", "banners", "announcements", "ticker", "music"];
 const LIVE = (k) => `lobby_${k}`;
@@ -33,6 +33,7 @@ export const BG_PRESETS = {
   ...ART_BG,
   ...HOLIDAY_ART,
   vaad: VAAD_BG,
+  camera: CAMERA_BG,
   gold: "linear-gradient(135deg, #f7f1e3 0%, #eaddc0 45%, #d9c194 100%)",
   summer: "linear-gradient(135deg, #fdf6e3 0%, #ffe9c2 50%, #ffd9a0 100%)",
   green: "linear-gradient(135deg, #f3f7ee 0%, #dcead0 50%, #c2d8ae 100%)",
@@ -62,6 +63,13 @@ const DEFAULT_BANNERS = [
     subtitle: "בימי חמישי — נא להוציא לרחוב רק ביום רביעי בערב",
     bg: "art_clean", image: null,
     start: "", end: "", active: true, order: 3,
+  },
+  {
+    id: "b_camera",
+    title: "המקום מוגן במצלמות",
+    subtitle: "לביטחון ולשלום כל הדיירים — שטחי הבניין מצולמים ומתועדים",
+    bg: "camera", image: null,
+    start: "", end: "", active: true, order: 4,
   },
 ];
 
@@ -145,7 +153,7 @@ export function discardDrafts() {
 // ─── שדרוג נתונים חד-פעמי למשתמשים קיימים ───
 // כשמעדכנים ברירות מחדל (למשל הפיכת הודעה לבאנר), זה לא משפיע על מכשירים
 // שכבר יש להם נתונים שמורים ב-localStorage. הפונקציה הזו מתקנת זאת בפעם הראשונה.
-const MIGRATION_FLAG = "lobby_migration_v2";
+const MIGRATION_FLAG = "lobby_migration_v3";
 
 function migrateOnce() {
   if (typeof window === "undefined") return;
@@ -166,18 +174,20 @@ function migrateOnce() {
       }
     } catch { /* ignore corrupt data */ }
 
+    // הוספת באנרי ברירת מחדל חדשים שנוספו בגרסאות מאוחרות (ללא כפילויות)
     try {
       const raw = localStorage.getItem(scope("banners"));
       const banners = raw ? JSON.parse(raw) : structuredClone(DEFAULT_BANNERS);
-      if (!banners.some((b) => b.id === "b_gizum")) {
+      let added = false;
+      for (const id of ["b_gizum", "b_camera"]) {
+        if (banners.some((b) => b.id === id)) continue;
+        const def = DEFAULT_BANNERS.find((b) => b.id === id);
+        if (!def) continue;
         const maxOrder = banners.reduce((m, b) => Math.max(m, b.order || 0), 0);
-        banners.push({
-          id: "b_gizum",
-          title: "פינוי גזם וגרוטאות",
-          subtitle: "בימי חמישי — נא להוציא לרחוב רק ביום רביעי בערב",
-          bg: "art_clean", image: null,
-          start: "", end: "", active: true, order: maxOrder + 1,
-        });
+        banners.push({ ...def, order: maxOrder + 1 });
+        added = true;
+      }
+      if (added) {
         localStorage.setItem(scope("banners"), JSON.stringify(banners));
         touched = true;
       }

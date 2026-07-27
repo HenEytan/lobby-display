@@ -14,6 +14,77 @@ import { mediaURL } from "./lib/media";
 import Admin from "./admin/Admin.jsx";
 import "./App.css";
 
+// ─── מסך מלא — תמיכה חוצת-דפדפנים (Chrome/Edge, Firefox, Safari, ומכשירים ישנים) ───
+function fsElement() {
+  return (
+    document.fullscreenElement ||
+    document.webkitFullscreenElement ||
+    document.mozFullScreenElement ||
+    document.msFullscreenElement ||
+    null
+  );
+}
+
+function fsSupported() {
+  if (typeof document === "undefined") return false;
+  const el = document.documentElement;
+  return !!(
+    el.requestFullscreen ||
+    el.webkitRequestFullscreen ||
+    el.webkitRequestFullScreen ||
+    el.mozRequestFullScreen ||
+    el.msRequestFullscreen
+  );
+}
+
+function useFullscreen() {
+  const [isFs, setIsFs] = useState(() => !!fsElement());
+  const supported = useMemo(() => fsSupported(), []);
+
+  useEffect(() => {
+    const onChange = () => setIsFs(!!fsElement());
+    const events = ["fullscreenchange", "webkitfullscreenchange", "mozfullscreenchange", "MSFullscreenChange"];
+    events.forEach((e) => document.addEventListener(e, onChange));
+    return () => events.forEach((e) => document.removeEventListener(e, onChange));
+  }, []);
+
+  const toggle = () => {
+    const el = document.documentElement;
+    if (fsElement()) {
+      const exit =
+        document.exitFullscreen ||
+        document.webkitExitFullscreen ||
+        document.mozCancelFullScreen ||
+        document.msExitFullscreen;
+      if (exit) Promise.resolve(exit.call(document)).catch(() => {});
+    } else {
+      const req =
+        el.requestFullscreen ||
+        el.webkitRequestFullscreen ||
+        el.webkitRequestFullScreen ||
+        el.mozRequestFullScreen ||
+        el.msRequestFullscreen;
+      // navigationUI מוסתר היכן שנתמך; דפדפנים שלא מכירים אותו פשוט מתעלמים
+      if (req) Promise.resolve(req.call(el, { navigationUI: "hide" })).catch(() => {});
+    }
+  };
+
+  // קיצור מקלדת: F או F11 (שימושי עם שלט/מקלדת אלחוטית מחוברת למסך)
+  useEffect(() => {
+    if (!supported) return;
+    const onKey = (e) => {
+      if (e.key === "f" || e.key === "F" || e.key === "F11") {
+        e.preventDefault();
+        toggle();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [supported]);
+
+  return { isFs, supported, toggle };
+}
+
 // ─── ניתוב לפי hash: ‎#admin — פאנל ניהול, ‎#preview — תצוגה מקדימה של טיוטות ───
 function useHashRoute() {
   const [hash, setHash] = useState(window.location.hash);
@@ -125,6 +196,7 @@ function Display({ previewMode }) {
   const slide = slides[idx % slides.length];
 
   const [showVersion, setShowVersion] = useState(false);
+  const { isFs, supported: fsOk, toggle: toggleFs } = useFullscreen();
 
   // ─── מצבים שתופסים את המסך המלא ───
   if (urgent) return <UrgentScreen ann={urgent} now={now} />;
@@ -176,7 +248,28 @@ function Display({ previewMode }) {
         const tickerVh = (settings.showTicker ? 6 : 0) + (settings.showNews && news.items.length > 0 ? 6.2 : 0);
         const floatStyle = tickerVh > 0 ? { bottom: `calc(${tickerVh}vh + 10px)` } : undefined;
         return (
-          <button className="ver" style={floatStyle} onClick={() => setShowVersion((v) => !v)}>גרסה {VERSION}</button>
+          <>
+            <button className="ver" style={floatStyle} onClick={() => setShowVersion((v) => !v)}>גרסה {VERSION}</button>
+            {fsOk && (
+              <button
+                className="fs-btn"
+                style={floatStyle}
+                onClick={toggleFs}
+                title={isFs ? "יציאה ממסך מלא (F)" : "מסך מלא — הסתרת סרגלי הדפדפן (F)"}
+                aria-label={isFs ? "יציאה ממסך מלא" : "מסך מלא"}
+              >
+                {isFs ? (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 3v6H3M15 3v6h6M9 21v-6H3M15 21v-6h6" />
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 9V3h6M21 9V3h-6M3 15v6h6M21 15v6h-6" />
+                  </svg>
+                )}
+              </button>
+            )}
+          </>
         );
       })()}
 

@@ -632,14 +632,17 @@ function MusicPlayer({ music, trackIdx, setTrackIdx }) {
   const audioRef = useRef(null);
   const [blocked, setBlocked] = useState(false);
   const [src, setSrc] = useState(null);
-  const [ytKey, setYtKey] = useState(0);
+  const ytHostRef = useRef(null);
+  const ytPlayerRef = useRef(null);
 
   const source = music.source || "youtube";
   const tracks = music.tracks || [];
   const hasYoutube = source === "youtube" && !!music.youtubeId;
   const hasUpload = source === "upload" && tracks.length > 0;
   const shouldPlay = music.enabled && (hasYoutube || hasUpload);
+  const vol100 = () => Math.round(Math.min(1, Math.max(0, music.volume == null ? 0.4 : music.volume)) * 100);
 
+  // ─── קבצים שהועלו ───
   useEffect(() => {
     let alive = true;
     if (!hasUpload || !music.enabled) { setSrc(null); return; }
@@ -651,7 +654,7 @@ function MusicPlayer({ music, trackIdx, setTrackIdx }) {
   useEffect(() => {
     const a = audioRef.current;
     if (!a || !hasUpload) return;
-    a.volume = Math.min(1, Math.max(0, music.volume ?? 0.4));
+    a.volume = Math.min(1, Math.max(0, music.volume == null ? 0.4 : music.volume));
     if (music.enabled && src) {
       a.play().then(() => setBlocked(false)).catch(() => setBlocked(true));
     } else {
@@ -659,45 +662,108 @@ function MusicPlayer({ music, trackIdx, setTrackIdx }) {
     }
   }, [hasUpload, music.enabled, src, music.volume]);
 
-  if (!shouldPlay) return null;
+  // ─── יוטיוב דרך IFrame Player API ───
+  // נגן אמיתי (ולא iframe פשוט) — מאפשר שליטה בעוצמה, זיהוי חסימת ניגון אוטומטי,
+  // והפעלה מחדש בלחיצה אחת. ניגון בלולאה אינסופית.
+  useEffect(() => {
+    if (!hasYoutube || !music.enabled) return;
+    let cancelled = false;
 
-  if (hasYoutube) {
-    const embedUrl =
-      `https://www.youtube.com/embed/${music.youtubeId}` +
-      `?autoplay=1&loop=1&playlist=${music.youtubeId}` +
-      `&controls=0&modestbranding=1&playsinline=1&rel=0&iv_load_policy=3&fs=0`;
-    return (
-      <>
-        <iframe
-          key={ytKey}
-          title="lobby-music"
-          src={embedUrl}
-          allow="autoplay; encrypted-media"
-          className="yt-audio-frame"
-        />
-        <button className="music-unblock" onClick={() => setYtKey((k) => k + 1)}>
-          🎵 הפעל מוזיקה
-        </button>
-      </>
-    );
-  }
+    function loadApi() {
+      return new Promise((resolve) => {
+        if (window.YT && window.YT.Player) { resolve(); return; }
+        const prev = window.onYouTubeIframeAPIReady;
+        window.onYouTubeIframeAPIReady = function () {
+          if (typeof prev === "function") prev();
+          resolve();
+        };
+        if (!document.getElementById("yt-iframe-api")) {
+          const s = document.createElement("script");
+          s.id = "yt-iframe-api";
+          s.src = "https://www.youtube.com/iframe_api";
+          document.head.appendChild(s);
+        }
+      });
+    }
+
+    loadApi().then(() => {
+      if (cancelled || !ytHostRef.current) return;
+      const host = document.createElement("div");
+      ytHostRef.current.appendChild(host);
+      try {
+        ytPlayerRef.current = new window.YT.Player(host, {
+          videoId: music.youtubeId,
+          playerVars: {
+            autoplay: 1, loop: 1, playlist: music.youtubeId,
+            controls: 0, disablekb: 1, modestbranding: 1,
+            playsinline: 1, rel: 0, iv_load_policy: 3, fs: 0,
+          },
+          events: {
+            onReady: (ev) => {
+              try { ev.target.unMute(); } catch { /* ignore */ }
+              try { ev.target.setVolume(vol100()); } catch { /* ignore */ }
+              try { ev.target.playVideo(); } catch { /* ignore */ }
+              // אם הדפדפן חסם ניגון אוטומטי — נציג כפתור הפעלה
+              setTimeout(() => {
+                if (cancelled) return;
+                try { setBlocked(ev.target.getPlayerState() !== 1); }
+                catch { setBlocked(true); }
+              }, 2500);
+            },
+            onStateChange: (ev) => {
+              if (ev.data === 1) setBlocked(false);
+              if (ev.data === 0) { try { ev.target.playVideo(); } catch { /* ignore */ } }
+            },
+            onError: () => setBlocked(true),
+          },
+        });
+      } catch { setBlocked(true); }
+    });
+
+    return () => {
+      cancelled = true;
+      try { if (ytPlayerRef.current) ytPlayerRef.current.destroy(); } catch { /* ignore */ }
+      ytPlayerRef.current = null;
+      if (ytHostRef.current) ytHostRef.current.innerHTML = "";
+    };
+  }, [hasYoutube, music.enabled, music.youtubeId]);
+
+  // שינוי עוצמה מהניהול משפיע מיד גם על נגן יוטיוב
+  useEffect(() => {
+    const p = ytPlayerRef.current;
+    if (p && typeof p.setVolume === "function") {
+      try { p.setVolume(vol100()); } catch { /* ignore */ }
+    }
+  }, [music.volume]);
+
+  const unblock = () => {
+    const p = ytPlayerRef.current;
+    if (p) {
+      try { p.unMute(); } catch { /* ignore */ }
+      try { p.setVolume(vol100()); } catch { /* ignore */ }
+      try { p.playVideo(); } catch { /* ignore */ }
+      setBlocked(false);
+      return;
+    }
+    const a = audioRef.current;
+    if (a) a.play().then(() => setBlocked(false)).catch(() => { /* ignore */ });
+  };
+
+  if (!shouldPlay) return null;
 
   return (
     <>
-      <audio
-        ref={audioRef}
-        src={src || undefined}
-        onEnded={() => setTrackIdx((i) => (i + 1) % tracks.length)}
-      />
+      {hasYoutube && <div className="yt-audio-frame" ref={ytHostRef} />}
+      {hasUpload && (
+        <audio
+          ref={audioRef}
+          src={src || undefined}
+          onEnded={() => setTrackIdx((i) => (i + 1) % tracks.length)}
+        />
+      )}
       {blocked && (
-        <button
-          className="music-unblock"
-          onClick={() => {
-            const a = audioRef.current;
-            if (a) a.play().then(() => setBlocked(false)).catch(() => {});
-          }}
-        >
-          🎵 הפעל מוזיקה
+        <button className="music-unblock" onClick={unblock}>
+          🎵 לחצו להפעלת המוזיקה
         </button>
       )}
     </>

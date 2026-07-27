@@ -630,8 +630,10 @@ function ShabbatScreen({ shabbat, name }) {
 
 function MusicPlayer({ music, trackIdx, setTrackIdx }) {
   const audioRef = useRef(null);
-  const [blocked, setBlocked] = useState(false);
+  const [playing, setPlaying] = useState(false);
   const [src, setSrc] = useState(null);
+  const [ytApiFailed, setYtApiFailed] = useState(false);
+  const [ytKey, setYtKey] = useState(0);
   const ytHostRef = useRef(null);
   const ytPlayerRef = useRef(null);
 
@@ -656,18 +658,22 @@ function MusicPlayer({ music, trackIdx, setTrackIdx }) {
     if (!a || !hasUpload) return;
     a.volume = Math.min(1, Math.max(0, music.volume == null ? 0.4 : music.volume));
     if (music.enabled && src) {
-      a.play().then(() => setBlocked(false)).catch(() => setBlocked(true));
+      a.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
     } else {
       a.pause();
+      setPlaying(false);
     }
   }, [hasUpload, music.enabled, src, music.volume]);
 
-  // ─── יוטיוב דרך IFrame Player API ───
-  // נגן אמיתי (ולא iframe פשוט) — מאפשר שליטה בעוצמה, זיהוי חסימת ניגון אוטומטי,
-  // והפעלה מחדש בלחיצה אחת. ניגון בלולאה אינסופית.
+  // ─── יוטיוב דרך IFrame Player API, עם נפילה חלקה ל-iframe רגיל ───
   useEffect(() => {
-    if (!hasYoutube || !music.enabled) return;
+    if (!hasYoutube || !music.enabled || ytApiFailed) return;
     let cancelled = false;
+
+    // אם ה-API של יוטיוב לא נטען (רשת איטית/חסימה) — עוברים ל-embed פשוט
+    const failTimer = setTimeout(() => {
+      if (!cancelled && !ytPlayerRef.current) setYtApiFailed(true);
+    }, 8000);
 
     function loadApi() {
       return new Promise((resolve) => {
@@ -681,6 +687,7 @@ function MusicPlayer({ music, trackIdx, setTrackIdx }) {
           const s = document.createElement("script");
           s.id = "yt-iframe-api";
           s.src = "https://www.youtube.com/iframe_api";
+          s.onerror = () => { if (!cancelled) setYtApiFailed(true); };
           document.head.appendChild(s);
         }
       });
@@ -703,32 +710,27 @@ function MusicPlayer({ music, trackIdx, setTrackIdx }) {
               try { ev.target.unMute(); } catch { /* ignore */ }
               try { ev.target.setVolume(vol100()); } catch { /* ignore */ }
               try { ev.target.playVideo(); } catch { /* ignore */ }
-              // אם הדפדפן חסם ניגון אוטומטי — נציג כפתור הפעלה
-              setTimeout(() => {
-                if (cancelled) return;
-                try { setBlocked(ev.target.getPlayerState() !== 1); }
-                catch { setBlocked(true); }
-              }, 2500);
             },
             onStateChange: (ev) => {
-              if (ev.data === 1) setBlocked(false);
+              if (ev.data === 1) setPlaying(true);
+              if (ev.data === 2) setPlaying(false);
               if (ev.data === 0) { try { ev.target.playVideo(); } catch { /* ignore */ } }
             },
-            onError: () => setBlocked(true),
+            onError: () => setYtApiFailed(true),
           },
         });
-      } catch { setBlocked(true); }
+      } catch { setYtApiFailed(true); }
     });
 
     return () => {
       cancelled = true;
+      clearTimeout(failTimer);
       try { if (ytPlayerRef.current) ytPlayerRef.current.destroy(); } catch { /* ignore */ }
       ytPlayerRef.current = null;
       if (ytHostRef.current) ytHostRef.current.innerHTML = "";
     };
-  }, [hasYoutube, music.enabled, music.youtubeId]);
+  }, [hasYoutube, music.enabled, music.youtubeId, ytApiFailed]);
 
-  // שינוי עוצמה מהניהול משפיע מיד גם על נגן יוטיוב
   useEffect(() => {
     const p = ytPlayerRef.current;
     if (p && typeof p.setVolume === "function") {
@@ -736,46 +738,59 @@ function MusicPlayer({ music, trackIdx, setTrackIdx }) {
     }
   }, [music.volume]);
 
-  const unblock = () => {
+  const start = () => {
     const p = ytPlayerRef.current;
-    if (p) {
+    if (p && typeof p.playVideo === "function") {
       try { p.unMute(); } catch { /* ignore */ }
       try { p.setVolume(vol100()); } catch { /* ignore */ }
       try { p.playVideo(); } catch { /* ignore */ }
-      setBlocked(false);
+      setPlaying(true);
       return;
     }
+    if (hasYoutube) { setYtKey((k) => k + 1); setPlaying(true); return; }
     const a = audioRef.current;
-    if (a) a.play().then(() => setBlocked(false)).catch(() => { /* ignore */ });
+    if (a) a.play().then(() => setPlaying(true)).catch(() => { /* ignore */ });
   };
 
-  // מוזיקה סומנה כפעילה אך אין מקור מוגדר — חיווי במקום שקט מוחלט בלי הסבר
+  // מוזיקה סומנה כפעילה אך אין מקור מוגדר — חיווי במקום שקט בלי הסבר
   if (music.enabled && !hasYoutube && !hasUpload) {
-    return (
-      <div className="music-chip warn">
-        ♪ מוזיקה מופעלת — לא הוגדר מקור בניהול
-      </div>
-    );
+    return <div className="music-chip warn">♪ מוזיקה מופעלת — לא הוגדר מקור בניהול</div>;
   }
 
   if (!shouldPlay) return null;
 
+  const fallbackUrl =
+    `https://www.youtube.com/embed/${music.youtubeId}` +
+    `?autoplay=1&loop=1&playlist=${music.youtubeId}` +
+    `&controls=0&modestbranding=1&playsinline=1&rel=0&iv_load_policy=3&fs=0`;
+
   return (
     <>
-      {hasYoutube && <div className="yt-audio-frame" ref={ytHostRef} />}
+      {hasYoutube && !ytApiFailed && <div className="yt-audio-frame" ref={ytHostRef} />}
+      {hasYoutube && ytApiFailed && (
+        <iframe
+          key={ytKey}
+          title="lobby-music"
+          src={fallbackUrl}
+          allow="autoplay; encrypted-media"
+          className="yt-audio-frame"
+        />
+      )}
       {hasUpload && (
         <audio
           ref={audioRef}
           src={src || undefined}
+          onPlay={() => setPlaying(true)}
+          onPause={() => setPlaying(false)}
           onEnded={() => setTrackIdx((i) => (i + 1) % tracks.length)}
         />
       )}
-      {blocked ? (
-        <button className="music-unblock" onClick={unblock}>
+      {playing ? (
+        <div className="music-chip">♪ מתנגן</div>
+      ) : (
+        <button className="music-unblock" onClick={start}>
           🎵 לחצו להפעלת המוזיקה
         </button>
-      ) : (
-        <div className="music-chip">♪ מתנגן</div>
       )}
     </>
   );

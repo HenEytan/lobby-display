@@ -72,7 +72,9 @@
       window.__lobbyBootError &&
         window.__lobbyBootError(
           'הדפדפן ישן מדי להרצת המסך',
-          'הדפדפן במכשיר לא תומך ב-JavaScript Modules. פתרון: להתקין Chrome עדכני (או Firefox) מחנות האפליקציות, ולהגדיר אותו כדפדפן שמריץ את כתובת המסך.'
+          'הדפדפן לא תומך ב-JavaScript Modules (נדרש Chrome 61 ומעלה).\n\n' +
+            '--- פרטי המכשיר (צלמו והעבירו) ---\n' +
+            navigator.userAgent
         );
     </script>
   </body>

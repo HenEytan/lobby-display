@@ -5,9 +5,72 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>מסך לובי — יסוד 9</title>
+    <style>
+      #boot-error {
+        display: none; position: fixed; inset: 0; z-index: 99999;
+        background: #12100c; color: #f3e9d2; padding: 24px;
+        font-family: Arial, "Helvetica Neue", sans-serif; font-size: 16px;
+        line-height: 1.7; direction: rtl; overflow: auto;
+      }
+      #boot-error b { color: #e0b352; display: block; font-size: 20px; margin-bottom: 12px; }
+      #boot-error code {
+        display: block; margin-top: 14px; padding: 12px; border-radius: 8px;
+        background: rgba(255,255,255,0.08); color: #ffd9a0; font-size: 13px;
+        white-space: pre-wrap; word-break: break-word; direction: ltr; text-align: left;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
+    <div id="boot-error"></div>
+
+    <!-- מדווח שגיאות טעינה: כתוב ב-ES5 בלבד כדי שירוץ גם בדפדפנים ישנים מאוד -->
+    <script>
+      (function () {
+        var shown = false;
+        function show(title, detail) {
+          if (shown) return;
+          shown = true;
+          var el = document.getElementById('boot-error');
+          if (!el) return;
+          el.style.display = 'block';
+          el.innerHTML = '<b>' + title + '</b>';
+          if (detail) {
+            var c = document.createElement('code');
+            c.appendChild(document.createTextNode(String(detail)));
+            el.appendChild(c);
+          }
+        }
+        window.__lobbyBootError = show;
+        window.addEventListener('error', function (e) {
+          var d = (e && e.message ? e.message : 'unknown');
+          if (e && e.filename) d += '\n' + e.filename + ':' + (e.lineno || 0);
+          show('שגיאה בטעינת המסך', d);
+        });
+        window.addEventListener('unhandledrejection', function (e) {
+          show('שגיאה בטעינת המסך', 'promise: ' + (e && e.reason ? e.reason : 'unknown'));
+        });
+        setTimeout(function () {
+          var root = document.getElementById('root');
+          if (root && root.children.length === 0) {
+            show(
+              'המסך לא נטען',
+              'ייתכן שגרסת הדפדפן ישנה מדי. מומלץ להתקין Chrome עדכני מחנות האפליקציות ולהריץ דרכו.'
+            );
+          }
+        }, 9000);
+      })();
+    </script>
+
     <script type="module" src="/src/main.jsx"></script>
+
+    <!-- דפדפן שלא תומך כלל במודולים (ישן מאוד) — הודעה ברורה במקום מסך לבן -->
+    <script nomodule>
+      window.__lobbyBootError &&
+        window.__lobbyBootError(
+          'הדפדפן ישן מדי להרצת המסך',
+          'הדפדפן במכשיר לא תומך ב-JavaScript Modules. פתרון: להתקין Chrome עדכני (או Firefox) מחנות האפליקציות, ולהגדיר אותו כדפדפן שמריץ את כתובת המסך.'
+        );
+    </script>
   </body>
 </html>

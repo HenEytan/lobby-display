@@ -387,9 +387,14 @@ function holidayArtSVG({ grad, emoji, dark }) {
 </svg>`;
 }
 
-export const HOLIDAY_ART = Object.fromEntries(
-  Object.entries(HOLIDAY_ART_DEFS).map(([k, v]) => [k, `${svgURL(holidayArtSVG(v))} center / cover no-repeat`])
-);
+// ללא Object.fromEntries — לא קיים בדפדפני Android ישנים
+export const HOLIDAY_ART = (() => {
+  const out = {};
+  for (const k of Object.keys(HOLIDAY_ART_DEFS)) {
+    out[k] = `${svgURL(holidayArtSVG(HOLIDAY_ART_DEFS[k]))} center / cover no-repeat`;
+  }
+  return out;
+})();
 export const HOLIDAY_ART_KEYS = Object.keys(HOLIDAY_ART_DEFS);
 
 // ─── רקע תזכורת דמי ועד — לוח שנה עם מטבעות, מופיע ביום האחרון של החודש ───

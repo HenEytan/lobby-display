@@ -382,7 +382,7 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 .cal-badge {
   align-self: flex-start;
   font-size: clamp(11px, 0.85vw, 13px); font-weight: 700;
-  color: var(--gold); background: color-mix(in srgb, var(--gold) 12%, transparent);
+  color: var(--gold); background: rgba(176, 141, 62, 0.12);
   padding: 2px 10px; border-radius: 999px;
 }
 .cal-card.tzom .cal-badge { color: #8d6e63; background: rgba(141, 110, 99, 0.14); }

@@ -99,15 +99,20 @@ const DEFAULTS = {
 
 // ─── קריאה/כתיבה ───
 
+// שכפול עמוק ללא structuredClone (לא קיים בדפדפנים ישנים)
+function clone(v) {
+  return v === undefined ? v : JSON.parse(JSON.stringify(v));
+}
+
 function parse(raw) {
   try { return raw ? JSON.parse(raw) : null; } catch { return null; }
 }
 
 export function readLive(key) {
   const v = parse(localStorage.getItem(LIVE(key)));
-  if (v == null) return structuredClone(DEFAULTS[key]);
+  if (v == null) return clone(DEFAULTS[key]);
   return key === "settings" || key === "music"
-    ? { ...structuredClone(DEFAULTS[key]), ...v }
+    ? { ...clone(DEFAULTS[key]), ...v }
     : v;
 }
 
@@ -115,7 +120,7 @@ export function readDraft(key) {
   const d = parse(localStorage.getItem(DRAFT(key)));
   if (d != null) {
     return key === "settings" || key === "music"
-      ? { ...structuredClone(DEFAULTS[key]), ...d }
+      ? { ...clone(DEFAULTS[key]), ...d }
       : d;
   }
   return readLive(key);
@@ -177,7 +182,7 @@ function migrateOnce() {
     // הוספת באנרי ברירת מחדל חדשים שנוספו בגרסאות מאוחרות (ללא כפילויות)
     try {
       const raw = localStorage.getItem(scope("banners"));
-      const banners = raw ? JSON.parse(raw) : structuredClone(DEFAULT_BANNERS);
+      const banners = raw ? JSON.parse(raw) : clone(DEFAULT_BANNERS);
       let added = false;
       for (const id of ["b_gizum", "b_camera"]) {
         if (banners.some((b) => b.id === id)) continue;

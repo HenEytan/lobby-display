@@ -26,6 +26,9 @@
 
     <!-- מדווח שגיאות טעינה: כתוב ב-ES5 בלבד כדי שירוץ גם בדפדפנים ישנים מאוד -->
     <script>
+      /* שים לפני כל קוד אחר: globalThis חסר בדפדפני Chrome ישנים מ-71 */
+      if (typeof window.globalThis === 'undefined') { window.globalThis = window; }
+
       (function () {
         var shown = false;
         function show(title, detail) {
@@ -55,7 +58,7 @@
           if (root && root.children.length === 0) {
             show(
               'המסך לא נטען',
-              'ייתכן שגרסת הדפדפן ישנה מדי. מומלץ להתקין Chrome עדכני מחנות האפליקציות ולהריץ דרכו.'
+              'ייתכן שגרסת הדפדפן ישנה מדי (נדרש Chrome 67 ומעלה). מומלץ להתקין Chrome עדכני מחנות האפליקציות ולהריץ דרכו.'
             );
           }
         }, 9000);

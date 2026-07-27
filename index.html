@@ -26,8 +26,80 @@
 
     <!-- מדווח שגיאות טעינה: כתוב ב-ES5 בלבד כדי שירוץ גם בדפדפנים ישנים מאוד -->
     <script>
-      /* שים לפני כל קוד אחר: globalThis חסר בדפדפני Chrome ישנים מ-71 */
+      /* ─── Polyfills לדפדפנים ישנים (Chrome 81 באנדרואיד 4.4 וכדומה) ───
+         נכתב ב-ES5 בלבד ורץ לפני טעינת האפליקציה. */
+
+      /* globalThis — נוסף ב-Chrome 71 */
       if (typeof window.globalThis === 'undefined') { window.globalThis = window; }
+
+      /* String.prototype.replaceAll — נוסף ב-Chrome 85 */
+      if (!String.prototype.replaceAll) {
+        String.prototype.replaceAll = function (search, replacement) {
+          var str = String(this);
+          if (Object.prototype.toString.call(search) === '[object RegExp]') {
+            var flags = search.flags !== undefined
+              ? search.flags
+              : (search.global ? 'g' : '') + (search.ignoreCase ? 'i' : '') + (search.multiline ? 'm' : '');
+            if (flags.indexOf('g') === -1) {
+              throw new TypeError('replaceAll must be called with a global RegExp');
+            }
+            return str.replace(search, replacement);
+          }
+          var s = String(search);
+          if (s === '') return str;
+          if (typeof replacement === 'function') {
+            var out = '', from = 0, pos;
+            while ((pos = str.indexOf(s, from)) !== -1) {
+              out += str.slice(from, pos) + String(replacement(s, pos, str));
+              from = pos + s.length;
+            }
+            return out + str.slice(from);
+          }
+          return str.split(s).join(String(replacement));
+        };
+      }
+
+      /* Array/String .at() — נוסף ב-Chrome 92 */
+      (function () {
+        function at(n) {
+          n = Math.trunc(n) || 0;
+          if (n < 0) n += this.length;
+          if (n < 0 || n >= this.length) return undefined;
+          return this[n];
+        }
+        if (!Array.prototype.at) Array.prototype.at = at;
+        if (!String.prototype.at) String.prototype.at = at;
+      })();
+
+      /* Object.hasOwn — נוסף ב-Chrome 93 */
+      if (!Object.hasOwn) {
+        Object.hasOwn = function (obj, key) {
+          return Object.prototype.hasOwnProperty.call(obj, key);
+        };
+      }
+
+      /* Array findLast / findLastIndex — נוספו ב-Chrome 97 */
+      if (!Array.prototype.findLastIndex) {
+        Array.prototype.findLastIndex = function (fn, thisArg) {
+          for (var i = this.length - 1; i >= 0; i--) {
+            if (fn.call(thisArg, this[i], i, this)) return i;
+          }
+          return -1;
+        };
+      }
+      if (!Array.prototype.findLast) {
+        Array.prototype.findLast = function (fn, thisArg) {
+          var i = this.findLastIndex(fn, thisArg);
+          return i === -1 ? undefined : this[i];
+        };
+      }
+
+      /* structuredClone — נוסף ב-Chrome 98 (גרסה בסיסית מספיקה לנתוני JSON) */
+      if (typeof window.structuredClone !== 'function') {
+        window.structuredClone = function (v) {
+          return v === undefined ? v : JSON.parse(JSON.stringify(v));
+        };
+      }
 
       (function () {
         var shown = false;

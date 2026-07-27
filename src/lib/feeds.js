@@ -1,46 +1,32 @@
-// מזג אוויר — Open-Meteo (ללא מפתח API), עבור הוד השרון.
-// הקריאה החיצונית היחידה במערכת. בעת נפילת המקור מוחזר ערך אחרון שנשמר.
+// מזג אוויר — נמשך דרך פונקציית השרת ‎/api/weather‎.
+// הקריאה ל-Open-Meteo מתבצעת בשרת, כך שכל המסכים מציגים בדיוק אותם נתונים
+// וגם מכשירים ישנים (עם מאגר תעודות SSL מיושן) מקבלים מידע מלא.
 
-const HOD_HASHARON = { lat: 32.15, lon: 34.89 };
-
-const WMO = {
-  0: "בהיר", 1: "בהיר בעיקר", 2: "מעונן חלקית", 3: "מעונן",
-  45: "ערפילי", 48: "ערפילי", 51: "טפטוף קל", 53: "טפטוף", 55: "טפטוף חזק",
-  61: "גשם קל", 63: "גשם", 65: "גשם חזק", 71: "שלג קל", 80: "ממטרים",
-  81: "ממטרים", 82: "ממטרים חזקים", 95: "סופת רעמים",
-};
+const CACHE_KEY = "weather_cache";
 
 export async function fetchWeather() {
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${HOD_HASHARON.lat}&longitude=${HOD_HASHARON.lon}&current=temperature_2m,weather_code,uv_index&daily=temperature_2m_max,temperature_2m_min,weather_code,uv_index_max&timezone=Asia%2FJerusalem&forecast_days=4`;
   try {
-    const res = await fetch(url);
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 12000);
+    let res;
+    try {
+      res = await fetch("/api/weather", { signal: ctrl.signal });
+    } finally {
+      clearTimeout(timer);
+    }
     if (!res.ok) throw new Error("weather source error");
     const d = await res.json();
-    const days = d.daily.time.map((t, i) => ({
-      date: t,
-      max: Math.round(d.daily.temperature_2m_max[i]),
-      min: Math.round(d.daily.temperature_2m_min[i]),
-      code: d.daily.weather_code[i],
-    }));
-    // מדד UV: העדפה לערך הנוכחי; אם חסר — שיא היום. מתעדכן בכל רענון מזג אוויר.
-    let uv = d.current && typeof d.current.uv_index === "number" ? d.current.uv_index : null;
-    if (uv == null && d.daily && Array.isArray(d.daily.uv_index_max)) {
-      const v = d.daily.uv_index_max[0];
-      if (typeof v === "number") uv = v;
-    }
-    const current = {
-      temp: Math.round(d.current.temperature_2m),
-      desc: WMO[d.current.weather_code] || "—",
-      code: d.current.weather_code,
-      uv: uv == null ? null : Math.round(uv * 10) / 10,
-    };
-    const payload = { current, days };
-    localStorage.setItem("weather_cache", JSON.stringify(payload));
+    if (!d.ok || !d.current) throw new Error("weather unavailable");
+
+    const payload = { current: d.current, days: Array.isArray(d.days) ? d.days : [] };
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(payload)); } catch { /* ignore */ }
     return payload;
   } catch {
-    const cached = localStorage.getItem("weather_cache");
-    if (cached) { try { return JSON.parse(cached); } catch { /* ignore */ } }
-    return { current: { temp: 28, desc: "בהיר", code: 0 }, days: [] };
+    try {
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) return JSON.parse(cached);
+    } catch { /* ignore */ }
+    return null; // אין נתונים — הכרטיס פשוט לא יוצג, בלי להמציא מספרים
   }
 }
 

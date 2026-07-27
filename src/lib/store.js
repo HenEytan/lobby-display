@@ -148,6 +148,70 @@ export function publishAll() {
     }
   }
   notify();
+  // שידור לשרת כדי שכל שאר המכשירים יקבלו את אותו תוכן
+  pushToServer();
+}
+
+// ═══════════ סנכרון בין מכשירים (Supabase דרך /api/state) ═══════════
+// ההגדרות נשמרות מרכזית, כך שאותו תוכן מוצג מכל מכשיר.
+// הערה: תמונות וקבצי אודיו שהועלו נשמרים מקומית (IndexedDB) ואינם מסונכרנים.
+
+const SYNC_STAMP = "lobby_server_stamp";
+export const SYNC_POLL_MS = 60 * 1000;
+
+function liveSnapshot() {
+  const out = {};
+  for (const k of KEYS) out[k] = readLive(k);
+  return out;
+}
+
+function applySnapshot(data) {
+  let changed = false;
+  for (const k of KEYS) {
+    if (data[k] === undefined) continue;
+    const next = JSON.stringify(data[k]);
+    if (localStorage.getItem(LIVE(k)) !== next) {
+      localStorage.setItem(LIVE(k), next);
+      changed = true;
+    }
+  }
+  return changed;
+}
+
+export async function pushToServer() {
+  try {
+    const data = liveSnapshot();
+    const pin = sessionStorage.getItem("lobby_admin_pin") || (data.settings && data.settings.pin);
+    const res = await fetch("/api/state", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pin, data }),
+    });
+    const d = await res.json();
+    if (d.ok && d.updatedAt) localStorage.setItem(SYNC_STAMP, d.updatedAt);
+    return d.ok === true;
+  } catch {
+    return false;
+  }
+}
+
+export async function pullFromServer() {
+  try {
+    const res = await fetch("/api/state", { cache: "no-store" });
+    const d = await res.json();
+    if (!d.ok) return false;
+
+    // אין עדיין נתונים בשרת — מעלים את המצב המקומי כבסיס
+    if (!d.data) { await pushToServer(); return false; }
+
+    if (d.updatedAt && localStorage.getItem(SYNC_STAMP) === d.updatedAt) return false;
+    const changed = applySnapshot(d.data);
+    if (d.updatedAt) localStorage.setItem(SYNC_STAMP, d.updatedAt);
+    if (changed) notify();
+    return changed;
+  } catch {
+    return false;
+  }
 }
 
 export function discardDrafts() {

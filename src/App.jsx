@@ -9,7 +9,7 @@ import { applyTheme } from "./lib/themes";
 import { BuildingArt, OliveDivider, CategoryIcon, AnnouncementIcon, rotatingArt } from "./lib/artwork.jsx";
 import {
   useLobbyData, activeBanners, activeAnnouncements, urgentAnnouncement,
-  BG_PRESETS,
+  BG_PRESETS, pullFromServer, SYNC_POLL_MS,
 } from "./lib/store";
 import { mediaURL } from "./lib/media";
 import Admin from "./admin/Admin.jsx";
@@ -125,6 +125,13 @@ function Display({ previewMode }) {
   const { settings } = data;
 
   useEffect(() => { applyTheme(settings.theme); }, [settings.theme]);
+
+  // משיכת תוכן מהשרת — כך שכל מסך מציג את אותן הגדרות, מכל מכשיר שנערכו
+  useEffect(() => {
+    pullFromServer();
+    const t = setInterval(pullFromServer, SYNC_POLL_MS);
+    return () => clearInterval(t);
+  }, []);
 
   const [weather, setWeather] = useState(null);
   useEffect(() => {

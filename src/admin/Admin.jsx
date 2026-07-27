@@ -10,6 +10,7 @@ import {
 import { VERSION } from "../version";
 import { THEMES, THEME_IDS, applyTheme } from "../lib/themes";
 import { holidayBannerSchedule } from "../lib/hebrew";
+import { pullFromServer } from "../lib/store";
 import "./admin.css";
 
 // ═══════════════ כניסת מנהל (PIN) ═══════════════
@@ -25,8 +26,11 @@ function PinGate({ onOk }) {
   const [err, setErr] = useState(false);
   const check = () => {
     const settings = readDraft("settings");
-    if (pin === String(settings.pin)) onOk();
-    else { setErr(true); setPin(""); }
+    if (pin === String(settings.pin)) {
+      // נשמר לסשן בלבד — משמש לאימות מול השרת בעת פרסום
+      try { sessionStorage.setItem("lobby_admin_pin", pin); } catch { /* ignore */ }
+      onOk();
+    } else { setErr(true); setPin(""); }
   };
   return (
     <div className="admin-root pin-screen" dir="rtl">
@@ -69,6 +73,9 @@ function AdminPanel({ onLogout }) {
   useEffect(() => {
     storageInfo().then(setStore);
   }, [data.rev]);
+
+  // טעינת התוכן העדכני מהשרת בכניסה לניהול, כדי לערוך על בסיס המצב האמיתי
+  useEffect(() => { pullFromServer(); }, []);
 
   return (
     <div className="admin-root" dir="rtl">

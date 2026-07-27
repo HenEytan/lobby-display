@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  readDraft, writeDraft, publishAll, discardDrafts, hasDrafts,
+  readDraft, readLive, writeDraft, publishAll, discardDrafts, hasDrafts,
   useLobbyData, BG_PRESETS, newId,
 } from "../lib/store";
 import {
@@ -508,23 +508,49 @@ function MusicTab({ data }) {
       {(() => {
         const src = music.source || "youtube";
         const ready = src === "youtube" ? !!music.youtubeId : (music.tracks || []).length > 0;
-        if (!music.enabled) {
-          return <div className="music-status off">⏸ המוזיקה כבויה — הפעילו את המתג למטה.</div>;
-        }
-        if (!ready) {
-          return (
-            <div className="music-status bad">
-              ⚠ המוזיקה מסומנת כפעילה אך <b>אין מקור מוגדר</b>.{" "}
-              {src === "youtube" ? "הדביקו קישור יוטיוב למטה." : "העלו קובץ אודיו למטה."}
-            </div>
-          );
-        }
+        const live = readLive("music");
+        const liveReady =
+          live.enabled &&
+          ((live.source || "youtube") === "youtube"
+            ? !!live.youtubeId
+            : (live.tracks || []).length > 0);
+
         return (
-          <div className="music-status good">
-            ✅ מוגדר ומוכן{src === "youtube" ? ` — יוטיוב (${music.youtubeId})` : ` — ${(music.tracks || []).length} קבצים`}.
-            <br />
-            חשוב: השינוי ייכנס לתוקף במסך רק אחרי לחיצה על <b>“פרסם שינויים”</b> בתחתית הדף.
-          </div>
+          <>
+            {!music.enabled && (
+              <div className="music-status off">⏸ המוזיקה כבויה — הפעילו את המתג למטה.</div>
+            )}
+            {music.enabled && !ready && (
+              <div className="music-status bad">
+                ⚠ המוזיקה מסומנת כפעילה אך <b>אין מקור מוגדר</b>.{" "}
+                {src === "youtube" ? "הדביקו קישור יוטיוב למטה." : "העלו קובץ אודיו למטה."}
+              </div>
+            )}
+            {music.enabled && ready && (
+              <div className="music-status good">
+                ✅ ההגדרות תקינות
+                {src === "youtube" ? ` — יוטיוב (${music.youtubeId})` : ` — ${(music.tracks || []).length} קבצים`}
+              </div>
+            )}
+
+            {/* מה שהמסך באמת מנגן כרגע — לא הטיוטה */}
+            <div className={"music-status " + (liveReady ? "good" : "bad")}>
+              {liveReady ? (
+                <>🖥 <b>במסך עצמו:</b> מוזיקה פעילה.</>
+              ) : (
+                <>
+                  🖥 <b>במסך עצמו: המוזיקה כבויה כרגע.</b>
+                  <br />
+                  שינויים נשמרים כטיוטה ומגיעים למסך רק אחרי פרסום.
+                  <div style={{ marginTop: "10px" }}>
+                    <button className="btn primary" onClick={publishAll}>
+                      🚀 פרסם עכשיו והפעל במסך
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </>
         );
       })()}
 

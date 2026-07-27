@@ -40,8 +40,8 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 
 /* כותרת */
 .board-head {
-  display: flex; align-items: center; justify-content: space-between; gap: 2vw;
-  padding: 1vh 1.6vw 1vh 1.2vw;
+  display: flex; align-items: center; justify-content: space-between; gap: 3.5vw;
+  padding: 1vh 2.2vw 1vh 1.8vw;
   background: linear-gradient(100deg, var(--panel) 65%, rgba(216, 195, 145, 0.14));
   border: 1px solid var(--line);
   border-radius: 16px;
@@ -53,32 +53,35 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
   width: 5px; background: linear-gradient(180deg, var(--gold), var(--gold-soft));
 }
 
-.head-brand { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; min-width: 0; }
+.head-brand { display: flex; align-items: baseline; gap: 22px; flex-wrap: nowrap; min-width: 0; }
 .head-hello {
   font-size: clamp(11px, 1vw, 14px); font-weight: 700;
-  color: var(--gold); letter-spacing: 0.2em;
+  color: var(--gold); letter-spacing: 0.42em;
+  text-indent: 0.42em; white-space: nowrap; opacity: 0.95;
 }
-.head-title { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; min-width: 0; }
+.head-title { display: flex; align-items: baseline; gap: 16px; flex-wrap: nowrap; min-width: 0; }
 .head-name {
-  font-size: clamp(22px, 2.3vw, 34px); font-weight: 800; letter-spacing: 0;
-  line-height: 1.1; margin: 0; color: #6b5216;
+  font-size: clamp(22px, 2.3vw, 34px); font-weight: 800; letter-spacing: 0.045em;
+  line-height: 1.1; margin: 0; color: #5f4712; white-space: nowrap;
 }
 .head-city {
-  font-size: clamp(11px, 1vw, 15px); font-weight: 600; color: #7d5f1d;
+  font-size: clamp(11px, 1vw, 15px); font-weight: 700; color: #7d5f1d;
   background: rgba(176, 141, 62, 0.12); border: 1px solid var(--gold-soft);
-  padding: 2px 10px; border-radius: 999px; white-space: nowrap;
-  letter-spacing: 0.05em;
+  padding: 3px 14px; border-radius: 999px; white-space: nowrap;
+  letter-spacing: 0.14em; text-indent: 0.14em;
 }
 
-.head-greet { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.head-greet { display: flex; align-items: center; gap: 18px; flex-shrink: 0; }
 .head-greet-text {
-  font-size: clamp(15px, 1.5vw, 22px); font-weight: 700; color: #6f5518;
-  white-space: nowrap;
+  font-size: clamp(15px, 1.5vw, 22px); font-weight: 700; color: #5f4712;
+  white-space: nowrap; letter-spacing: 0.14em; text-indent: 0.14em;
 }
-.head-divider { width: clamp(50px, 6vw, 90px); height: 10px; opacity: 0.7; }
+.head-divider { width: clamp(46px, 5vw, 78px); height: 10px; opacity: 0.55; }
 
 @media (max-width: 900px) {
   .board-head { flex-direction: column; align-items: flex-start; gap: 0.8vh; }
+  .head-brand, .head-title { flex-wrap: wrap; }
+  .head-name { white-space: normal; }
 }
 
 /* גוף: אזור ראשי + עמודה */

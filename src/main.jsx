@@ -1,3 +1,4 @@
+import "./lib/fullscreen.js";
 import "./lib/autoUpdate.js";
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'

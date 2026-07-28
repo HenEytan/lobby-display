@@ -225,10 +225,12 @@ const HOLIDAY_BANNER_DEFS = [
   { key: "purim", re: /^פורים(?! קטן)/, title: "פורים שמח", subtitle: "חג שמח ומחופש לכל המשפחה", bg: "holiday_purim" },
   { key: "pesach", re: /^פסח(?! שני)/, title: "חג פסח שמח", subtitle: "חג כשר ושמח לכל דיירי הבניין", bg: "holiday_pesach" },
   { key: "shavuot", re: /שבועות/, title: "חג שבועות שמח", subtitle: "חג מתן תורה שמח לכולם", bg: "holiday_shavuot" },
-  { key: "atzmaut", re: /יום העצמאות/, title: "יום עצמאות שמח", subtitle: "חוגגים ביחד את עצמאות ישראל", bg: "holiday_atzmaut" },
+  { key: "atzmaut", re: /יום העצמאות/, title: "יום עצמאות שמח", subtitle: "חוגגים ביחד את עצמאות ישראל", bg: "holiday_atzmaut", noEve: true },
   { key: "tu_bishvat", re: /ט״ו בשבט|טו בשבט/, title: "ט״ו בשבט שמח", subtitle: "חג האילנות — נטיעות ופריחה", bg: "holiday_tu_bishvat" },
   { key: "lag_baomer", re: /ל״ג בעומר|לג בעומר/, title: "ל״ג בעומר שמח", subtitle: "מדורות ושמחה לכל המשפחה", bg: "holiday_lag_baomer" },
   { key: "tu_bav", re: /ט״ו באב|טו באב|Tu B'Av/, title: "ט״ו באב שמח", subtitle: "חג האהבה — הרבה אהבה ושמחה לכל דיירי הבניין", bg: "holiday_tu_bav" },
+  { key: "shoah", re: /יום השואה/, title: "יום הזיכרון לשואה ולגבורה", subtitle: "זוכרים את השישה מיליון — יהי זכרם ברוך", bg: "holiday_shoah", noEve: true },
+  { key: "zikaron", re: /יום הזכרון|יום הזיכרון/, title: "יום הזיכרון לחללי מערכות ישראל", subtitle: "זוכרים ומוקירים את הנופלים ואת נפגעי פעולות האיבה — יהי זכרם ברוך", bg: "holiday_zikaron" },
 ];
 
 function ymdLocal(d) {
@@ -273,7 +275,9 @@ export function holidayBannerSchedule(now = new Date()) {
     const r = ranges.get(def.key);
     if (!r) continue;
     const startDate = new Date(r.first);
-    startDate.setDate(startDate.getDate() - 1);
+    // ברירת מחדל: הבאנר עולה יום לפני החג. noEve — רק ביום עצמו
+    // (למשל עצמאות, כדי לא לחגוג בזמן יום הזיכרון).
+    if (!def.noEve) startDate.setDate(startDate.getDate() - 1);
     out.push({
       id: `hb_${def.key}`,
       title: def.title,

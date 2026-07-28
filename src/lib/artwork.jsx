@@ -452,6 +452,66 @@ const TU_BAV_SVG = `
 HOLIDAY_ART["holiday_tu_bav"] = `${svgURL(TU_BAV_SVG)} center / cover no-repeat`;
 HOLIDAY_ART_KEYS.push("holiday_tu_bav");
 
+// ─── ימי זיכרון — איורים מאופקים: נר זיכרון, ללא צבעוניות חגיגית ───
+const SHOAH_SVG = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="shg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f5f5f6"/><stop offset="1" stop-color="#d7d9de"/>
+    </linearGradient>
+    <radialGradient id="shflame" cx="50%" cy="35%" r="60%">
+      <stop offset="0" stop-color="rgba(240,190,90,0.5)"/><stop offset="1" stop-color="rgba(240,190,90,0)"/>
+    </radialGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#shg)"/>
+  <path d="M118 78 l20 34 h-40 z M118 134 l-20-34 h40 z" fill="none" stroke="#9a9da6" stroke-width="4" opacity="0.5"/>
+  <circle cx="400" cy="205" r="145" fill="rgba(255,255,255,0.55)"/>
+  <circle cx="400" cy="150" r="95" fill="url(#shflame)"/>
+  <g>
+    <rect x="368" y="170" width="64" height="150" rx="12" fill="#fdfaf2" stroke="#c9c4b4" stroke-width="3"/>
+    <path d="M372 176 q10 16 4 34" fill="none" stroke="#e7e0cc" stroke-width="6" stroke-linecap="round"/>
+    <rect x="396" y="150" width="8" height="24" rx="4" fill="#8f8a7a"/>
+    <path d="M400 108 q16 22 0 44 q-16-22 0-44z" fill="#f2b23e" stroke="#d98f1f" stroke-width="2"/>
+    <path d="M400 124 q7 11 0 22 q-7-11 0-22z" fill="#fde9b8"/>
+  </g>
+  <text x="400" y="382" font-size="30" text-anchor="middle" fill="#6c7078" font-family="sans-serif">יזכור</text>
+</svg>`;
+HOLIDAY_ART["holiday_shoah"] = `${svgURL(SHOAH_SVG)} center / cover no-repeat`;
+HOLIDAY_ART_KEYS.push("holiday_shoah");
+
+const ZIKARON_SVG = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="zkg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#eef1f5"/><stop offset="1" stop-color="#c6cfda"/>
+    </linearGradient>
+    <radialGradient id="zkflame" cx="50%" cy="35%" r="60%">
+      <stop offset="0" stop-color="rgba(240,190,90,0.5)"/><stop offset="1" stop-color="rgba(240,190,90,0)"/>
+    </radialGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#zkg)"/>
+  <circle cx="400" cy="205" r="145" fill="rgba(255,255,255,0.55)"/>
+  <circle cx="400" cy="150" r="95" fill="url(#zkflame)"/>
+  <g>
+    <rect x="368" y="170" width="64" height="150" rx="12" fill="#fdfaf2" stroke="#c2c6ce" stroke-width="3"/>
+    <path d="M372 176 q10 16 4 34" fill="none" stroke="#e7e6df" stroke-width="6" stroke-linecap="round"/>
+    <rect x="396" y="150" width="8" height="24" rx="4" fill="#84888f"/>
+    <path d="M400 108 q16 22 0 44 q-16-22 0-44z" fill="#f2b23e" stroke="#d98f1f" stroke-width="2"/>
+    <path d="M400 124 q7 11 0 22 q-7-11 0-22z" fill="#fde9b8"/>
+  </g>
+  <g transform="translate(505,268)">
+    <path d="M0 60 q-4-34 0-60" fill="none" stroke="#6f8a5f" stroke-width="5" stroke-linecap="round"/>
+    <g fill="#c0392b">
+      <circle cx="0" cy="-8" r="9"/><circle cx="-10" cy="0" r="9"/><circle cx="10" cy="0" r="9"/>
+      <circle cx="-6" cy="10" r="9"/><circle cx="6" cy="10" r="9"/>
+    </g>
+    <circle cx="0" cy="2" r="5" fill="#7d221a"/>
+  </g>
+  <text x="400" y="382" font-size="30" text-anchor="middle" fill="#5d6673" font-family="sans-serif">יהי זכרם ברוך</text>
+</svg>`;
+HOLIDAY_ART["holiday_zikaron"] = `${svgURL(ZIKARON_SVG)} center / cover no-repeat`;
+HOLIDAY_ART_KEYS.push("holiday_zikaron");
+
 // ─── רקע תזכורת דמי ועד — לוח שנה עם מטבעות, מופיע ביום האחרון של החודש ───
 const VAAD_SVG = `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" preserveAspectRatio="xMidYMid slice">

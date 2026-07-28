@@ -1,7 +1,6 @@
 // אירועי אלומה — הוד השרון.
 // ללא תמונות חיצוניות: לכל קטגוריה רקע גרדיאנט מקומי.
-// המקור החי (alumahod.com) חסום מדפדפן (CORS); בעתיד — proxy ייעודי בצד שרת.
-// הנתונים כאן בפורמט זהה לזה שה-proxy יספק, וניתן לרענן אותם ידנית.
+// המקור החי נטען דרך /api/aluma-events (proxy בצד השרת); הנתונים כאן הם גיבוי בלבד.
 
 export const CATEGORY_BG = {
   "מופעים": "linear-gradient(135deg, #efe6f7 0%, #dcc8ee 100%)",
@@ -57,9 +56,22 @@ function startOfWeek(d) {
   return x;
 }
 
-// סינון לאירועי השבוע הנוכחי (א׳–ש׳), ממוין לפי זמן.
+export const EVENTS_REFRESH_MS = 3 * 60 * 60 * 1000; // רענון אירועים חיים כל 3 שעות
+
+// שליפת אירועי אלומה מה-proxy בצד השרת; נפילה חיננית לנתוני הדוגמה המקומיים.
+export async function fetchAlumaEvents() {
+  try {
+    const res = await fetch("/api/aluma-events", { cache: "no-store" });
+    const d = await res.json();
+    if (d.ok && Array.isArray(d.events) && d.events.length) return d.events;
+  } catch { /* אין רשת — נשארים על הגיבוי המקומי */ }
+  return SAMPLE_EVENTS;
+}
+
+// אירועי שבעת הימים הקרובים (מהיום ואילך), ממוינים לפי זמן.
 export function eventsThisWeek(now = new Date(), events = SAMPLE_EVENTS) {
-  const start = startOfWeek(now);
+  const start = new Date(now);
+  start.setHours(0, 0, 0, 0);
   const end = new Date(start);
   end.setDate(start.getDate() + 7);
   return events

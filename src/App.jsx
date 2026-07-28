@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { VERSION, CHANGELOG } from "./version";
 import { gregDateHe, hebrewDate, dailyGreeting, todayHoliday, shabbatInfo, upcomingHolidays, holidayBannerSchedule } from "./lib/hebrew";
-import { eventsThisWeek, formatEventTime, CATEGORY_BG } from "./lib/events";
+import { eventsThisWeek, formatEventTime, fetchAlumaEvents, EVENTS_REFRESH_MS, CATEGORY_BG } from "./lib/events";
 import { fetchWeather, weatherIcon, uvLevel } from "./lib/feeds";
 import { syncTime, israelNow, TIME_SYNC_MS } from "./lib/time";
 import { fetchNews, NEWS_REFRESH_MS } from "./lib/news";
@@ -150,7 +150,18 @@ function Display({ previewMode }) {
 
   const holiday = useMemo(() => todayHoliday(now), [now.getDate(), now.getMonth()]);
   const shabbat = useMemo(() => shabbatInfo(now), [Math.floor(now.getTime() / 60000)]);
-  const events = useMemo(() => eventsThisWeek(now), [now.getDate()]);
+  // אירועי אלומה — נטענים מה-API החי ומתרעננים כל כמה שעות
+  const [alumaEvents, setAlumaEvents] = useState(null);
+  useEffect(() => {
+    if (!settings.showEvents) return;
+    fetchAlumaEvents().then(setAlumaEvents);
+    const t = setInterval(() => fetchAlumaEvents().then(setAlumaEvents), EVENTS_REFRESH_MS);
+    return () => clearInterval(t);
+  }, [settings.showEvents]);
+  const events = useMemo(
+    () => eventsThisWeek(now, alumaEvents || undefined),
+    [now.getDate(), alumaEvents]
+  );
   const monthHolidays = useMemo(() => upcomingHolidays(now, 30), [now.getDate()]);
   const anns = activeAnnouncements(data.announcements, now);
   const urgent = urgentAnnouncement(data.announcements, now);
@@ -188,7 +199,7 @@ function Display({ previewMode }) {
   const slides = useMemo(() => {
     const regular = activeBanners(data.banners, now).map((b) => ({ type: "banner", key: b.id, banner: b }));
     const holidayNow = activeBanners(holidayBanners, now).map((b) => ({ type: "banner", key: b.id, banner: b }));
-    const s = [...regular, ...holidayNow];
+    const s = [...holidayNow, ...regular]; // באנרי חגים תמיד ראשונים בסבב
     if (settings.showEvents && events.length > 0) s.push({ type: "events", key: "events" });
     if (settings.showCalendar && monthHolidays.length > 0) s.push({ type: "calendar", key: "calendar" });
     if (holiday) s.push({ type: "holiday", key: "holiday" });
@@ -394,12 +405,23 @@ function WeekendSlide({ isSaturday }) {
 }
 
 function EventsSlide({ events }) {
+  // דפדוף אוטומטי — כל האירועים מוצגים, 6 בכל עמוד
+  const PAGE = 6;
+  const pages = Math.max(1, Math.ceil(events.length / PAGE));
+  const [page, setPage] = useState(0);
+  useEffect(() => {
+    if (pages <= 1) return;
+    const t = setInterval(() => setPage((p) => (p + 1) % pages), 7000);
+    return () => clearInterval(t);
+  }, [pages]);
+  const shown = events.slice((page % pages) * PAGE, (page % pages) * PAGE + PAGE);
+
   return (
     <div className="slide events-slide fade">
       <div className="slide-eyebrow">אלומה · הוד השרון</div>
       <h3>אירועי השבוע</h3>
-      <div className="ev-grid">
-        {events.slice(0, 6).map((e, i) => (
+      <div className="ev-grid fade" key={page}>
+        {shown.map((e, i) => (
           <div className="ev-card" key={i}>
             <div className="ev-band" style={{ background: CATEGORY_BG[e.category] || CATEGORY_BG.default }}>
               <CategoryIcon category={e.category} className="ev-icon" />
@@ -414,6 +436,13 @@ function EventsSlide({ events }) {
           </div>
         ))}
       </div>
+      {pages > 1 && (
+        <div className="cal-pages">
+          {Array.from({ length: pages }).map((_, i) => (
+            <span key={i} className={"dot small" + (i === page % pages ? " on" : "")} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

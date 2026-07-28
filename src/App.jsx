@@ -194,7 +194,6 @@ function Display({ previewMode }) {
     if (holiday) s.push({ type: "holiday", key: "holiday" });
     if (showVaadSlide) s.push({ type: "vaad", key: "vaad" });
     if (showWeekendSlide) s.push({ type: "weekend", key: "weekend" });
-    if (musicOn) s.push({ type: "music", key: "music" });
     if (s.length === 0) s.push({ type: "welcome", key: "welcome" });
     return s;
   }, [data.rev, data.banners, holidayBanners, events, holiday, monthHolidays, settings.showEvents, settings.showCalendar, showWeekendSlide, showVaadSlide, musicOn, now.getDate()]);
@@ -316,7 +315,6 @@ function MainSlide({ slide, events, holiday, name, currentTrack, isSaturday, mon
   if (slide.type === "holiday") return <HolidaySlide text={holiday} />;
   if (slide.type === "vaad") return <VaadSlide />;
   if (slide.type === "weekend") return <WeekendSlide isSaturday={isSaturday} />;
-  if (slide.type === "music") return <MusicSlide track={currentTrack} />;
   return <WelcomeSlide name={name} />;
 }
 
@@ -358,18 +356,6 @@ function WelcomeSlide({ name }) {
   );
 }
 
-function MusicSlide({ track }) {
-  return (
-    <div className="slide music-slide fade">
-      <div className="music-eq" aria-hidden="true">
-        {[0, 1, 2, 3, 4].map((i) => <span key={i} style={{ animationDelay: `${i * 0.12}s` }} />)}
-      </div>
-      <div className="slide-eyebrow">מנגן כעת</div>
-      <h2>{track ? track.name : "מוזיקת רקע"}</h2>
-      <p>מוזיקת רקע נעימה ללובי הבניין</p>
-    </div>
-  );
-}
 
 function HolidaySlide({ text }) {
   return (

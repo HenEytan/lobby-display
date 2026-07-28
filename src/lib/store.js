@@ -321,14 +321,27 @@ export function activeBanners(banners, now = new Date()) {
     .sort((a, b) => (a.order || 0) - (b.order || 0));
 }
 
+// הודעות — מודל פשוט: created (תאריך יצירה) + days (כמה ימים להציג).
+// days ריק/0 = ללא הגבלה. פריטים ישנים עם start/end ממשיכים לעבוד (תאימות לאחור).
+export function announcementVisible(a, now = new Date()) {
+  if (a.days !== undefined && a.days !== null && a.days !== "") {
+    const days = Number(a.days);
+    if (!days || days <= 0 || !a.created) return true;
+    const expiry = new Date(`${a.created}T00:00:00`);
+    expiry.setDate(expiry.getDate() + days);
+    return now < expiry;
+  }
+  return inDateRange(a, now);
+}
+
 export function activeAnnouncements(anns, now = new Date()) {
   return anns
-    .filter((a) => inDateRange(a, now))
+    .filter((a) => announcementVisible(a, now))
     .sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
 }
 
 export function urgentAnnouncement(anns, now = new Date()) {
-  return anns.find((a) => a.urgent && inDateRange(a, now)) || null;
+  return anns.find((a) => a.urgent && announcementVisible(a, now)) || null;
 }
 
 // ─── שעות פעילות ───

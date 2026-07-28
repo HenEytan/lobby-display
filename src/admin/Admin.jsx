@@ -332,27 +332,13 @@ function HolidaysTab({ data }) {
 function AnnouncementsTab({ data }) {
   const anns = data.announcements;
   const save = (list) => writeDraft("announcements", list);
-  const today = () => new Date().toISOString().slice(0, 10);
-  const addDays = (d, n) => {
-    const x = new Date(d + "T12:00:00");
-    x.setDate(x.getDate() + n);
-    return x.toISOString().slice(0, 10);
-  };
-  // מספר ימי ההצגה נגזר מטווח start/end (נשמר פנימית לתאימות לאחור)
-  const daysOf = (a) => {
-    if (!a.end) return "";
-    const base = a.start || today();
-    return Math.max(1, Math.round((new Date(a.end) - new Date(base)) / 86400000) + 1);
-  };
-  const setDays = (a, v) => {
-    const n = parseInt(v, 10);
-    const base = a.start || today();
-    if (!n || n < 1) update(a.id, { start: base, end: "" }); // ריק = ללא הגבלה
-    else update(a.id, { start: base, end: addDays(base, n - 1) });
+  const today = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   };
   const add = () => save([{
     id: newId("a"), title: "הודעה חדשה", body: "", category: "ועד",
-    pinned: false, urgent: false, start: today(), end: addDays(today(), 6),
+    pinned: false, urgent: false, created: today(), days: 7,
   }, ...anns]);
   const update = (id, patch) => save(anns.map((a) => (a.id === id ? { ...a, ...patch } : a)));
   const remove = (a) => confirm(`למחוק את ההודעה "${a.title}"?`) && save(anns.filter((x) => x.id !== a.id));
@@ -362,7 +348,7 @@ function AnnouncementsTab({ data }) {
       <div className="sec-head">
         <div>
           <h2>הודעות לדיירים</h2>
-          <p>כותבים הודעה ובוחרים לכמה ימים — וכבר על המסך. נעיצה, והודעה דחופה שתופסת את המסך המלא.</p>
+          <p>כותבים הודעה — וכבר על המסך. בוחרים כמה ימים תוצג, נעיצה, והודעה דחופה שתופסת את המסך המלא.</p>
         </div>
         <button className="btn primary" onClick={add}>+ הודעה חדשה</button>
       </div>
@@ -380,11 +366,15 @@ function AnnouncementsTab({ data }) {
                     {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </label>
-                <label>ימים להצגה:{" "}
-                  <input type="number" min="1" max="365" className="f-days" value={daysOf(a)}
-                    placeholder="ללא הגבלה" onChange={(e) => setDays(a, e.target.value)} />
+                <label>מוצג למשך:
+                  <input type="number" min="0" max="365" style={{ width: 70 }} value={a.days ?? ""}
+                    onChange={(e) => update(a.id, {
+                      days: e.target.value === "" ? "" : Number(e.target.value),
+                      created: a.created || today(),
+                      start: undefined, end: undefined,
+                    })} />
+                  ימים (0 = ללא הגבלה)
                 </label>
-                {a.end && <span className="ann-until">עד {a.end.split("-").reverse().join(".")}</span>}
               </div>
             </div>
             <div className="item-actions">

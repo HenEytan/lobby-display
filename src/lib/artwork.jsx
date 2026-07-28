@@ -397,6 +397,61 @@ export const HOLIDAY_ART = (() => {
 })();
 export const HOLIDAY_ART_KEYS = Object.keys(HOLIDAY_ART_DEFS);
 
+// ─── ט״ו באב — חג האהבה: איור ייעודי עם לב, גפנים ויונים ───
+const TU_BAV_SVG = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="tbg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fdeef2"/>
+      <stop offset="0.55" stop-color="#f9d3dd"/>
+      <stop offset="1" stop-color="#f2b3c4"/>
+    </linearGradient>
+    <radialGradient id="tbsun" cx="50%" cy="42%" r="55%">
+      <stop offset="0" stop-color="rgba(255,255,255,0.85)"/>
+      <stop offset="1" stop-color="rgba(255,255,255,0)"/>
+    </radialGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#tbg)"/>
+  <circle cx="400" cy="190" r="200" fill="url(#tbsun)"/>
+  <!-- לבבות מרחפים -->
+  <g fill="#e88aa4" opacity="0.55">
+    <path d="M120 90 c-8-14 8-26 18-15 c10-11 26 1 18 15 c-6 10-18 18-18 18 s-12-8-18-18z"/>
+    <path d="M660 70 c-6-11 6-20 14-12 c8-8 20 1 14 12 c-5 8-14 14-14 14 s-9-6-14-14z"/>
+    <path d="M700 300 c-7-12 7-23 16-13 c9-10 23 1 16 13 c-6 9-16 16-16 16 s-10-7-16-16z"/>
+    <path d="M95 320 c-6-11 6-20 14-12 c8-8 20 1 14 12 c-5 8-14 14-14 14 s-9-6-14-14z"/>
+    <path d="M560 150 c-5-9 5-16 11-10 c6-6 16 1 11 10 c-4 6-11 11-11 11 s-7-5-11-11z"/>
+    <path d="M215 180 c-5-9 5-16 11-10 c6-6 16 1 11 10 c-4 6-11 11-11 11 s-7-5-11-11z"/>
+  </g>
+  <!-- לב מרכזי -->
+  <circle cx="400" cy="195" r="128" fill="rgba(255,255,255,0.55)"/>
+  <circle cx="400" cy="195" r="128" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="3"/>
+  <path d="M400 265 c-44-32 -84-62 -84-102 c0-28 22-48 48-48 c16 0 29 8 36 20 c7-12 20-20 36-20 c26 0 48 20 48 48 c0 40-40 70-84 102z"
+    fill="#e0607e" stroke="#c94b6a" stroke-width="4"/>
+  <path d="M372 152 c-8 4-16 12-18 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="7" stroke-linecap="round"/>
+  <!-- יונים -->
+  <g stroke="#a67483" stroke-width="4" fill="none" stroke-linecap="round">
+    <path d="M275 95 q10-12 22-6 q4-12 18-10"/>
+    <path d="M510 100 q10-12 22-6 q4-12 18-10"/>
+  </g>
+  <!-- גפנים בתחתית — ריקודי הכרמים -->
+  <g>
+    <path d="M-10 430 q120-60 250-28 q70 16 140 6" fill="none" stroke="#7ea86b" stroke-width="7" stroke-linecap="round"/>
+    <path d="M810 430 q-120-60 -250-28 q-70 16 -140 6" fill="none" stroke="#7ea86b" stroke-width="7" stroke-linecap="round"/>
+    <g fill="#8fba7a">
+      <ellipse cx="120" cy="392" rx="18" ry="11" transform="rotate(-24 120 392)"/>
+      <ellipse cx="250" cy="382" rx="18" ry="11" transform="rotate(14 250 382)"/>
+      <ellipse cx="680" cy="392" rx="18" ry="11" transform="rotate(24 680 392)"/>
+      <ellipse cx="550" cy="382" rx="18" ry="11" transform="rotate(-14 550 382)"/>
+    </g>
+    <g fill="#9b5f86">
+      <g transform="translate(180,404)"><circle r="8"/><circle cx="-11" cy="12" r="8"/><circle cx="11" cy="12" r="8"/><circle cy="24" r="8"/></g>
+      <g transform="translate(620,404)"><circle r="8"/><circle cx="-11" cy="12" r="8"/><circle cx="11" cy="12" r="8"/><circle cy="24" r="8"/></g>
+    </g>
+  </g>
+</svg>`;
+HOLIDAY_ART["holiday_tu_bav"] = `${svgURL(TU_BAV_SVG)} center / cover no-repeat`;
+HOLIDAY_ART_KEYS.push("holiday_tu_bav");
+
 // ─── רקע תזכורת דמי ועד — לוח שנה עם מטבעות, מופיע ביום האחרון של החודש ───
 const VAAD_SVG = `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" preserveAspectRatio="xMidYMid slice">

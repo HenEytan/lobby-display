@@ -228,6 +228,7 @@ const HOLIDAY_BANNER_DEFS = [
   { key: "atzmaut", re: /יום העצמאות/, title: "יום עצמאות שמח", subtitle: "חוגגים ביחד את עצמאות ישראל", bg: "holiday_atzmaut" },
   { key: "tu_bishvat", re: /ט״ו בשבט|טו בשבט/, title: "ט״ו בשבט שמח", subtitle: "חג האילנות — נטיעות ופריחה", bg: "holiday_tu_bishvat" },
   { key: "lag_baomer", re: /ל״ג בעומר|לג בעומר/, title: "ל״ג בעומר שמח", subtitle: "מדורות ושמחה לכל המשפחה", bg: "holiday_lag_baomer" },
+  { key: "tu_bav", re: /ט״ו באב|טו באב|Tu B'Av/, title: "ט״ו באב שמח", subtitle: "חג האהבה — הרבה אהבה ושמחה לכל דיירי הבניין", bg: "holiday_tu_bav" },
 ];
 
 function ymdLocal(d) {

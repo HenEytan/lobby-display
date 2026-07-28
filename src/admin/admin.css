@@ -173,3 +173,6 @@
 .music-status.off  { background: #f3f1ec; border-color: #e0dbd0; color: #6d6355; }
 .music-status.bad  { background: #fff2e4; border-color: #e8c39a; color: #a8501f; font-weight: 600; }
 .music-status.good { background: #eef7ea; border-color: #bcd9b0; color: #3f6b35; }
+
+.f-days { width: 70px; }
+.ann-until { font-size: 12px; opacity: 0.7; align-self: center; }

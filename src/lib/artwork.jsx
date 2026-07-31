@@ -512,6 +512,60 @@ const ZIKARON_SVG = `
 HOLIDAY_ART["holiday_zikaron"] = `${svgURL(ZIKARON_SVG)} center / cover no-repeat`;
 HOLIDAY_ART_KEYS.push("holiday_zikaron");
 
+// ─── באנר יום שישי — נרות שבת, חלה וגביע קידוש על רקע זהוב חם ───
+const FRIDAY_SVG = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="frg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fdf7e7"/>
+      <stop offset="0.6" stop-color="#f8e7c0"/>
+      <stop offset="1" stop-color="#eccf94"/>
+    </linearGradient>
+    <radialGradient id="frglow" cx="50%" cy="34%" r="55%">
+      <stop offset="0" stop-color="rgba(255,215,120,0.55)"/>
+      <stop offset="1" stop-color="rgba(255,215,120,0)"/>
+    </radialGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#frg)"/>
+  <g fill="#d9b45c" opacity="0.55">
+    <path d="M110 84 l5 12 12 2 -9 9 2 13 -10-6 -10 6 2-13 -9-9 12-2z"/>
+    <path d="M688 66 l4 10 10 2 -7 7 1 11 -8-5 -8 5 1-11 -7-7 10-2z"/>
+    <path d="M660 300 l4 10 10 2 -7 7 1 11 -8-5 -8 5 1-11 -7-7 10-2z"/>
+  </g>
+  <circle cx="400" cy="185" r="150" fill="url(#frglow)"/>
+  <circle cx="400" cy="195" r="132" fill="rgba(255,255,255,0.5)"/>
+  <circle cx="400" cy="195" r="132" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="3"/>
+  <!-- שני נרות שבת -->
+  <g>
+    <rect x="352" y="152" width="20" height="92" rx="8" fill="#fdfaf0" stroke="#d8cfae" stroke-width="2.5"/>
+    <rect x="428" y="152" width="20" height="92" rx="8" fill="#fdfaf0" stroke="#d8cfae" stroke-width="2.5"/>
+    <rect x="359" y="140" width="6" height="16" rx="3" fill="#8f8a7a"/>
+    <rect x="435" y="140" width="6" height="16" rx="3" fill="#8f8a7a"/>
+    <path d="M362 104 q13 18 0 36 q-13-18 0-36z" fill="#f2b23e" stroke="#d98f1f" stroke-width="2"/>
+    <path d="M438 104 q13 18 0 36 q-13-18 0-36z" fill="#f2b23e" stroke="#d98f1f" stroke-width="2"/>
+    <path d="M362 117 q5 8 0 16 q-5-8 0-16z" fill="#fde9b8"/>
+    <path d="M438 117 q5 8 0 16 q-5-8 0-16z" fill="#fde9b8"/>
+    <!-- פמוטים -->
+    <path d="M344 244 h36 l-6 14 h-24 z" fill="#c9a84c"/>
+    <path d="M420 244 h36 l-6 14 h-24 z" fill="#c9a84c"/>
+  </g>
+  <!-- גביע קידוש -->
+  <g transform="translate(297,238)">
+    <path d="M-20 0 h40 q0 26 -20 30 q-20-4 -20-30z" fill="#c9a84c" stroke="#a9884a" stroke-width="2.5"/>
+    <rect x="-3.5" y="28" width="7" height="18" fill="#a9884a"/>
+    <path d="M-14 48 h28 l4 8 h-36 z" fill="#c9a84c"/>
+    <path d="M-13 6 q13 7 26 0" fill="none" stroke="#8c2f39" stroke-width="5" stroke-linecap="round"/>
+  </g>
+  <!-- חלה קלועה -->
+  <g transform="translate(500,268)">
+    <ellipse cx="0" cy="14" rx="62" ry="24" fill="#d99a4e" stroke="#b57733" stroke-width="3"/>
+    <path d="M-52 10 q10-16 24-2 q10-16 26-2 q10-16 26-2 q8-10 20 0" fill="none" stroke="#b57733" stroke-width="4" stroke-linecap="round"/>
+    <g fill="#f6e3b8"><circle cx="-30" cy="4" r="2.4"/><circle cx="-8" cy="0" r="2.4"/><circle cx="16" cy="2" r="2.4"/><circle cx="36" cy="6" r="2.4"/></g>
+  </g>
+</svg>`;
+HOLIDAY_ART["friday_shabbat"] = `${svgURL(FRIDAY_SVG)} center / cover no-repeat`;
+HOLIDAY_ART_KEYS.push("friday_shabbat");
+
 // ─── רקע תזכורת דמי ועד — לוח שנה עם מטבעות, מופיע ביום האחרון של החודש ───
 const VAAD_SVG = `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" preserveAspectRatio="xMidYMid slice">

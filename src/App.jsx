@@ -186,28 +186,48 @@ function Display({ previewMode }) {
     () => (settings.showHolidayBanners ? holidayBannerSchedule(now) : []),
     [settings.showHolidayBanners, now.getDate()]
   );
-  const isWeekend = now.getDay() === 5 || now.getDay() === 6;
-  const showWeekendSlide = isWeekend && !shabbat?.active;
+  // שקופיית הסופ״ש נשארת לשבת בלבד; ביום שישי הבאנר החדש מוביל את הסבב
+  const showWeekendSlide = now.getDay() === 6 && !shabbat?.active;
 
-  // תזכורת דמי ועד — מופיעה ביום האחרון של כל חודש
-  const isLastDayOfMonth = useMemo(() => {
-    const t = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    return now.getDate() === t.getDate();
-  }, [now.getDate(), now.getMonth(), now.getFullYear()]);
-  const showVaadSlide = isLastDayOfMonth && settings.showVaadReminder !== false;
+  // תזכורת דמי ועד — שלושת הימים האחרונים של כל חודש, במקום השני בסבב
+  const showVaadBanner = useMemo(() => {
+    const last = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    return now.getDate() >= last - 2 && settings.showVaadReminder !== false;
+  }, [now.getDate(), now.getMonth(), now.getFullYear(), settings.showVaadReminder]);
 
   const slides = useMemo(() => {
     const regular = activeBanners(data.banners, now).map((b) => ({ type: "banner", key: b.id, banner: b }));
     const holidayNow = activeBanners(holidayBanners, now).map((b) => ({ type: "banner", key: b.id, banner: b }));
-    const s = [...holidayNow, ...regular]; // באנרי חגים תמיד ראשונים בסבב
+    // יום שישי — באנר סופ״ש ושבת שלום, תמיד ראשון בסבב
+    const fridayNow = now.getDay() === 5 ? [{
+      type: "banner", key: "b_friday",
+      banner: {
+        id: "b_friday",
+        title: "סוף שבוע טוב ושבת שלום",
+        subtitle: `לכל דיירי ${settings.buildingName} — שבת של מנוחה ושלווה`,
+        bg: "friday_shabbat", image: null,
+      },
+    }] : [];
+    const s = [...fridayNow, ...holidayNow, ...regular]; // שישי ראשון, אחריו חגים
+    // תזכורת דמי ועד — נכנסת במקום השני בסבב
+    if (showVaadBanner) {
+      s.splice(Math.min(1, s.length), 0, {
+        type: "banner", key: "b_vaad",
+        banner: {
+          id: "b_vaad",
+          title: "תזכורת: תשלום דמי ועד",
+          subtitle: "נא להסדיר את התשלום עד סוף החודש — תודה רבה!",
+          bg: "vaad", image: null,
+        },
+      });
+    }
     if (settings.showEvents && events.length > 0) s.push({ type: "events", key: "events" });
     if (settings.showCalendar && monthHolidays.length > 0) s.push({ type: "calendar", key: "calendar" });
     if (holiday) s.push({ type: "holiday", key: "holiday" });
-    if (showVaadSlide) s.push({ type: "vaad", key: "vaad" });
     if (showWeekendSlide) s.push({ type: "weekend", key: "weekend" });
     if (s.length === 0) s.push({ type: "welcome", key: "welcome" });
     return s;
-  }, [data.rev, data.banners, holidayBanners, events, holiday, monthHolidays, settings.showEvents, settings.showCalendar, showWeekendSlide, showVaadSlide, musicOn, now.getDate()]);
+  }, [data.rev, data.banners, holidayBanners, events, holiday, monthHolidays, settings.showEvents, settings.showCalendar, showWeekendSlide, showVaadBanner, settings.buildingName, musicOn, now.getDate()]);
 
   const [idx, setIdx] = useState(0);
   useEffect(() => {

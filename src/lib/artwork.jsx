@@ -758,6 +758,69 @@ export function ShabbatSceneArt({ className = "" }) {
       {/* גבעות רכות */}
       <path d="M0 620 q260-90 520-40 q280 54 560 6 q260-44 520 34 V900 H0 z" fill="#e2d5a4" opacity="0.85" />
       <path d="M0 680 q300-64 640-24 q340 40 960 -6 V900 H0 z" fill="#d5c58e" opacity="0.9" />
+      {/* עצים על הגבעות */}
+      <g>
+        <rect x="455" y="578" width="12" height="48" rx="4" fill="#8a6b3f" />
+        <circle cx="461" cy="552" r="40" fill="#a3b075" />
+        <circle cx="430" cy="574" r="26" fill="#93a264" />
+        <circle cx="494" cy="572" r="26" fill="#b0bd83" />
+        <rect x="1148" y="602" width="10" height="42" rx="4" fill="#8a6b3f" />
+        <circle cx="1153" cy="580" r="32" fill="#a3b075" />
+        <circle cx="1130" cy="598" r="20" fill="#93a264" />
+        <circle cx="1178" cy="596" r="20" fill="#b0bd83" />
+      </g>
+      {/* עפיפון בשמיים */}
+      <g>
+        <g transform="translate(332,206) rotate(16)">
+          <path d="M0 -48 L36 0 L0 48 L-36 0 Z" fill="#d76f5a" stroke="#b25443" strokeWidth="4" strokeLinejoin="round" />
+          <path d="M0 -48 V48 M-36 0 H36" stroke="#fbe9cd" strokeWidth="3" />
+        </g>
+        <path d="M318 252 q-16 26 -40 30 q22 12 10 34" fill="none" stroke="#b25443" strokeWidth="3" opacity="0.8" />
+        <path d="M334 254 Q322 440 292 612" fill="none" stroke="#a5977a" strokeWidth="3" />
+      </g>
+      {/* הורה וילד מעיפים עפיפון */}
+      <g>
+        <g transform="translate(196,668)">
+          <circle cx="0" cy="-78" r="15" fill="#eac9a2" />
+          <path d="M-16 -62 h32 l-5 52 h-22 z" fill="#a2603f" />
+          <path d="M-9 -10 l-3 34 M9 -10 l3 34" stroke="#5a4a33" strokeWidth="7" strokeLinecap="round" />
+          <path d="M14 -54 L42 -36" stroke="#eac9a2" strokeWidth="7" strokeLinecap="round" />
+        </g>
+        <g transform="translate(262,678)">
+          <circle cx="0" cy="-56" r="12" fill="#eac9a2" />
+          <path d="M-13 -44 h26 l-4 38 h-18 z" fill="#7c8fae" />
+          <path d="M-7 -6 l-2 26 M7 -6 l2 26" stroke="#5a4a33" strokeWidth="6" strokeLinecap="round" />
+          <path d="M10 -38 L29 -62" stroke="#eac9a2" strokeWidth="6" strokeLinecap="round" />
+        </g>
+      </g>
+      {/* פיקניק משפחתי על הגבעה */}
+      <g transform="translate(1330,630)">
+        <ellipse cx="0" cy="34" rx="160" ry="30" fill="#8c6d43" opacity="0.25" />
+        <ellipse cx="0" cy="30" rx="152" ry="26" fill="#d7666f" />
+        <ellipse cx="0" cy="30" rx="110" ry="17" fill="#e2848b" />
+        <g transform="translate(-84,6)">
+          <circle cx="0" cy="-52" r="14" fill="#eac9a2" />
+          <path d="M-15 -38 h30 q8 30 0 40 h-30 q-8 -10 0 -40z" fill="#8c6d43" />
+          <path d="M13 -30 L44 -12" stroke="#eac9a2" strokeWidth="6" strokeLinecap="round" />
+        </g>
+        <g transform="translate(-32,16)">
+          <circle cx="0" cy="-42" r="11" fill="#eac9a2" />
+          <path d="M-12 -30 h24 q5 22 0 28 h-24 q-5 -6 0 -28z" fill="#7f8a52" />
+        </g>
+        <g transform="translate(62,4)">
+          <circle cx="0" cy="-54" r="15" fill="#eac9a2" />
+          <path d="M-16 -40 h32 q8 32 0 42 h-32 q-8 -10 0 -42z" fill="#6f7a4e" />
+        </g>
+        <g transform="translate(122,12)">
+          <path d="M-24 0 h48 l-8 24 h-32 z" fill="#c19a45" stroke="#9a7a34" strokeWidth="3" />
+          <path d="M-14 0 q14 -20 28 0" fill="none" stroke="#9a7a34" strokeWidth="4" />
+        </g>
+      </g>
+      {/* כדור משחק */}
+      <g transform="translate(1128,678)">
+        <circle cx="0" cy="0" r="14" fill="#d3ab53" stroke="#a9884a" strokeWidth="3" />
+        <path d="M-14 0 q14 -10 28 0" fill="none" stroke="#a9884a" strokeWidth="3" />
+      </g>
       {/* זוהר הנרות */}
       <ellipse cx="800" cy="600" rx="430" ry="240" fill="url(#shb-candleglow)" />
       {/* שולחן השבת */}

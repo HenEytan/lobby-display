@@ -489,10 +489,6 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
   position: relative; z-index: 1; display: flex; flex-direction: column;
   align-items: center; text-align: center; margin-bottom: 24vh;
 }
-.shabbat-eyebrow {
-  font-size: clamp(14px, 1.5vw, 24px); letter-spacing: 0.45em; padding-right: 0.45em;
-  color: #dcbf7c; font-weight: 600;
-}
 .shabbat h1 {
   margin: 0.5vh 0 0; font-size: clamp(56px, 8.5vw, 160px); font-weight: 800;
   background: linear-gradient(180deg, #fdf3d6 12%, #ecca87 55%, #c9974b 100%);
@@ -501,7 +497,8 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 }
 .shabbat-orn { width: clamp(180px, 22vw, 340px); margin-top: 1.2vh; }
 .shabbat p {
-  margin-top: 1.6vh; font-size: clamp(17px, 2vw, 34px); color: #ead9b4;
+  margin-top: 2.2vh; font-size: clamp(28px, 3.4vw, 62px); font-weight: 600;
+  line-height: 1.35; max-width: 90vw; color: #ead9b4;
   text-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
 }
 .shabbat-times-row { display: flex; gap: clamp(12px, 2vw, 28px); margin-top: 3.2vh; }
@@ -525,7 +522,6 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 
 /* ─── מסך שבת — גרסה בהירה כללית לכל שעות השבת ─── */
 .shabbat { background: #fbf5e6; color: #6b5423; }
-.shabbat-eyebrow { color: #a8843c; }
 .shabbat h1 {
   background: linear-gradient(180deg, #cf9f42 5%, #a87b26 55%, #7c5a1c 100%);
   -webkit-background-clip: text; background-clip: text; color: transparent;

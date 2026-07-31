@@ -668,7 +668,6 @@ function ShabbatScreen({ shabbat, name }) {
     <div className="fullscreen shabbat" dir="rtl">
       <ShabbatSceneArt className="shabbat-scene" />
       <div className="shabbat-content">
-        <div className="shabbat-eyebrow">שבת קודש</div>
         <h1>שבת שלום</h1>
         <svg className="shabbat-orn" viewBox="0 0 320 24" aria-hidden="true">
           <line x1="10" y1="12" x2="132" y2="12" stroke="#b8934a" strokeWidth="2" opacity="0.8" />

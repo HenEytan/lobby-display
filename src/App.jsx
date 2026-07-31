@@ -6,7 +6,7 @@ import { fetchWeather, weatherIcon, uvLevel } from "./lib/feeds";
 import { syncTime, israelNow, TIME_SYNC_MS } from "./lib/time";
 import { fetchNews, NEWS_REFRESH_MS } from "./lib/news";
 import { applyTheme } from "./lib/themes";
-import { BuildingArt, OliveDivider, CategoryIcon, AnnouncementIcon, rotatingArt } from "./lib/artwork.jsx";
+import { BuildingArt, OliveDivider, CategoryIcon, AnnouncementIcon, rotatingArt, ShabbatNightArt } from "./lib/artwork.jsx";
 import {
   useLobbyData, activeBanners, activeAnnouncements, urgentAnnouncement,
   BG_PRESETS, pullFromServer, SYNC_POLL_MS, isMusicHour,
@@ -666,12 +666,26 @@ function UrgentScreen({ ann, now }) {
 function ShabbatScreen({ shabbat, name }) {
   return (
     <div className="fullscreen shabbat" dir="rtl">
-      <div className="shabbat-glow" />
-      <div className="shabbat-candles">🕯🕯</div>
-      <h1>שבת שלום</h1>
-      <p>לכל דיירי {name} ומשפחותיהם</p>
-      <div className="shabbat-meta">
-        הדלקת נרות {shabbat.candles} · צאת השבת {shabbat.havdalah}
+      <ShabbatNightArt className="shabbat-scene" />
+      <div className="shabbat-content">
+        <div className="shabbat-eyebrow">שבת קודש</div>
+        <h1>שבת שלום</h1>
+        <svg className="shabbat-orn" viewBox="0 0 320 24" aria-hidden="true">
+          <line x1="10" y1="12" x2="132" y2="12" stroke="#dcbf7c" strokeWidth="2" opacity="0.8" />
+          <rect x="152" y="4" width="16" height="16" transform="rotate(45 160 12)" fill="none" stroke="#dcbf7c" strokeWidth="2" />
+          <line x1="188" y1="12" x2="310" y2="12" stroke="#dcbf7c" strokeWidth="2" opacity="0.8" />
+        </svg>
+        <p>לכל דיירי {name} ומשפחותיהם — שבת של מנוחה ושלווה</p>
+        <div className="shabbat-times-row">
+          <div className="sh-chip">
+            <span className="sh-label">הדלקת נרות</span>
+            <span className="sh-val">{shabbat.candles}</span>
+          </div>
+          <div className="sh-chip">
+            <span className="sh-label">צאת השבת</span>
+            <span className="sh-val">{shabbat.havdalah}</span>
+          </div>
+        </div>
       </div>
     </div>
   );

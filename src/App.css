@@ -481,3 +481,44 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 }
 .news-ticker .ticker-viewport { flex: 1; display: flex; align-items: center; overflow: hidden; }
 .news-ticker .ticker-track { color: var(--ink); font-size: clamp(19px, 1.75vw, 31px); font-weight: 600; }
+
+/* ─── מסך שבת — עיצוב מחודש: לילה, נרות דולקים ושולחן שבת ─── */
+.shabbat { background: #171d3a; color: #f2e8cf; overflow: hidden; }
+.shabbat-scene { position: absolute; inset: 0; width: 100%; height: 100%; }
+.shabbat-content {
+  position: relative; z-index: 1; display: flex; flex-direction: column;
+  align-items: center; text-align: center; margin-bottom: 24vh;
+}
+.shabbat-eyebrow {
+  font-size: clamp(14px, 1.5vw, 24px); letter-spacing: 0.45em; padding-right: 0.45em;
+  color: #dcbf7c; font-weight: 600;
+}
+.shabbat h1 {
+  margin: 0.5vh 0 0; font-size: clamp(56px, 8.5vw, 160px); font-weight: 800;
+  background: linear-gradient(180deg, #fdf3d6 12%, #ecca87 55%, #c9974b 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 6px 26px rgba(0, 0, 0, 0.45));
+}
+.shabbat-orn { width: clamp(180px, 22vw, 340px); margin-top: 1.2vh; }
+.shabbat p {
+  margin-top: 1.6vh; font-size: clamp(17px, 2vw, 34px); color: #ead9b4;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+}
+.shabbat-times-row { display: flex; gap: clamp(12px, 2vw, 28px); margin-top: 3.2vh; }
+.sh-chip {
+  display: flex; flex-direction: column; gap: 4px; min-width: clamp(130px, 14vw, 220px);
+  padding: clamp(10px, 1.2vw, 18px) clamp(18px, 2vw, 30px);
+  background: rgba(22, 20, 48, 0.55); border: 1px solid rgba(226, 195, 124, 0.45);
+  border-radius: 18px; backdrop-filter: blur(4px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+}
+.sh-label { font-size: clamp(12px, 1.1vw, 18px); color: #d8bd84; letter-spacing: 0.08em; }
+.sh-val { font-size: clamp(24px, 2.6vw, 46px); font-weight: 700; color: #fbf2da; font-variant-numeric: tabular-nums; }
+.shb-star { animation: shbTwinkle 3.6s ease-in-out infinite; }
+.shb-flame { transform-box: fill-box; transform-origin: 50% 92%; animation: shbFlick 2.3s ease-in-out infinite; }
+.shb-flame.f2 { animation-duration: 2.7s; animation-delay: 1.2s; }
+@keyframes shbTwinkle { 0%, 100% { opacity: 0.25; } 50% { opacity: 0.95; } }
+@keyframes shbFlick {
+  0%, 100% { transform: scale(1) rotate(-2deg); }
+  50% { transform: scale(1.05, 1.12) rotate(2deg); }
+}

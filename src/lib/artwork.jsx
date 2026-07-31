@@ -697,64 +697,74 @@ const GIZUM_SVG = `
 
 export const GIZUM_BG = `${svgURL(GIZUM_SVG)} center / cover no-repeat`;
 
-
-// ─── סצנת ליל שבת למסך המלא: שמי לילה, ירח, קו רקיע ושולחן שבת ───
-export function ShabbatNightArt({ className = "" }) {
-  const stars = [
-    [90, 90, 3], [190, 170, 2], [300, 70, 2.5], [420, 150, 2], [540, 60, 3],
-    [660, 130, 2], [780, 55, 2.5], [905, 140, 2], [1030, 75, 3], [1120, 190, 2],
-    [1330, 60, 2.5], [1440, 150, 2], [1530, 90, 3], [240, 260, 2], [700, 240, 2.5],
-    [980, 250, 2], [1500, 260, 2.5], [60, 210, 2], [1240, 260, 2],
+// ─── סצנת שבת למסך המלא: אור זהוב רך, גבעות, יונים ושולחן שבת ───
+// עיצוב כללי וחם שמתאים לכל שעות השבת — מהערב ועד צאתה.
+export function ShabbatSceneArt({ className = "" }) {
+  const sparks = [
+    [150, 130, 10], [420, 80, 8], [1180, 100, 10], [1460, 170, 8],
+    [280, 260, 7], [1330, 290, 7], [700, 70, 8], [980, 150, 9],
   ];
   return (
     <svg className={className} viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
       <defs>
         <linearGradient id="shb-sky" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#151b38" />
-          <stop offset="0.45" stopColor="#2b2a52" />
-          <stop offset="0.72" stopColor="#5b3f63" />
-          <stop offset="1" stopColor="#a2653f" />
+          <stop offset="0" stopColor="#fdfaf0" />
+          <stop offset="0.5" stopColor="#f8edd2" />
+          <stop offset="1" stopColor="#efdcb0" />
         </linearGradient>
-        <radialGradient id="shb-moonglow" cx="50%" cy="50%" r="50%">
-          <stop offset="0" stopColor="rgba(243,231,192,0.5)" />
-          <stop offset="1" stopColor="rgba(243,231,192,0)" />
+        <radialGradient id="shb-light" cx="50%" cy="30%" r="60%">
+          <stop offset="0" stopColor="rgba(244,205,115,0.5)" />
+          <stop offset="1" stopColor="rgba(244,205,115,0)" />
         </radialGradient>
         <radialGradient id="shb-candleglow" cx="50%" cy="50%" r="50%">
-          <stop offset="0" stopColor="rgba(244,196,98,0.4)" />
-          <stop offset="1" stopColor="rgba(244,196,98,0)" />
+          <stop offset="0" stopColor="rgba(240,180,80,0.38)" />
+          <stop offset="1" stopColor="rgba(240,180,80,0)" />
         </radialGradient>
         <linearGradient id="shb-cloth" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#f4ebd4" />
-          <stop offset="1" stopColor="#ddcda6" />
+          <stop offset="0" stopColor="#fdf8ea" />
+          <stop offset="1" stopColor="#e5d6ae" />
         </linearGradient>
       </defs>
       <rect width="1600" height="900" fill="url(#shb-sky)" />
-      {stars.map(([x, y, r], i) => (
-        <circle key={i} className="shb-star" cx={x} cy={y} r={r} fill="#f4ecd2"
-          style={{ animationDelay: `${(i % 7) * 0.55}s` }} />
+      <circle cx="800" cy="240" r="560" fill="url(#shb-light)" />
+      {/* ניצוצות זהב עדינים */}
+      {sparks.map(([x, y, s], i) => (
+        <path key={i} className="shb-star"
+          d={`M${x} ${y - s} L${x + s * 0.3} ${y - s * 0.3} L${x + s} ${y} L${x + s * 0.3} ${y + s * 0.3} L${x} ${y + s} L${x - s * 0.3} ${y + s * 0.3} L${x - s} ${y} L${x - s * 0.3} ${y - s * 0.3} Z`}
+          fill="#d9b45c" opacity="0.5" style={{ animationDelay: `${(i % 5) * 0.8}s` }} />
       ))}
-      <circle cx="1280" cy="165" r="105" fill="url(#shb-moonglow)" />
-      <circle cx="1280" cy="165" r="46" fill="#f3e7c0" />
-      <circle cx="1301" cy="152" r="42" fill="#20244a" opacity="0.92" />
-      <path d="M0 640 h70 v-60 h60 l14 -22 14 22 h50 v60 h80 v-90 h90 v90 h60 v-46 h70 v46 h110 v-70 h40 v-28 h44 v28 h40 v70 h120 v-52 h84 v52 h90 v-84 h96 v84 h70 v-40 h64 v40 h110 v-64 h100 v64 h124 v260 H0 z"
-        fill="#221d40" opacity="0.9" />
-      <g fill="#f2c76a" opacity="0.75">
-        <rect x="160" y="600" width="14" height="16" rx="2" />
-        <rect x="310" y="572" width="14" height="16" rx="2" />
-        <rect x="560" y="618" width="12" height="14" rx="2" />
-        <rect x="905" y="588" width="14" height="16" rx="2" />
-        <rect x="1210" y="612" width="12" height="14" rx="2" />
-        <rect x="1450" y="616" width="14" height="16" rx="2" />
+      {/* ענפי זית מסגרת בפינות העליונות */}
+      <g stroke="#9aa06f" strokeWidth="5" fill="none" strokeLinecap="round">
+        <path d="M-20 60 q120 30 210 130" />
+        <path d="M1620 60 q-120 30 -210 130" />
       </g>
-      <g fill="#1b1734">
-        <circle cx="120" cy="628" r="26" /><rect x="115" y="636" width="10" height="20" />
-        <circle cx="1050" cy="632" r="30" /><rect x="1044" y="640" width="12" height="22" />
+      <g fill="#a8ae7c">
+        <ellipse cx="70" cy="86" rx="20" ry="9" transform="rotate(24 70 86)" />
+        <ellipse cx="130" cy="118" rx="20" ry="9" transform="rotate(38 130 118)" />
+        <ellipse cx="178" cy="164" rx="20" ry="9" transform="rotate(52 178 164)" />
+        <ellipse cx="1530" cy="86" rx="20" ry="9" transform="rotate(-24 1530 86)" />
+        <ellipse cx="1470" cy="118" rx="20" ry="9" transform="rotate(-38 1470 118)" />
+        <ellipse cx="1422" cy="164" rx="20" ry="9" transform="rotate(-52 1422 164)" />
       </g>
+      <g fill="#6f7a4e">
+        <circle cx="98" cy="104" r="6" /><circle cx="152" cy="144" r="6" />
+        <circle cx="1502" cy="104" r="6" /><circle cx="1448" cy="144" r="6" />
+      </g>
+      {/* יונים */}
+      <g fill="#ffffff" stroke="#c9bfa2" strokeWidth="3" strokeLinejoin="round">
+        <path d="M560 190 q28-30 54-10 q30-26 20 8 q34-6 10 20 q-40 22 -74 4 q-18-10 -10-22z" />
+        <path d="M1000 250 q22-24 43-8 q24-21 16 6 q27-5 8 16 q-32 18 -59 3 q-14-8 -8-17z" transform="scale(0.85) translate(180,60)" />
+      </g>
+      {/* גבעות רכות */}
+      <path d="M0 620 q260-90 520-40 q280 54 560 6 q260-44 520 34 V900 H0 z" fill="#e2d5a4" opacity="0.85" />
+      <path d="M0 680 q300-64 640-24 q340 40 960 -6 V900 H0 z" fill="#d5c58e" opacity="0.9" />
+      {/* זוהר הנרות */}
       <ellipse cx="800" cy="600" rx="430" ry="240" fill="url(#shb-candleglow)" />
+      {/* שולחן השבת */}
       <path d="M0 730 q400 -34 800 -34 t800 34 V900 H0 z" fill="url(#shb-cloth)" />
-      <path d="M0 748 q400 -30 800 -30 t800 30" fill="none" stroke="#cbb98d" strokeWidth="3" opacity="0.6" />
+      <path d="M0 748 q400 -30 800 -30 t800 30" fill="none" stroke="#c6b283" strokeWidth="3" opacity="0.7" />
       <g transform="translate(568,660)">
-        <ellipse cx="0" cy="88" rx="52" ry="10" fill="#c9b487" opacity="0.55" />
+        <ellipse cx="0" cy="88" rx="52" ry="10" fill="#b9a26b" opacity="0.45" />
         <path d="M-34 0 h68 q0 42 -34 50 q-34 -8 -34 -50z" fill="#d3ab53" stroke="#a9884a" strokeWidth="4" />
         <path d="M-22 10 q22 12 44 0" fill="none" stroke="#8c2f39" strokeWidth="8" strokeLinecap="round" />
         <rect x="-6" y="48" width="12" height="28" fill="#b3924e" />
@@ -763,26 +773,27 @@ export function ShabbatNightArt({ className = "" }) {
       <g>
         <path d="M712 806 h56 l-9 -20 h-38 z" fill="#c9a24e" />
         <rect x="731" y="716" width="18" height="72" rx="6" fill="#b3924e" />
-        <rect x="722" y="606" width="36" height="116" rx="10" fill="#fdf8ea" stroke="#d9cfae" strokeWidth="3" />
+        <rect x="722" y="606" width="36" height="116" rx="10" fill="#fdf8ea" stroke="#cfc19a" strokeWidth="3" />
         <rect x="736" y="588" width="8" height="22" rx="4" fill="#8f8a7a" />
         <ellipse cx="740" cy="560" rx="34" ry="44" fill="url(#shb-candleglow)" />
-        <path className="shb-flame" d="M740 528 q20 26 0 54 q-20 -28 0 -54z" fill="#f5b53e" stroke="#d98f1f" strokeWidth="3" />
-        <path className="shb-flame" d="M740 548 q8 12 0 24 q-8 -12 0 -24z" fill="#fdeab8" />
+        <path className="shb-flame" d="M740 528 q20 26 0 54 q-20 -28 0 -54z" fill="#f0a92e" stroke="#cf8318" strokeWidth="3" />
+        <path className="shb-flame" d="M740 548 q8 12 0 24 q-8 -12 0 -24z" fill="#fde3a6" />
         <path d="M832 806 h56 l-9 -20 h-38 z" fill="#c9a24e" />
         <rect x="851" y="716" width="18" height="72" rx="6" fill="#b3924e" />
-        <rect x="842" y="606" width="36" height="116" rx="10" fill="#fdf8ea" stroke="#d9cfae" strokeWidth="3" />
+        <rect x="842" y="606" width="36" height="116" rx="10" fill="#fdf8ea" stroke="#cfc19a" strokeWidth="3" />
         <rect x="856" y="588" width="8" height="22" rx="4" fill="#8f8a7a" />
         <ellipse cx="860" cy="560" rx="34" ry="44" fill="url(#shb-candleglow)" />
-        <path className="shb-flame f2" d="M860 528 q20 26 0 54 q-20 -28 0 -54z" fill="#f5b53e" stroke="#d98f1f" strokeWidth="3" />
-        <path className="shb-flame f2" d="M860 548 q8 12 0 24 q-8 -12 0 -24z" fill="#fdeab8" />
+        <path className="shb-flame f2" d="M860 528 q20 26 0 54 q-20 -28 0 -54z" fill="#f0a92e" stroke="#cf8318" strokeWidth="3" />
+        <path className="shb-flame f2" d="M860 548 q8 12 0 24 q-8 -12 0 -24z" fill="#fde3a6" />
       </g>
       <g transform="translate(1035,700)">
-        <ellipse cx="0" cy="86" rx="118" ry="14" fill="#c9b487" opacity="0.5" />
-        <path d="M-96 60 q-14 -64 44 -78 q10 -26 52 -26 q42 0 52 26 q58 14 44 78 q-8 26 -96 26 t-96 -26z" fill="#f6efdd" stroke="#d8caa6" strokeWidth="4" />
-        <path d="M-88 44 q88 26 176 0" fill="none" stroke="#c9a24e" strokeWidth="6" strokeLinecap="round" opacity="0.85" />
-        <path d="M-60 66 q60 16 120 0" fill="none" stroke="#ddd0ad" strokeWidth="4" strokeLinecap="round" />
-        <circle cx="0" cy="22" r="9" fill="none" stroke="#c9a24e" strokeWidth="4" opacity="0.8" />
+        <ellipse cx="0" cy="86" rx="118" ry="14" fill="#b9a26b" opacity="0.4" />
+        <path d="M-96 60 q-14 -64 44 -78 q10 -26 52 -26 q42 0 52 26 q58 14 44 78 q-8 26 -96 26 t-96 -26z" fill="#fbf4e2" stroke="#cdbc92" strokeWidth="4" />
+        <path d="M-88 44 q88 26 176 0" fill="none" stroke="#c19a45" strokeWidth="6" strokeLinecap="round" opacity="0.85" />
+        <path d="M-60 66 q60 16 120 0" fill="none" stroke="#d6c79d" strokeWidth="4" strokeLinecap="round" />
+        <circle cx="0" cy="22" r="9" fill="none" stroke="#c19a45" strokeWidth="4" opacity="0.8" />
       </g>
     </svg>
   );
 }
+

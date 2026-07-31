@@ -522,3 +522,20 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
   0%, 100% { transform: scale(1) rotate(-2deg); }
   50% { transform: scale(1.05, 1.12) rotate(2deg); }
 }
+
+/* ─── מסך שבת — גרסה בהירה כללית לכל שעות השבת ─── */
+.shabbat { background: #fbf5e6; color: #6b5423; }
+.shabbat-eyebrow { color: #a8843c; }
+.shabbat h1 {
+  background: linear-gradient(180deg, #cf9f42 5%, #a87b26 55%, #7c5a1c 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 4px 16px rgba(160, 120, 40, 0.28));
+}
+.shabbat p { color: #7d6636; text-shadow: none; }
+.sh-chip {
+  background: rgba(255, 252, 242, 0.78);
+  border-color: rgba(176, 138, 62, 0.5);
+  box-shadow: 0 8px 26px rgba(150, 110, 40, 0.18);
+}
+.sh-label { color: #a8843c; }
+.sh-val { color: #6b4f18; }

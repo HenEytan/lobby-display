@@ -571,59 +571,68 @@ const MOTZASH_SVG = `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" preserveAspectRatio="xMidYMid slice">
   <defs>
     <linearGradient id="mzsky" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#12172e"/>
-      <stop offset="0.55" stop-color="#1e2749"/>
-      <stop offset="1" stop-color="#33406f"/>
+      <stop offset="0" stop-color="#2a3160"/>
+      <stop offset="0.42" stop-color="#6b5fa8"/>
+      <stop offset="0.72" stop-color="#d98aa2"/>
+      <stop offset="1" stop-color="#ffc97c"/>
     </linearGradient>
-    <radialGradient id="mzglow" cx="50%" cy="42%" r="55%">
-      <stop offset="0" stop-color="rgba(255,200,110,0.5)"/>
-      <stop offset="1" stop-color="rgba(255,200,110,0)"/>
+    <radialGradient id="mzsun" cx="50%" cy="100%" r="70%">
+      <stop offset="0" stop-color="rgba(255,220,140,0.9)"/>
+      <stop offset="0.5" stop-color="rgba(255,190,110,0.35)"/>
+      <stop offset="1" stop-color="rgba(255,190,110,0)"/>
     </radialGradient>
+    <linearGradient id="mzhillA" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3f5f7d"/><stop offset="1" stop-color="#2c4560"/>
+    </linearGradient>
+    <linearGradient id="mzhillB" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2b4258"/><stop offset="1" stop-color="#1f3245"/>
+    </linearGradient>
   </defs>
   <rect width="800" height="450" fill="url(#mzsky)"/>
-  <g fill="#f4e3ae">
-    <path d="M96 70 l5 12 12 2 -9 9 2 13 -10-6 -10 6 2-13 -9-9 12-2z" opacity="0.9"/>
-    <path d="M700 96 l4 10 10 2 -7 7 1 11 -8-5 -8 5 1-11 -7-7 10-2z" opacity="0.75"/>
-    <path d="M636 40 l3 8 8 1 -6 6 1 9 -6-4 -6 4 1-9 -6-6 8-1z" opacity="0.6"/>
-    <path d="M170 170 l3 8 8 1 -6 6 1 9 -6-4 -6 4 1-9 -6-6 8-1z" opacity="0.55"/>
-    <path d="M660 250 l4 10 10 2 -7 7 1 11 -8-5 -8 5 1-11 -7-7 10-2z" opacity="0.7"/>
+  <!-- כוכבים אחרונים של הלילה -->
+  <g fill="#ffffff">
+    <circle cx="90" cy="60" r="2.2" opacity="0.85"/><circle cx="200" cy="110" r="1.7" opacity="0.6"/>
+    <circle cx="320" cy="52" r="2" opacity="0.75"/><circle cx="470" cy="86" r="1.6" opacity="0.55"/>
+    <circle cx="600" cy="48" r="2.2" opacity="0.8"/><circle cx="716" cy="104" r="1.8" opacity="0.6"/>
+    <circle cx="150" cy="170" r="1.5" opacity="0.4"/><circle cx="660" cy="170" r="1.5" opacity="0.4"/>
   </g>
-  <g fill="#ffffff" opacity="0.7">
-    <circle cx="60" cy="150" r="2"/><circle cx="220" cy="60" r="2.4"/><circle cx="300" cy="110" r="1.7"/>
-    <circle cx="520" cy="55" r="2"/><circle cx="580" cy="150" r="1.7"/><circle cx="740" cy="200" r="2.2"/>
-    <circle cx="120" cy="260" r="1.7"/><circle cx="760" cy="60" r="1.8"/><circle cx="410" cy="48" r="1.6"/>
+  <g fill="#ffe9b8">
+    <path d="M120 96 l4 10 10 2 -7 7 1 11 -8-5 -8 5 1-11 -7-7 10-2z" opacity="0.85"/>
+    <path d="M680 66 l3 8 8 1 -6 6 1 9 -6-4 -6 4 1-9 -6-6 8-1z" opacity="0.7"/>
   </g>
-  <path d="M726 138 a44 44 0 1 1 -36 -70 a36 36 0 1 0 36 70z" fill="#f4e3b0" opacity="0.95"/>
-  <circle cx="400" cy="180" r="160" fill="url(#mzglow)"/>
-  <!-- נר הבדלה קלוע -->
+  <!-- הילת זריחה -->
+  <rect width="800" height="450" fill="url(#mzsun)"/>
+  <!-- שמש עולה -->
   <g>
-    <rect x="382" y="140" width="36" height="106" rx="10" fill="#3a63b8" stroke="#274a92" stroke-width="2.5"/>
-    <path d="M386 150 q14 12 28 0 M386 174 q14 12 28 0 M386 198 q14 12 28 0 M386 222 q14 12 28 0" fill="none" stroke="#f2f5ff" stroke-width="6" stroke-linecap="round" opacity="0.9"/>
-    <rect x="396" y="126" width="8" height="18" rx="4" fill="#8f8a7a"/>
-    <path d="M400 78 q20 26 0 52 q-20-26 0-52z" fill="#f2b23e" stroke="#d98f1f" stroke-width="2"/>
-    <path d="M400 96 q8 12 0 24 q-8-12 0-24z" fill="#fde9b8"/>
-    <path d="M376 246 h48 l-7 15 h-34 z" fill="#c9a84c"/>
+    <circle cx="400" cy="332" r="64" fill="#ffd98c"/>
+    <circle cx="400" cy="332" r="64" fill="none" stroke="#fff3d0" stroke-width="4" opacity="0.8"/>
+    <g stroke="#ffd98c" stroke-width="6" stroke-linecap="round" opacity="0.85">
+      <line x1="400" y1="216" x2="400" y2="242"/>
+      <line x1="306" y1="252" x2="325" y2="270"/>
+      <line x1="494" y1="252" x2="475" y2="270"/>
+      <line x1="272" y1="330" x2="298" y2="330"/>
+      <line x1="528" y1="330" x2="502" y2="330"/>
+    </g>
   </g>
-  <!-- גביע יין -->
-  <g transform="translate(298,248)">
-    <path d="M-20 0 h40 q0 26 -20 30 q-20-4 -20-30z" fill="#c9a84c" stroke="#a9884a" stroke-width="2.5"/>
-    <rect x="-3.5" y="28" width="7" height="18" fill="#a9884a"/>
-    <path d="M-14 48 h28 l4 8 h-36 z" fill="#c9a84c"/>
-    <path d="M-13 6 q13 7 26 0" fill="none" stroke="#8c2f39" stroke-width="5" stroke-linecap="round"/>
+  <!-- ציפורים -->
+  <g fill="none" stroke="#2f3a55" stroke-width="4" stroke-linecap="round">
+    <path d="M232 160 q12 -12 24 0 q12 -12 24 0"/>
+    <path d="M540 132 q10 -10 20 0 q10 -10 20 0"/>
+    <path d="M330 108 q8 -8 16 0 q8 -8 16 0"/>
   </g>
-  <!-- קופסת בשמים -->
-  <g transform="translate(506,232)">
-    <rect x="-18" y="26" width="36" height="46" rx="6" fill="#c9a84c" stroke="#a9884a" stroke-width="2.5"/>
-    <path d="M-18 26 q18 -30 36 0 z" fill="#c9a84c" stroke="#a9884a" stroke-width="2.5"/>
-    <circle cx="0" cy="4" r="4" fill="#f4e3b0"/>
-    <g stroke="#7d6428" stroke-width="2"><line x1="-8" y1="36" x2="-8" y2="62"/><line x1="0" y1="36" x2="0" y2="62"/><line x1="8" y1="36" x2="8" y2="62"/></g>
-    <path d="M-24 72 h48 l5 9 h-58 z" fill="#c9a84c"/>
+  <!-- עננים רכים -->
+  <g fill="#ffffff" opacity="0.35">
+    <ellipse cx="160" cy="236" rx="66" ry="15"/><ellipse cx="205" cy="224" rx="42" ry="12"/>
+    <ellipse cx="632" cy="216" rx="72" ry="16"/><ellipse cx="586" cy="204" rx="40" ry="11"/>
   </g>
-  <g fill="#ffd88a">
-    <circle cx="356" cy="94" r="3" opacity="0.9"/>
-    <circle cx="448" cy="86" r="2.6" opacity="0.8"/>
-    <circle cx="342" cy="128" r="2.2" opacity="0.7"/>
-    <circle cx="462" cy="126" r="2.2" opacity="0.7"/>
+  <!-- גבעות -->
+  <path d="M0 356 q120 -64 260 -20 q150 46 320 -8 q120 -36 220 16 v106 h-800z" fill="url(#mzhillA)"/>
+  <path d="M0 402 q170 -52 350 -12 q200 44 450 -6 v66 h-800z" fill="url(#mzhillB)"/>
+  <!-- ניצוצות של שבוע חדש -->
+  <g fill="#ffe9b8">
+    <circle cx="352" cy="250" r="2.6" opacity="0.9"/>
+    <circle cx="452" cy="244" r="2.2" opacity="0.8"/>
+    <circle cx="400" cy="200" r="2.4" opacity="0.7"/>
   </g>
 </svg>`;
 HOLIDAY_ART["motzash"] = `${svgURL(MOTZASH_SVG)} center / cover no-repeat`;

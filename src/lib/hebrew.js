@@ -70,6 +70,25 @@ export function todayHoliday(d) {
 
 const HOD_HASHARON = new Location(32.15, 34.89, true, "Asia/Jerusalem", "Hod HaSharon", "IL");
 
+// זמני hebcal (הדלקה/הבדלה) הם רגעים אמיתיים (UTC). שעון המכשיר עלול להיות
+// באזור זמן שגוי, לכן ממירים כל זמן ל"תאריך מוזז" שקריאת השדות המקומיים שלו
+// (getHours/getDay) נותנת שעון ישראל — אותה מוסכמה של israelNow(), כך
+// שההשוואות מול now והתצוגה תמיד נכונות, בלי תלות באזור הזמן של המכשיר.
+const IL_PARTS_FMT = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Asia/Jerusalem", hourCycle: "h23",
+  year: "numeric", month: "2-digit", day: "2-digit",
+  hour: "2-digit", minute: "2-digit", second: "2-digit",
+});
+function toIsraelLocal(t) {
+  try {
+    const p = {};
+    for (const part of IL_PARTS_FMT.formatToParts(t)) p[part.type] = part.value;
+    return new Date(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute, +p.second);
+  } catch {
+    return t;
+  }
+}
+
 function fridayOf(d) {
   const x = new Date(d);
   x.setHours(12, 0, 0, 0);
@@ -95,7 +114,7 @@ function shabbatWindow(d) {
     });
     for (const ev of events) {
       const desc = stripNiqqud(ev.render("he"));
-      const time = ev.eventTime ? new Date(ev.eventTime) : null;
+      const time = ev.eventTime ? toIsraelLocal(new Date(ev.eventTime)) : null;
       if (!time) continue;
       if (/הדלקת נרות/.test(desc) && time.getDay() === 5) candles = time;
       if (/הבדלה/.test(desc)) havdalah = time;

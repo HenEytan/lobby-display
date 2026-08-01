@@ -566,6 +566,69 @@ const FRIDAY_SVG = `
 HOLIDAY_ART["friday_shabbat"] = `${svgURL(FRIDAY_SVG)} center / cover no-repeat`;
 HOLIDAY_ART_KEYS.push("friday_shabbat");
 
+// ─── באנר מוצאי שבת — נר הבדלה, גביע ובשמים על שמי לילה זרועי כוכבים ───
+const MOTZASH_SVG = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="mzsky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#12172e"/>
+      <stop offset="0.55" stop-color="#1e2749"/>
+      <stop offset="1" stop-color="#33406f"/>
+    </linearGradient>
+    <radialGradient id="mzglow" cx="50%" cy="42%" r="55%">
+      <stop offset="0" stop-color="rgba(255,200,110,0.5)"/>
+      <stop offset="1" stop-color="rgba(255,200,110,0)"/>
+    </radialGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#mzsky)"/>
+  <g fill="#f4e3ae">
+    <path d="M96 70 l5 12 12 2 -9 9 2 13 -10-6 -10 6 2-13 -9-9 12-2z" opacity="0.9"/>
+    <path d="M700 96 l4 10 10 2 -7 7 1 11 -8-5 -8 5 1-11 -7-7 10-2z" opacity="0.75"/>
+    <path d="M636 40 l3 8 8 1 -6 6 1 9 -6-4 -6 4 1-9 -6-6 8-1z" opacity="0.6"/>
+    <path d="M170 170 l3 8 8 1 -6 6 1 9 -6-4 -6 4 1-9 -6-6 8-1z" opacity="0.55"/>
+    <path d="M660 250 l4 10 10 2 -7 7 1 11 -8-5 -8 5 1-11 -7-7 10-2z" opacity="0.7"/>
+  </g>
+  <g fill="#ffffff" opacity="0.7">
+    <circle cx="60" cy="150" r="2"/><circle cx="220" cy="60" r="2.4"/><circle cx="300" cy="110" r="1.7"/>
+    <circle cx="520" cy="55" r="2"/><circle cx="580" cy="150" r="1.7"/><circle cx="740" cy="200" r="2.2"/>
+    <circle cx="120" cy="260" r="1.7"/><circle cx="760" cy="60" r="1.8"/><circle cx="410" cy="48" r="1.6"/>
+  </g>
+  <path d="M726 138 a44 44 0 1 1 -36 -70 a36 36 0 1 0 36 70z" fill="#f4e3b0" opacity="0.95"/>
+  <circle cx="400" cy="180" r="160" fill="url(#mzglow)"/>
+  <!-- נר הבדלה קלוע -->
+  <g>
+    <rect x="382" y="140" width="36" height="106" rx="10" fill="#3a63b8" stroke="#274a92" stroke-width="2.5"/>
+    <path d="M386 150 q14 12 28 0 M386 174 q14 12 28 0 M386 198 q14 12 28 0 M386 222 q14 12 28 0" fill="none" stroke="#f2f5ff" stroke-width="6" stroke-linecap="round" opacity="0.9"/>
+    <rect x="396" y="126" width="8" height="18" rx="4" fill="#8f8a7a"/>
+    <path d="M400 78 q20 26 0 52 q-20-26 0-52z" fill="#f2b23e" stroke="#d98f1f" stroke-width="2"/>
+    <path d="M400 96 q8 12 0 24 q-8-12 0-24z" fill="#fde9b8"/>
+    <path d="M376 246 h48 l-7 15 h-34 z" fill="#c9a84c"/>
+  </g>
+  <!-- גביע יין -->
+  <g transform="translate(298,248)">
+    <path d="M-20 0 h40 q0 26 -20 30 q-20-4 -20-30z" fill="#c9a84c" stroke="#a9884a" stroke-width="2.5"/>
+    <rect x="-3.5" y="28" width="7" height="18" fill="#a9884a"/>
+    <path d="M-14 48 h28 l4 8 h-36 z" fill="#c9a84c"/>
+    <path d="M-13 6 q13 7 26 0" fill="none" stroke="#8c2f39" stroke-width="5" stroke-linecap="round"/>
+  </g>
+  <!-- קופסת בשמים -->
+  <g transform="translate(506,232)">
+    <rect x="-18" y="26" width="36" height="46" rx="6" fill="#c9a84c" stroke="#a9884a" stroke-width="2.5"/>
+    <path d="M-18 26 q18 -30 36 0 z" fill="#c9a84c" stroke="#a9884a" stroke-width="2.5"/>
+    <circle cx="0" cy="4" r="4" fill="#f4e3b0"/>
+    <g stroke="#7d6428" stroke-width="2"><line x1="-8" y1="36" x2="-8" y2="62"/><line x1="0" y1="36" x2="0" y2="62"/><line x1="8" y1="36" x2="8" y2="62"/></g>
+    <path d="M-24 72 h48 l5 9 h-58 z" fill="#c9a84c"/>
+  </g>
+  <g fill="#ffd88a">
+    <circle cx="356" cy="94" r="3" opacity="0.9"/>
+    <circle cx="448" cy="86" r="2.6" opacity="0.8"/>
+    <circle cx="342" cy="128" r="2.2" opacity="0.7"/>
+    <circle cx="462" cy="126" r="2.2" opacity="0.7"/>
+  </g>
+</svg>`;
+HOLIDAY_ART["motzash"] = `${svgURL(MOTZASH_SVG)} center / cover no-repeat`;
+HOLIDAY_ART_KEYS.push("motzash");
+
 // ─── רקע תזכורת דמי ועד — לוח שנה עם מטבעות, מופיע ביום האחרון של החודש ───
 const VAAD_SVG = `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" preserveAspectRatio="xMidYMid slice">

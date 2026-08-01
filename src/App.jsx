@@ -186,8 +186,8 @@ function Display({ previewMode }) {
     () => (settings.showHolidayBanners ? holidayBannerSchedule(now) : []),
     [settings.showHolidayBanners, now.getDate()]
   );
-  // שקופיית הסופ״ש נשארת לשבת בלבד; ביום שישי הבאנר החדש מוביל את הסבב
-  const showWeekendSlide = now.getDay() === 6 && !shabbat?.active;
+  // מוצאי שבת — אחרי ההבדלה עולה באנר "שבוע טוב" שמוביל את הסבב עד חצות
+  const isMotzash = now.getDay() === 6 && !shabbat?.active;
 
   // תזכורת דמי ועד — שלושת הימים האחרונים של כל חודש, במקום השני בסבב
   const showVaadBanner = useMemo(() => {
@@ -208,7 +208,17 @@ function Display({ previewMode }) {
         bg: "friday_shabbat", image: null,
       },
     }] : [];
-    const s = [...fridayNow, ...holidayNow, ...regular]; // שישי ראשון, אחריו חגים
+    // מוצאי שבת — באנר "שבוע טוב" לכל הדיירים, תמיד ראשון בסבב
+    const motzashNow = isMotzash ? [{
+      type: "banner", key: "b_motzash",
+      banner: {
+        id: "b_motzash",
+        title: "שבוע טוב ומבורך",
+        subtitle: `לכל דיירי ${settings.buildingName} — שבוע של בריאות, הצלחה ושמחה`,
+        bg: "motzash", image: null,
+      },
+    }] : [];
+    const s = [...fridayNow, ...motzashNow, ...holidayNow, ...regular]; // שישי/מוצ״ש ראשונים, אחריהם חגים
     // תזכורת דמי ועד — נכנסת במקום השני בסבב
     if (showVaadBanner) {
       s.splice(Math.min(1, s.length), 0, {
@@ -224,10 +234,9 @@ function Display({ previewMode }) {
     if (settings.showEvents && events.length > 0) s.push({ type: "events", key: "events" });
     if (settings.showCalendar && monthHolidays.length > 0) s.push({ type: "calendar", key: "calendar" });
     if (holiday) s.push({ type: "holiday", key: "holiday" });
-    if (showWeekendSlide) s.push({ type: "weekend", key: "weekend" });
     if (s.length === 0) s.push({ type: "welcome", key: "welcome" });
     return s;
-  }, [data.rev, data.banners, holidayBanners, events, holiday, monthHolidays, settings.showEvents, settings.showCalendar, showWeekendSlide, showVaadBanner, settings.buildingName, musicOn, now.getDate()]);
+  }, [data.rev, data.banners, holidayBanners, events, holiday, monthHolidays, settings.showEvents, settings.showCalendar, isMotzash, showVaadBanner, settings.buildingName, musicOn, now.getDate()]);
 
   const [idx, setIdx] = useState(0);
   useEffect(() => {

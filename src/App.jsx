@@ -218,7 +218,9 @@ function Display({ previewMode }) {
         bg: "motzash", image: null,
       },
     }] : [];
-    const s = [...fridayNow, ...motzashNow, ...holidayNow, ...regular]; // שישי/מוצ״ש ראשונים, אחריהם חגים
+    // תודה לאמה על קייטנת הקיץ — ראשון בסבב, לשבועיים, עם זמן תצוגה ארוך יותר
+    const emmaNow = isEmmaWindow(now) ? [{ type: "emma", key: "b_emma", secs: 30 }] : [];
+    const s = [...emmaNow, ...fridayNow, ...motzashNow, ...holidayNow, ...regular]; // שישי/מוצ״ש ראשונים, אחריהם חגים
     // תזכורת דמי ועד — נכנסת במקום השני בסבב
     if (showVaadBanner) {
       s.splice(Math.min(1, s.length), 0, {
@@ -239,15 +241,17 @@ function Display({ previewMode }) {
   }, [data.rev, data.banners, holidayBanners, events, holiday, monthHolidays, settings.showEvents, settings.showCalendar, isMotzash, showVaadBanner, settings.buildingName, musicOn, now.getDate()]);
 
   const [idx, setIdx] = useState(0);
+  const slide = slides[idx % slides.length];
   useEffect(() => {
     if (slides.length <= 1) return;
+    const base = Math.max(5, settings.rotationSecs);
+    const secs = slide && slide.secs ? slide.secs : base;
     const t = setTimeout(
       () => setIdx((i) => (i + 1) % slides.length),
-      Math.max(5, settings.rotationSecs) * 1000
+      secs * 1000
     );
     return () => clearTimeout(t);
-  }, [idx, slides.length, settings.rotationSecs]);
-  const slide = slides[idx % slides.length];
+  }, [idx, slides.length, settings.rotationSecs, slide]);
 
   const [showVersion, setShowVersion] = useState(false);
   const { isFs, supported: fsOk, toggle: toggleFs } = useFullscreen();
@@ -349,6 +353,7 @@ function Display({ previewMode }) {
 // ─── האזור הראשי ───
 
 function MainSlide({ slide, events, holiday, name, currentTrack, isSaturday, monthHolidays }) {
+  if (slide.type === "emma") return <EmmaSlide />;
   if (slide.type === "banner") return <BannerSlide banner={slide.banner} />;
   if (slide.type === "events") return <EventsSlide events={events} />;
   if (slide.type === "calendar") return <CalendarSlide items={monthHolidays} />;
@@ -356,6 +361,95 @@ function MainSlide({ slide, events, holiday, name, currentTrack, isSaturday, mon
   if (slide.type === "vaad") return <VaadSlide />;
   if (slide.type === "weekend") return <WeekendSlide isSaturday={isSaturday} />;
   return <WelcomeSlide name={name} />;
+}
+
+// ─── באנר תודה לאמה על קייטנת הקיץ (עד 26.8.2026) ───
+const EMMA_UNTIL = new Date("2026-08-26T23:59:59+03:00");
+function isEmmaWindow(d) {
+  return d.getTime() <= EMMA_UNTIL.getTime();
+}
+
+function EmmaSlide() {
+  return (
+    <div
+      className="slide fade"
+      style={{
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "2.2vh",
+        padding: "2.5vh 3vw",
+        borderRadius: "22px",
+        background:
+          "linear-gradient(160deg, #ffd166 0%, #ff9f6b 35%, #ff8a95 65%, #5ecfca 100%)",
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          background: "#ffffff",
+          borderRadius: "26px",
+          padding: "1.6vh 3vw",
+          boxShadow: "0 10px 26px rgba(140,70,20,0.25)",
+          textAlign: "center",
+          maxWidth: "92%",
+          flex: "0 0 auto",
+        }}
+      >
+        <div
+          style={{
+            fontFamily: "'Frank Ruhl Libre', serif",
+            fontSize: "clamp(28px, 3.8vw, 54px)",
+            fontWeight: 700,
+            color: "#e85c3f",
+            lineHeight: 1.2,
+          }}
+        >
+          תודה רבה, אמה! 💛
+        </div>
+        <div
+          style={{
+            fontSize: "clamp(14px, 1.5vw, 22px)",
+            color: "#4a3a28",
+            fontWeight: 500,
+            lineHeight: 1.5,
+            marginTop: "0.6vh",
+          }}
+        >
+          על קייטנת הקיץ הנפלאה שהעניקה לילדי הבניין רגעים של שמחה, יצירה ומשחק
+          — מכל דיירי הבניין, <b style={{ color: "#17a398" }}>שבוע נהדר!</b>
+        </div>
+      </div>
+
+      <div
+        style={{
+          flex: "1 1 auto",
+          minHeight: 0,
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <img
+          src="/emma-camp.webp"
+          alt="קייטנת הקיץ של אמה"
+          style={{
+            maxWidth: "100%",
+            maxHeight: "100%",
+            width: "auto",
+            height: "auto",
+            display: "block",
+            borderRadius: "18px",
+            boxShadow: "0 14px 30px rgba(120,60,20,0.3)",
+          }}
+        />
+      </div>
+    </div>
+  );
 }
 
 function BannerSlide({ banner }) {

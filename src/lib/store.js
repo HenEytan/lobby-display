@@ -3,7 +3,7 @@
 // ולחיצה על "פרסם" מעתיקה את כל הטיוטות ל-live בבת אחת.
 
 import { useEffect, useMemo, useState } from "react";
-import { ART_BG, HOLIDAY_ART, VAAD_BG, CAMERA_BG, GIZUM_BG } from "./artwork.jsx";
+import { ART_BG, HOLIDAY_ART, VAAD_BG, CAMERA_BG, GIZUM_BG, SCHOOL_BG } from "./artwork.jsx";
 
 export const KEYS = ["settings", "banners", "announcements", "ticker", "music"];
 const LIVE = (k) => `lobby_${k}`;
@@ -35,6 +35,7 @@ export const BG_PRESETS = {
   vaad: VAAD_BG,
   gizum: GIZUM_BG,
   camera: CAMERA_BG,
+  school: SCHOOL_BG,
   gold: "linear-gradient(135deg, #f7f1e3 0%, #eaddc0 45%, #d9c194 100%)",
   summer: "linear-gradient(135deg, #fdf6e3 0%, #ffe9c2 50%, #ffd9a0 100%)",
   green: "linear-gradient(135deg, #f3f7ee 0%, #dcead0 50%, #c2d8ae 100%)",

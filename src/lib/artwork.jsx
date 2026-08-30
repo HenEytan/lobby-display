@@ -769,6 +769,97 @@ const GIZUM_SVG = `
 
 export const GIZUM_BG = `${svgURL(GIZUM_SVG)} center / cover no-repeat`;
 
+// ─── רקע פתיחת שנת הלימודים — בית ספר, ספרים, ילקוט ואותיות מרחפות ───
+const SCHOOL_SVG = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sk" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#eaf5fc"/><stop offset="0.7" stop-color="#d8ecf6"/><stop offset="1" stop-color="#c8e2ef"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#sk)"/>
+
+  <circle cx="700" cy="72" r="40" fill="#ffe9a8"/>
+  <g stroke="#e8c65f" stroke-width="5" stroke-linecap="round" opacity="0.9">
+    <line x1="700" y1="10" x2="700" y2="24"/><line x1="700" y1="120" x2="700" y2="134"/>
+    <line x1="638" y1="72" x2="652" y2="72"/><line x1="748" y1="72" x2="762" y2="72"/>
+    <line x1="656" y1="28" x2="666" y2="38"/><line x1="734" y1="106" x2="744" y2="116"/>
+    <line x1="744" y1="28" x2="734" y2="38"/><line x1="666" y1="106" x2="656" y2="116"/>
+  </g>
+
+  <g fill="#ffffff" opacity="0.8">
+    <ellipse cx="150" cy="70" rx="52" ry="18"/><ellipse cx="192" cy="80" rx="38" ry="14"/>
+    <ellipse cx="430" cy="52" rx="44" ry="15"/><ellipse cx="466" cy="60" rx="30" ry="12"/>
+  </g>
+
+  <path d="M250 130 C 330 100, 420 150, 505 112" fill="none" stroke="#93b8d2" stroke-width="3" stroke-dasharray="2 11" stroke-linecap="round"/>
+  <g transform="translate(530,102) rotate(14)">
+    <path d="M0 0 L-46 10 L-14 16 Z" fill="#ffffff" stroke="#7ba3c2" stroke-width="2.5" stroke-linejoin="round"/>
+    <path d="M-46 10 L-10 30 L-14 16 Z" fill="#dcebf5" stroke="#7ba3c2" stroke-width="2.5" stroke-linejoin="round"/>
+  </g>
+
+  <g font-weight="bold" text-anchor="middle">
+    <circle cx="118" cy="170" r="26" fill="#ffffff" opacity="0.85" stroke="#c9a84c" stroke-width="3"/>
+    <text x="118" y="181" font-size="30" fill="#a9812f">א</text>
+    <circle cx="184" cy="128" r="21" fill="#ffffff" opacity="0.85" stroke="#8fae5c" stroke-width="3"/>
+    <text x="184" y="137" font-size="24" fill="#6d8a3a">ב</text>
+    <circle cx="240" cy="182" r="17" fill="#ffffff" opacity="0.85" stroke="#7ba3c2" stroke-width="3"/>
+    <text x="240" y="190" font-size="20" fill="#4a7396">ג</text>
+  </g>
+
+  <rect y="396" width="800" height="54" fill="#9db35c" opacity="0.5"/>
+  <path d="M330 450 L400 396 L470 396 L430 450 Z" fill="#e7d9b8" opacity="0.9"/>
+
+  <g transform="translate(608,282)">
+    <rect x="-118" y="-60" width="236" height="174" rx="8" fill="#f7ecd2" stroke="#c9a84c" stroke-width="4"/>
+    <path d="M-130 -60 L0 -128 L130 -60 Z" fill="#d97b57" stroke="#b85f40" stroke-width="4" stroke-linejoin="round"/>
+    <circle cx="0" cy="-24" r="24" fill="#ffffff" stroke="#a9812f" stroke-width="4"/>
+    <line x1="0" y1="-24" x2="0" y2="-38" stroke="#a9812f" stroke-width="3.5" stroke-linecap="round"/>
+    <line x1="0" y1="-24" x2="10" y2="-18" stroke="#a9812f" stroke-width="3.5" stroke-linecap="round"/>
+    <g fill="#9cc4de" stroke="#7ba3c2" stroke-width="3">
+      <rect x="-96" y="16" width="40" height="34" rx="5"/>
+      <rect x="56" y="16" width="40" height="34" rx="5"/>
+    </g>
+    <rect x="-26" y="34" width="52" height="80" rx="8" fill="#a9784a" stroke="#8a5f38" stroke-width="4"/>
+    <circle cx="-14" cy="76" r="3.5" fill="#f0e0b8"/>
+    <line x1="-158" y1="114" x2="-158" y2="-96" stroke="#8a795c" stroke-width="6" stroke-linecap="round"/>
+    <path d="M-152 -92 L-92 -78 L-152 -62 Z" fill="#e2665f"/>
+  </g>
+
+  <g transform="translate(150,352)">
+    <ellipse cx="6" cy="46" rx="112" ry="15" fill="#7c8a3f" opacity="0.25"/>
+    <g stroke-linejoin="round">
+      <rect x="-84" y="14" width="172" height="32" rx="7" fill="#6e9ec0" stroke="#557f9e" stroke-width="4"/>
+      <rect x="-70" y="-16" width="148" height="32" rx="7" fill="#e2665f" stroke="#b85043" stroke-width="4"/>
+      <rect x="-78" y="-46" width="132" height="32" rx="7" fill="#8fb862" stroke="#6d8a3a" stroke-width="4"/>
+    </g>
+    <g stroke="#ffffff" stroke-width="3.5" opacity="0.75" stroke-linecap="round">
+      <line x1="70" y1="22" x2="70" y2="38"/><line x1="60" y1="-8" x2="60" y2="8"/><line x1="38" y1="-38" x2="38" y2="-22"/>
+    </g>
+    <g transform="translate(112,-10) rotate(24)">
+      <rect x="-9" y="-64" width="18" height="88" rx="3" fill="#e8c65f" stroke="#b8912f" stroke-width="3"/>
+      <path d="M-9 24 L0 46 L9 24 Z" fill="#e7d9b8" stroke="#b8912f" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M-3.5 38 L0 46 L3.5 38 Z" fill="#5a5a5a"/>
+      <rect x="-9" y="-76" width="18" height="12" rx="4" fill="#df8f8a"/>
+    </g>
+    <g transform="translate(-16,-62)">
+      <circle cx="0" cy="0" r="17" fill="#e2665f" stroke="#b85043" stroke-width="3"/>
+      <path d="M0 -14 C 2 -22, 8 -24, 12 -24" fill="none" stroke="#6d8a3a" stroke-width="3.5" stroke-linecap="round"/>
+      <ellipse cx="11" cy="-21" rx="7" ry="4" fill="#8fb862" transform="rotate(-24 11 -21)"/>
+    </g>
+  </g>
+
+  <g transform="translate(340,364)">
+    <ellipse cx="0" cy="46" rx="64" ry="12" fill="#7c8a3f" opacity="0.25"/>
+    <rect x="-46" y="-38" width="92" height="90" rx="20" fill="#c9a84c" stroke="#a9812f" stroke-width="4"/>
+    <path d="M-30 -38 C -30 -62, 30 -62, 30 -38" fill="none" stroke="#a9812f" stroke-width="7" stroke-linecap="round"/>
+    <rect x="-32" y="4" width="64" height="48" rx="12" fill="#e7d9b8" stroke="#a9812f" stroke-width="3.5"/>
+    <rect x="-14" y="-2" width="28" height="14" rx="6" fill="#a9812f"/>
+  </g>
+</svg>`;
+
+export const SCHOOL_BG = `${svgURL(SCHOOL_SVG)} center / cover no-repeat`;
+
 // ─── סצנת שבת למסך המלא: אור זהוב רך, גבעות, יונים ושולחן שבת ───
 // עיצוב כללי וחם שמתאים לכל שעות השבת — מהערב ועד צאתה.
 export function ShabbatSceneArt({ className = "" }) {

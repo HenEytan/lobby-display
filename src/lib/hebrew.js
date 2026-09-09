@@ -259,6 +259,22 @@ function ymdLocal(d) {
   return `${y}-${m}-${day}`;
 }
 
+// מועדים שנושאים שם דומה לחג אמיתי אך אינם החג עצמו — אסור שיקבעו את גבולות
+// הבאנר. בלעדיהם ״ראש השנה למעשר בהמה״ (אלול הבא) ו״יום הזכרון ליצחק רבין״
+// (חשוון) נדבקו לחג עצמו והבאנר נמתח על פני חודשים שלמים.
+const BANNER_SKIP = new RegExp([
+  "ערב ", "למעשר", "לבהמ", "רבין", "הרצל", "בן.?גוריון", "ז'בוטינסקי",
+  "טרומפלדור", "יום העליה", "יום המשפחה", "סיגד", "פורים קטן", "שושן פורים",
+].join("|"));
+
+// הבאנר עולה שלושה ימים לפני תחילת החג (למעט מועדים המסומנים noEve — הם
+// מוצגים ביום עצמו בלבד, כדי לא לחגוג בזמן יום הזיכרון וכדומה).
+const BANNER_LEAD_DAYS = 3;
+// פער מקסימלי בימים בין תאריכים שנחשבים לאותו מופע של החג (חנוכה — 8 ימים,
+// סוכות עד שמחת תורה — 8 ימים). פער גדול יותר פירושו מופע של השנה הבאה.
+const SAME_OCCURRENCE_GAP_DAYS = 30;
+const DAY_MS = 86400000;
+
 export function holidayBannerSchedule(now = new Date()) {
   const start = new Date(now);
   start.setHours(0, 0, 0, 0);
@@ -273,30 +289,37 @@ export function holidayBannerSchedule(now = new Date()) {
     });
   } catch { return []; }
 
-  const ranges = new Map();
+  const hits = new Map();
   for (const ev of raw) {
     const desc = stripNiqqud(ev.render("he"));
+    if (BANNER_SKIP.test(desc)) continue;
     for (const def of HOLIDAY_BANNER_DEFS) {
       if (!def.re.test(desc)) continue;
-      const date = ev.getDate().greg();
-      const r = ranges.get(def.key);
-      if (!r) ranges.set(def.key, { first: date, last: date });
-      else {
-        if (date < r.first) r.first = date;
-        if (date > r.last) r.last = date;
-      }
+      const list = hits.get(def.key) || [];
+      list.push(ev.getDate().greg());
+      hits.set(def.key, list);
       break;
     }
   }
 
   const out = [];
   for (const def of HOLIDAY_BANNER_DEFS) {
-    const r = ranges.get(def.key);
-    if (!r) continue;
+    const dates = (hits.get(def.key) || []).sort((a, b) => a - b);
+    if (dates.length === 0) continue;
+
+    // פיצול לרצפים — כל רצף הוא מופע אחד של החג. חלון החישוב הוא שנה שלמה,
+    // כך שחג שנופל גם בתחילתו וגם בסופו מקבל שני רצפים נפרדים.
+    const runs = [];
+    for (const date of dates) {
+      const last = runs[runs.length - 1];
+      if (last && (date - last.last) / DAY_MS <= SAME_OCCURRENCE_GAP_DAYS) last.last = date;
+      else runs.push({ first: date, last: date });
+    }
+    // המופע הקרוב שעדיין לא הסתיים
+    const r = runs.find((run) => run.last >= start) || runs[0];
+
     const startDate = new Date(r.first);
-    // ברירת מחדל: הבאנר עולה יום לפני החג. noEve — רק ביום עצמו
-    // (למשל עצמאות, כדי לא לחגוג בזמן יום הזיכרון).
-    if (!def.noEve) startDate.setDate(startDate.getDate() - 1);
+    if (!def.noEve) startDate.setDate(startDate.getDate() - BANNER_LEAD_DAYS);
     out.push({
       id: `hb_${def.key}`,
       title: def.title,

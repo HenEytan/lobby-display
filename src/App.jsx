@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { VERSION, CHANGELOG } from "./version";
 import { gregDateHe, hebrewDate, dailyGreeting, todayHoliday, shabbatInfo, upcomingHolidays, holidayBannerSchedule } from "./lib/hebrew";
-import { eventsThisWeek, formatEventTime, fetchAlumaEvents, EVENTS_REFRESH_MS, CATEGORY_BG } from "./lib/events";
+import { eventsThisWeek, eventDayLabel, formatEventWhen, fetchAlumaEvents, EVENTS_REFRESH_MS, CATEGORY_BG } from "./lib/events";
 import { fetchWeather, weatherIcon, uvLevel } from "./lib/feeds";
 import { syncTime, israelNow, TIME_SYNC_MS } from "./lib/time";
 import { fetchNews, NEWS_REFRESH_MS } from "./lib/news";
@@ -231,12 +231,12 @@ function Display({ previewMode }) {
         },
       });
     }
-    if (settings.showEvents && events.length > 0) s.push({ type: "events", key: "events" });
+    // אירועי הוד השרון אינם בסבב — הם מוצגים בסבב מתגלגל בעמודה הצדדית
     if (settings.showCalendar && monthHolidays.length > 0) s.push({ type: "calendar", key: "calendar" });
     if (holiday) s.push({ type: "holiday", key: "holiday" });
     if (s.length === 0) s.push({ type: "welcome", key: "welcome" });
     return s;
-  }, [data.rev, data.banners, holidayBanners, events, holiday, monthHolidays, settings.showEvents, settings.showCalendar, isMotzash, showVaadBanner, settings.buildingName, musicOn, now.getDate()]);
+  }, [data.rev, data.banners, holidayBanners, holiday, monthHolidays, settings.showCalendar, isMotzash, showVaadBanner, settings.buildingName, musicOn, now.getDate()]);
 
   const [idx, setIdx] = useState(0);
   const slide = slides[idx % slides.length];
@@ -273,23 +273,26 @@ function Display({ previewMode }) {
         </div>
       )}
 
-      <header className="board-head">
-        <div className="head-brand">
-          <span className="head-hello">ברוכים הבאים</span>
-          <div className="head-title">
-            <h1 className="head-name">{settings.buildingName}</h1>
-            {settings.city && <span className="head-city">{settings.city}</span>}
+      {/* סרגל מצב עליון — זהות הבניין, ברכה, שעון ומזג אוויר בשורה אחת */}
+      <header className="statusbar">
+        <div className="sb-brand">
+          <div className="sb-id">
+            <span className="sb-hello">ברוכים הבאים</span>
+            <h1 className="sb-name">{settings.buildingName}</h1>
+          </div>
+          {settings.city && <span className="sb-city">{settings.city}</span>}
+          <div className="sb-greet-wrap">
+            <OliveDivider className="sb-divider" />
+            <span className="sb-greet">{dailyGreeting(now, holiday)}</span>
           </div>
         </div>
-        <div className="head-greet">
-          <span className="head-greet-text">{dailyGreeting(now, holiday)}</span>
-          <OliveDivider className="head-divider" />
-        </div>
+        <ClockStatus now={now} shabbat={shabbat} />
+        <WeatherStatus weather={weather} />
       </header>
 
       <div className="board-body">
         <main className="main-area">
-          <MainSlide slide={slide} events={events} holiday={holiday} name={settings.buildingName} currentTrack={currentTrack} isSaturday={now.getDay() === 6} monthHolidays={monthHolidays} />
+          <MainSlide slide={slide} holiday={holiday} name={settings.buildingName} currentTrack={currentTrack} isSaturday={now.getDay() === 6} monthHolidays={monthHolidays} />
           {slides.length > 1 && (
             <div className="slide-dots">
               {slides.map((s, i) => (
@@ -300,8 +303,7 @@ function Display({ previewMode }) {
         </main>
 
         <aside className="side">
-          <ClockCard now={now} shabbat={shabbat} />
-          <WeatherCard weather={weather} />
+          {settings.showEvents && events.length > 0 && <EventsRail events={events} />}
           <AnnouncementsCard anns={anns} />
         </aside>
       </div>
@@ -350,9 +352,8 @@ function Display({ previewMode }) {
 
 // ─── האזור הראשי ───
 
-function MainSlide({ slide, events, holiday, name, currentTrack, isSaturday, monthHolidays }) {
+function MainSlide({ slide, holiday, name, currentTrack, isSaturday, monthHolidays }) {
   if (slide.type === "banner") return <BannerSlide banner={slide.banner} />;
-  if (slide.type === "events") return <EventsSlide events={events} />;
   if (slide.type === "calendar") return <CalendarSlide items={monthHolidays} />;
   if (slide.type === "holiday") return <HolidaySlide text={holiday} />;
   if (slide.type === "vaad") return <VaadSlide />;
@@ -435,49 +436,6 @@ function WeekendSlide({ isSaturday }) {
   );
 }
 
-function EventsSlide({ events }) {
-  // דפדוף אוטומטי — כל האירועים מוצגים, 6 בכל עמוד
-  const PAGE = 6;
-  const pages = Math.max(1, Math.ceil(events.length / PAGE));
-  const [page, setPage] = useState(0);
-  useEffect(() => {
-    if (pages <= 1) return;
-    const t = setInterval(() => setPage((p) => (p + 1) % pages), 7000);
-    return () => clearInterval(t);
-  }, [pages]);
-  const shown = events.slice((page % pages) * PAGE, (page % pages) * PAGE + PAGE);
-
-  return (
-    <div className="slide events-slide fade">
-      <div className="slide-eyebrow">אלומה · הוד השרון</div>
-      <h3>אירועי השבוע</h3>
-      <div className="ev-grid fade" key={page}>
-        {shown.map((e, i) => (
-          <div className="ev-card" key={i}>
-            <div className="ev-band" style={{ background: CATEGORY_BG[e.category] || CATEGORY_BG.default }}>
-              <CategoryIcon category={e.category} className="ev-icon" />
-              <span className="ev-cat">{e.category}</span>
-            </div>
-            <div className="ev-body">
-              <CategoryIcon category={e.category} className="ev-body-icon" />
-              <div className="ev-title">{e.title}</div>
-              <div className="ev-meta">{formatEventTime(e.date)}</div>
-              <div className="ev-loc">{e.location}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-      {pages > 1 && (
-        <div className="cal-pages">
-          {Array.from({ length: pages }).map((_, i) => (
-            <span key={i} className={"dot small" + (i === page % pages ? " on" : "")} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 const YEAR_TYPE = {
   chag: { label: "חג", cls: "chag" },
   tzom: { label: "צום", cls: "tzom" },
@@ -522,61 +480,111 @@ function CalendarSlide({ items = [] }) {
   );
 }
 
-// ─── עמודת המידע ───
+// ─── סרגל המצב העליון ───
 
-function ClockCard({ now, shabbat }) {
+function ClockStatus({ now, shabbat }) {
   const hh = String(now.getHours()).padStart(2, "0");
   const mm = String(now.getMinutes()).padStart(2, "0");
   return (
-    <div className="card clock-card">
-      <div className="clock">
+    <div className="sb-block sb-clock">
+      <div className="sb-time">
         <span>{hh}</span><span className="colon">:</span><span>{mm}</span>
       </div>
-      <div className="hebdate">{hebrewDate(now)}</div>
-      <div className="gregdate">{gregDateHe(now)}</div>
-      {shabbat && !shabbat.active && (
-        <div className="shabbat-times">
-          🕯 הדלקת נרות {shabbat.candles} · הבדלה {shabbat.havdalah}
-        </div>
-      )}
+      <div className="sb-dates">
+        <div className="sb-hebdate">{hebrewDate(now)}</div>
+        <div className="sb-gregdate">{gregDateHe(now)}</div>
+        {shabbat && !shabbat.active && (
+          <div className="sb-shabbat">🕯 הדלקת נרות {shabbat.candles} · הבדלה {shabbat.havdalah}</div>
+        )}
+      </div>
     </div>
   );
 }
 
-function WeatherCard({ weather }) {
+function WeatherStatus({ weather }) {
   if (!weather) return null;
   const dayName = (iso) => ["א׳", "ב׳", "ג׳", "ד׳", "ה׳", "ו׳", "שבת"][new Date(iso).getDay()];
+  const uv = weather.current.uv;
+  const lvl = uvLevel(uv);
   return (
-    <div className="card wx-card">
-      <div className="wx-now">
-        <span className="wx-icon">{weatherIcon(weather.current.code)}</span>
-        <span className="wx-temp">{weather.current.temp}°</span>
-        <span className="wx-desc">{weather.current.desc}</span>
+    <div className="sb-block sb-wx">
+      <div className="sb-wx-now">
+        <span className="sb-wx-icon">{weatherIcon(weather.current.code)}</span>
+        <span className="sb-wx-temp">{weather.current.temp}°</span>
+        <span className="sb-wx-desc">{weather.current.desc}</span>
       </div>
-      {(() => {
-        const uv = weather.current.uv;
-        const lvl = uvLevel(uv);
-        if (!lvl) return null;
-        return (
-          <div className={"wx-uv " + lvl.cls}>
+      <div className="sb-wx-meta">
+        {lvl && (
+          <div className={"sb-uv " + lvl.cls}>
             <span className="uv-tag">UV</span>
             <span className="uv-val">{uv}</span>
             <span className="uv-label">{lvl.label}</span>
             <span className="uv-advice">{lvl.advice}</span>
           </div>
-        );
-      })()}
-      {weather.days.length > 1 && (
-        <div className="wx-forecast">
-          {weather.days.slice(1, 4).map((d, i) => (
-            <div className="wx-day" key={i}>
-              <span>{dayName(d.date)}</span>
-              <span className="wx-day-icon">{weatherIcon(d.code)}</span>
-              <span>{d.max}°/{d.min}°</span>
+        )}
+        {weather.days.length > 1 && (
+          <div className="sb-wx-days">
+            {weather.days.slice(1, 4).map((d, i) => (
+              <div className="sb-wx-day" key={i}>
+                <span>{dayName(d.date)}</span>
+                <span className="sb-wx-day-icon">{weatherIcon(d.code)}</span>
+                <span>{d.max}°/{d.min}°</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── עמודת המידע ───
+
+// אירועי הוד השרון (אלומה) — סבב אנכי שנע כלפי מעלה ברצף.
+// הרשימה משוכפלת פעמיים כדי שהתנועה תיראה אינסופית וללא קפיצה;
+// כשיש מעט אירועים ומכולם יש מקום על המסך — הסבב עומד במקום.
+const RAIL_LOOP_MIN = 4;
+const RAIL_SECS_PER_EVENT = 8;
+
+function EventsRail({ events }) {
+  const moving = events.length >= RAIL_LOOP_MIN;
+  const copies = moving ? [0, 1] : [0];
+  const duration = Math.max(30, events.length * RAIL_SECS_PER_EVENT);
+
+  return (
+    <div className="card rail-card">
+      <div className="card-title rail-title-row">
+        <span>🎭 אירועים בהוד השרון</span>
+        <span className="rail-source">אלומה</span>
+      </div>
+      <div className={"rail-viewport" + (moving ? " masked" : "")}>
+        <div
+          className={"rail-track" + (moving ? " moving" : "")}
+          style={moving ? { animationDuration: `${duration}s` } : undefined}
+        >
+          {copies.map((c) => (
+            <div className="rail-copy" key={c} aria-hidden={c === 1 ? "true" : undefined}>
+              {events.map((e, i) => {
+                const { day, month } = eventDayLabel(e.date);
+                return (
+                  <div className="rail-ev" key={`${c}-${i}`}>
+                    <div className="rail-date" style={{ background: CATEGORY_BG[e.category] || CATEGORY_BG.default }}>
+                      <b>{day}</b>
+                      <span>{month}</span>
+                    </div>
+                    <div className="rail-body">
+                      <div className="rail-ev-title">{e.title}</div>
+                      <div className="rail-when">{formatEventWhen(e.date)}</div>
+                      <div className="rail-loc">{e.location}</div>
+                    </div>
+                    <CategoryIcon category={e.category} className="rail-icon" />
+                  </div>
+                );
+              })}
             </div>
           ))}
         </div>
-      )}
+      </div>
     </div>
   );
 }

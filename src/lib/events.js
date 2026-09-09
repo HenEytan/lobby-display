@@ -81,8 +81,22 @@ export function eventsThisWeek(now = new Date(), events = SAMPLE_EVENTS) {
 }
 
 const DOW = ["א׳", "ב׳", "ג׳", "ד׳", "ה׳", "ו׳", "שבת"];
-export function formatEventTime(date) {
-  const hh = String(date.getHours()).padStart(2, "0");
-  const mm = String(date.getMinutes()).padStart(2, "0");
-  return `יום ${DOW[date.getDay()]} · ${date.getDate()}.${date.getMonth() + 1} · ${hh}:${mm}`;
+const SHORT_MONTHS = [
+  "ינו׳", "פבר׳", "מרץ", "אפר׳", "מאי", "יוני",
+  "יולי", "אוג׳", "ספט׳", "אוק׳", "נוב׳", "דצמ׳",
+];
+
+// תווית התאריך לכרטיס בסבב הצדדי: מספר היום ושם החודש המקוצר
+export function eventDayLabel(date) {
+  return { day: date.getDate(), month: SHORT_MONTHS[date.getMonth()] };
+}
+
+// יום בשבוע, ושעה רק כשהיא ידועה — דף אלומה מפרסם תאריך בלבד לחלק מהאירועים,
+// ואז השעה נקראת 00:00 ואין טעם להציג אותה.
+export function formatEventWhen(date) {
+  const parts = [`יום ${DOW[date.getDay()]}`];
+  if (date.getHours() !== 0 || date.getMinutes() !== 0) {
+    parts.push(`${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`);
+  }
+  return parts.join(" · ");
 }

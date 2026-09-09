@@ -223,15 +223,6 @@ export function yearEvents(now = new Date()) {
   return computeHolidayList(start, end);
 }
 
-// חגים/מועדים/צומות בחלון הקרוב בלבד (ברירת מחדל: 30 יום) — לשקופיית "לוח החודש הקרוב".
-export function upcomingHolidays(now = new Date(), days = 30) {
-  const start = new Date(now);
-  start.setHours(0, 0, 0, 0);
-  const end = new Date(start);
-  end.setDate(end.getDate() + days);
-  return computeHolidayList(start, end);
-}
-
 // ─── באנרים לחגים לאורך השנה ───
 // מוכן ומעודכן תמיד לפי הלוח העברי — אין צורך לתחזק תאריכים ידנית.
 // כל באנר מופיע החל מיום לפני תחילת החג ועד סופו (כולל ימי חוה"מ).

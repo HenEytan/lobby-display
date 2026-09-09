@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { VERSION, CHANGELOG } from "./version";
-import { gregDateHe, hebrewDate, dailyGreeting, todayHoliday, shabbatInfo, upcomingHolidays, holidayBannerSchedule } from "./lib/hebrew";
+import { gregDateHe, hebrewDate, dailyGreeting, todayHoliday, shabbatInfo, holidayBannerSchedule } from "./lib/hebrew";
 import { eventsThisWeek, eventDayLabel, formatEventWhen, fetchAlumaEvents, EVENTS_REFRESH_MS, CATEGORY_BG } from "./lib/events";
 import { fetchWeather, weatherIcon, uvLevel } from "./lib/feeds";
 import { syncTime, israelNow, TIME_SYNC_MS } from "./lib/time";
@@ -162,7 +162,6 @@ function Display({ previewMode }) {
     () => eventsThisWeek(now, alumaEvents || undefined),
     [now.getDate(), alumaEvents]
   );
-  const monthHolidays = useMemo(() => upcomingHolidays(now, 30), [now.getDate()]);
   const anns = activeAnnouncements(data.announcements, now);
   const urgent = urgentAnnouncement(data.announcements, now);
 
@@ -232,11 +231,10 @@ function Display({ previewMode }) {
       });
     }
     // אירועי הוד השרון אינם בסבב — הם מוצגים בסבב מתגלגל בעמודה הצדדית
-    if (settings.showCalendar && monthHolidays.length > 0) s.push({ type: "calendar", key: "calendar" });
     if (holiday) s.push({ type: "holiday", key: "holiday" });
     if (s.length === 0) s.push({ type: "welcome", key: "welcome" });
     return s;
-  }, [data.rev, data.banners, holidayBanners, holiday, monthHolidays, settings.showCalendar, isMotzash, showVaadBanner, settings.buildingName, musicOn, now.getDate()]);
+  }, [data.rev, data.banners, holidayBanners, holiday, isMotzash, showVaadBanner, settings.buildingName, musicOn, now.getDate()]);
 
   const [idx, setIdx] = useState(0);
   const slide = slides[idx % slides.length];
@@ -292,7 +290,7 @@ function Display({ previewMode }) {
 
       <div className="board-body">
         <main className="main-area">
-          <MainSlide slide={slide} holiday={holiday} name={settings.buildingName} currentTrack={currentTrack} isSaturday={now.getDay() === 6} monthHolidays={monthHolidays} />
+          <MainSlide slide={slide} holiday={holiday} name={settings.buildingName} currentTrack={currentTrack} isSaturday={now.getDay() === 6} />
           {slides.length > 1 && (
             <div className="slide-dots">
               {slides.map((s, i) => (
@@ -352,9 +350,8 @@ function Display({ previewMode }) {
 
 // ─── האזור הראשי ───
 
-function MainSlide({ slide, holiday, name, currentTrack, isSaturday, monthHolidays }) {
+function MainSlide({ slide, holiday, name, currentTrack, isSaturday }) {
   if (slide.type === "banner") return <BannerSlide banner={slide.banner} />;
-  if (slide.type === "calendar") return <CalendarSlide items={monthHolidays} />;
   if (slide.type === "holiday") return <HolidaySlide text={holiday} />;
   if (slide.type === "vaad") return <VaadSlide />;
   if (slide.type === "weekend") return <WeekendSlide isSaturday={isSaturday} />;
@@ -432,50 +429,6 @@ function WeekendSlide({ isSaturday }) {
       <h2>שבת שלום</h2>
       <p>{isSaturday ? "סוף שבוע נעים ומרגיע לכל דיירי הבניין" : "לכולנו — סוף שבוע מהנה ושבת שלום"}</p>
       <OliveDivider className="weekend-divider" />
-    </div>
-  );
-}
-
-const YEAR_TYPE = {
-  chag: { label: "חג", cls: "chag" },
-  tzom: { label: "צום", cls: "tzom" },
-  memorial: { label: "יום זיכרון", cls: "memorial" },
-};
-
-function CalendarSlide({ items = [] }) {
-  const PAGE = 8;
-  const pages = Math.max(1, Math.ceil(items.length / PAGE));
-  const [page, setPage] = useState(0);
-  useEffect(() => {
-    if (pages <= 1) return;
-    const t = setInterval(() => setPage((p) => (p + 1) % pages), 7000);
-    return () => clearInterval(t);
-  }, [pages]);
-
-  const shown = items.slice((page % pages) * PAGE, (page % pages) * PAGE + PAGE);
-  return (
-    <div className="slide calendar-slide fade">
-      <div className="slide-eyebrow">לוח השנה העברי · החודש הקרוב</div>
-      <h3>חגים, מועדים וצומות</h3>
-      <div className="cal-grid fade" key={page}>
-        {shown.map((e, i) => (
-          <div className={"cal-card " + YEAR_TYPE[e.type].cls} key={i}>
-            <div className="cal-badge">{YEAR_TYPE[e.type].label}</div>
-            <div className="cal-name">{e.name}</div>
-            <div className="cal-dates">
-              <span className="cal-heb">{e.heb}</span>
-              <span className="cal-greg">יום {e.dow} · {e.greg}</span>
-            </div>
-          </div>
-        ))}
-      </div>
-      {pages > 1 && (
-        <div className="cal-pages">
-          {Array.from({ length: pages }).map((_, i) => (
-            <span key={i} className={"dot small" + (i === page % pages ? " on" : "")} />
-          ))}
-        </div>
-      )}
     </div>
   );
 }

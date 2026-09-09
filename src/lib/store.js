@@ -19,7 +19,6 @@ export const DEFAULT_SETTINGS = {
   showTicker: true,
   showEvents: true,
   showNews: true,     // מבזקי ynet בתחתית
-  showCalendar: true, // שקופית לוח חגים ומועדים
   showHolidayBanners: true, // באנרים אוטומטיים לחגים לאורך השנה
   showVaadReminder: true,   // תזכורת דמי ועד ביום האחרון של כל חודש
   tickerSpeed: 45, // שניות לסיבוב מלא

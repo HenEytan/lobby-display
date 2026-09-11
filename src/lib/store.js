@@ -20,6 +20,7 @@ export const DEFAULT_SETTINGS = {
   showEvents: true,
   showNews: true,     // מבזקי ynet בתחתית
   showHolidayBanners: true, // באנרים אוטומטיים לחגים לאורך השנה
+  showHolidayScreen: true,  // מסך חג סטטי מכניסת החג ועד צאתו, כמו מסך השבת
   showVaadReminder: true,   // תזכורת דמי ועד ביום האחרון של כל חודש
   tickerSpeed: 45, // שניות לסיבוב מלא
   newsSpeed: 140,  // שניות לסיבוב מבזקים (גבוה יותר = איטי יותר)

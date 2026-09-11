@@ -1,4 +1,4 @@
-import { HDate, HebrewCalendar, Location } from "@hebcal/core";
+import { HDate, HebrewCalendar, Location, flags } from "@hebcal/core";
 
 // hebcal מחזיר מחרוזות עם ניקוד — מסירים אותו לפני התאמת ביטויים
 const stripNiqqud = (s) => s.replace(/[\u0591-\u05C7]/g, "");
@@ -325,4 +325,80 @@ export function holidayBannerSchedule(now = new Date()) {
   }
   out.sort((a, b) => a.firstDate - b.firstDate);
   return out.map(({ firstDate, ...rest }) => rest);
+}
+
+// ─── ימים טובים — מסך מלא סטטי, בדיוק כמו בשבת ───
+// החלון נפתח בהדלקת הנרות שלפני החג ונסגר בהבדלה בצאתו. חגים רב-יומיים
+// (ראש השנה) וחג שנצמד לשבת מקבלים חלון אחד רצוף — למשל ראש השנה תשפ״ז,
+// שנמשך משישי בערב עד מוצאי יום ראשון. ימי חול המועד אינם ימי שבתון ולכן
+// אינם נכללים, והמסך חוזר בהם לתצוגה הרגילה.
+export function yomTovInfo(now = new Date()) {
+  const start = new Date(now);
+  start.setDate(start.getDate() - 8);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(now);
+  end.setDate(end.getDate() + 4);
+
+  let raw = [];
+  try {
+    raw = HebrewCalendar.calendar({
+      start, end, il: true,
+      candlelighting: true, location: HOD_HASHARON,
+      sedrot: false, noHolidays: false,
+    });
+  } catch { return null; }
+
+  const lighting = [];   // הדלקות נרות
+  const ending = [];     // הבדלות
+  const chagDays = [];   // ימי שבתון בלבד (דגל CHAG של hebcal)
+  for (const ev of raw) {
+    const desc = stripNiqqud(ev.render("he"));
+    if (ev.eventTime) {
+      const t = toIsraelLocal(new Date(ev.eventTime));
+      if (/הדלקת נרות/.test(desc)) lighting.push(t);
+      else if (/הבדלה/.test(desc)) ending.push(t);
+      continue;
+    }
+    if (ev.getFlags() & flags.CHAG) chagDays.push({ date: ev.getDate().greg(), desc });
+  }
+  lighting.sort((a, b) => a - b);
+  ending.sort((a, b) => a - b);
+
+  // החלון הפתוח כרגע נמדד מההבדלה האחרונה שהושלמה: ההדלקה הראשונה שאחריה היא
+  // כניסת החג, וההבדלה הבאה היא צאתו. הדלקות ביניים (ליל יום שני של ראש השנה)
+  // אינן סוגרות את החלון ואינן מזיזות את שעת הכניסה — ולכן החלון רצוף.
+  const lastEnd = ending.filter((t) => t <= now).pop();
+  const opened = lighting.find((t) => t <= now && (!lastEnd || t > lastEnd));
+  if (!opened) return null;
+  const closes = ending.find((t) => t > opened);
+  if (!closes || now > closes) return null;
+
+  // רק חלון שיש בו יום שבתון. שבת רגילה אינה מסומנת CHAG ונשארת ל-shabbatInfo.
+  const from = new Date(opened); from.setHours(0, 0, 0, 0);
+  const to = new Date(closes); to.setHours(23, 59, 59, 999);
+  const covered = chagDays.filter((c) => c.date >= from && c.date <= to);
+  const def = covered.map((c) => HOLIDAY_BANNER_DEFS.find((d) => d.re.test(c.desc))).find(Boolean);
+  if (!def) return null;
+
+  // שמיני עצרת ושמחת תורה חולקים הגדרה עם סוכות — אך הם חג בפני עצמו,
+  // ו״חג סוכות שמח״ אינו הברכה הנכונה עבורם
+  const atzeret = covered.some((c) => /שמיני עצרת|שמחת תורה/.test(c.desc));
+  const title = atzeret ? "חג שמח" : def.title;
+  const subtitle = atzeret
+    ? "שמיני עצרת ושמחת תורה — מועדים לשמחה לכל דיירי הבניין"
+    : def.subtitle;
+
+  // הדלקת נרות נוספת בתוך החג — רלוונטית לדיירים, מוצגת כל עוד לא עברה
+  const next = lighting.find((t) => t > now && t < closes);
+
+  return {
+    active: true,
+    key: def.key,
+    title,
+    subtitle,
+    bg: def.bg,
+    candles: HE_TIME(opened),
+    havdalah: HE_TIME(closes),
+    nextCandles: next ? HE_TIME(next) : null,
+  };
 }

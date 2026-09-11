@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { VERSION, CHANGELOG } from "./version";
-import { gregDateHe, hebrewDate, dailyGreeting, todayHoliday, shabbatInfo, holidayBannerSchedule } from "./lib/hebrew";
+import { gregDateHe, hebrewDate, dailyGreeting, todayHoliday, shabbatInfo, yomTovInfo, holidayBannerSchedule } from "./lib/hebrew";
 import { eventsThisWeek, eventDayLabel, formatEventWhen, fetchAlumaEvents, EVENTS_REFRESH_MS, CATEGORY_BG } from "./lib/events";
 import { fetchWeather, weatherIcon, uvLevel } from "./lib/feeds";
 import { syncTime, israelNow, TIME_SYNC_MS } from "./lib/time";
@@ -150,6 +150,11 @@ function Display({ previewMode }) {
 
   const holiday = useMemo(() => todayHoliday(now), [now.getDate(), now.getMonth()]);
   const shabbat = useMemo(() => shabbatInfo(now), [Math.floor(now.getTime() / 60000)]);
+  // יום טוב — מסך סטטי מכניסת החג ועד צאתו, בדיוק כמו בשבת
+  const yomTov = useMemo(
+    () => (settings.showHolidayScreen === false ? null : yomTovInfo(now)),
+    [Math.floor(now.getTime() / 60000), settings.showHolidayScreen]
+  );
   // אירועי אלומה — נטענים מה-API החי ומתרעננים כל כמה שעות
   const [alumaEvents, setAlumaEvents] = useState(null);
   useEffect(() => {
@@ -254,6 +259,8 @@ function Display({ previewMode }) {
 
   // ─── מצבים שתופסים את המסך המלא ───
   if (urgent) return <UrgentScreen ann={urgent} now={now} />;
+  // חג הנופל בשבת נשאר חג — מסך החג קודם למסך השבת
+  if (yomTov?.active) return <HolidayScreen info={yomTov} name={settings.buildingName} />;
   if (shabbat?.active) return <ShabbatScreen shabbat={shabbat} name={settings.buildingName} />;
 
   return (
@@ -631,6 +638,43 @@ function UrgentScreen({ ann, now }) {
       <h1>{ann.title}</h1>
       <p>{ann.body}</p>
       <div className="urgent-clock">{hh}:{mm}</div>
+    </div>
+  );
+}
+
+// מסך חג — תצוגה סטטית לאורך כל ימי החג, כמו מסך השבת.
+// האיור של אותו חג משמש כרקע מלא, והכיתוב יושב בכרטיס קריא במרכז.
+function HolidayScreen({ info, name }) {
+  const subtitle = info.subtitle.replace("דיירי הבניין", `דיירי ${name}`);
+  // יום כיפור הוא חג וגם צום — הזמנים מוכרים לדיירים ככניסת הצום וצאתו
+  const fast = info.key === "yom_kippur";
+  return (
+    <div className="fullscreen holiday-fs" dir="rtl" style={{ background: BG_PRESETS[info.bg] }}>
+      <div className="holiday-fs-card">
+        <h1>{info.title}</h1>
+        <svg className="holiday-fs-orn" viewBox="0 0 320 24" aria-hidden="true">
+          <line x1="10" y1="12" x2="132" y2="12" stroke="#b8934a" strokeWidth="2" opacity="0.8" />
+          <rect x="152" y="4" width="16" height="16" transform="rotate(45 160 12)" fill="none" stroke="#b8934a" strokeWidth="2" />
+          <line x1="188" y1="12" x2="310" y2="12" stroke="#b8934a" strokeWidth="2" opacity="0.8" />
+        </svg>
+        <p>{subtitle}</p>
+        <div className="holiday-fs-times">
+          <div className="sh-chip">
+            <span className="sh-label">{fast ? "כניסת הצום" : "כניסת החג"}</span>
+            <span className="sh-val">{info.candles}</span>
+          </div>
+          {info.nextCandles && (
+            <div className="sh-chip">
+              <span className="sh-label">הדלקת נרות להמשך החג</span>
+              <span className="sh-val">{info.nextCandles}</span>
+            </div>
+          )}
+          <div className="sh-chip">
+            <span className="sh-label">{fast ? "צאת הצום" : "צאת החג"}</span>
+            <span className="sh-val">{info.havdalah}</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

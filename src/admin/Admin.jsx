@@ -295,12 +295,12 @@ function HolidaysTab({ data }) {
           <h2>באנרי חגים לאורך השנה</h2>
           <p>
             מוכן מראש ומתעדכן אוטומטית לפי הלוח העברי — כל חג מקבל באנר עם איור משלו,
-            ומוצג במסך הראשי החל משלושה ימים לפני תחילתו ועד סופו. אין צורך לתחזק תאריכים ידנית.
+            ומוצג במסך הראשי החל משלושה ימים לפני תחילתו ועד סופו. בחג עצמו המסך עובר לתצוגה סטטית מלאה. אין צורך לתחזק תאריכים ידנית.
           </p>
         </div>
       </div>
 
-      <div className="item-card" style={{ marginBottom: "16px" }}>
+      <div className="item-card" style={{ marginBottom: "16px", flexDirection: "column", alignItems: "stretch", gap: "10px" }}>
         <label className="switch big">
           <input
             type="checkbox"
@@ -309,6 +309,19 @@ function HolidaysTab({ data }) {
           />
           <span>{s.showHolidayBanners !== false ? "🎉 באנרי חגים פעילים" : "⏸ באנרי חגים כבויים"}</span>
         </label>
+        <label className="switch big">
+          <input
+            type="checkbox"
+            checked={s.showHolidayScreen !== false}
+            onChange={(e) => save({ showHolidayScreen: e.target.checked })}
+          />
+          <span>{s.showHolidayScreen !== false ? "🕯 מסך חג מלא מכניסת החג ועד צאתו" : "⏸ מסך חג מלא כבוי"}</span>
+        </label>
+        <p style={{ color: "#8a7f6d", fontSize: "12px", margin: "8px 0 0" }}>
+          בימים טובים (ראש השנה, יום כיפור, סוכות, שמיני עצרת, פסח ושבועות) המסך עובר
+          לתצוגה סטטית של איור החג — בדיוק כמו מסך השבת — מהדלקת הנרות שלפני החג ועד
+          ההבדלה בצאתו, כולל חג שנמשך כמה ימים או נצמד לשבת. בחול המועד המסך חוזר לתצוגה הרגילה.
+        </p>
       </div>
 
       <div className="cards">

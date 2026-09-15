@@ -24,13 +24,35 @@ export default function Admin() {
 function PinGate({ onOk }) {
   const [pin, setPin] = useState("");
   const [err, setErr] = useState(false);
-  const check = () => {
+  const [busy, setBusy] = useState(false);
+  const accept = () => {
+    // נשמר לסשן בלבד — משמש לאימות מול השרת בעת פרסום
+    try { sessionStorage.setItem("lobby_admin_pin", pin); } catch { /* ignore */ }
+    onOk();
+  };
+  const check = async () => {
     const settings = readDraft("settings");
-    if (pin === String(settings.pin)) {
-      // נשמר לסשן בלבד — משמש לאימות מול השרת בעת פרסום
-      try { sessionStorage.setItem("lobby_admin_pin", pin); } catch { /* ignore */ }
-      onOk();
-    } else { setErr(true); setPin(""); }
+    // הקוד ידוע מקומית רק במכשיר שבו הוא נקבע. מכשיר שסונכרן מהשרת מקבל null
+    // (ה-GET מסתיר את הקוד), ואז הבדיקה היחידה שאפשר לסמוך עליה היא מול השרת.
+    if (settings.pin != null) {
+      if (pin === String(settings.pin)) accept();
+      else { setErr(true); setPin(""); }
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await fetch("/api/state", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pin, verify: true, data: {} }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (res.ok && d.verified) accept();
+      else { setErr(true); setPin(""); }
+    } catch {
+      // אין רשת: אין דרך לאמת, ואסור לפתוח את מסך הניהול על סמך ניחוש.
+      setErr(true); setPin("");
+    } finally { setBusy(false); }
   };
   return (
     <div className="admin-root pin-screen" dir="rtl">
@@ -46,7 +68,7 @@ function PinGate({ onOk }) {
           placeholder="••••"
         />
         {err && <div className="pin-err">קוד שגוי — נסו שוב</div>}
-        <button className="btn primary" onClick={check}>כניסה</button>
+        <button className="btn primary" disabled={busy} onClick={check}>{busy ? "בודק..." : "כניסה"}</button>
         <a className="pin-back" href="#">→ חזרה למסך</a>
       </div>
     </div>

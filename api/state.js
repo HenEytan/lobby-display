@@ -113,7 +113,23 @@ export default async function handler(req, res) {
         return;
       }
 
-      const payload = [{ id: ROW_ID, data, updated_at: new Date().toISOString() }];
+      // בקשת אימות בלבד: הקוד נבדק למעלה ולא נכתב דבר. זה מה שמאפשר למסך הניהול
+      // לאמת קוד במכשיר שלא מכיר אותו מקומית, בלי שה-GET יחזיר אותו לעולם.
+      if (body.verify === true) {
+        res.status(200).json({ ok: true, verified: true });
+        return;
+      }
+
+      // ה-PIN מוסתר מה-GET, ולכן מכשיר שסונכרן מהשרת פשוט לא מחזיק אותו ולא שולח
+      // אותו בחזרה. בלי השורה הזו פרסום ממכשיר כזה היה מוחק את הקוד מהמסמך —
+      // ומאפס אותו לכל הבניין. מה שהלקוח לא שלח, השרת שומר.
+      const incoming = data.settings && typeof data.settings === "object" ? data.settings : null;
+      const merged =
+        incoming && incoming.pin == null && currentPin != null
+          ? { ...data, settings: { ...incoming, pin: currentPin } }
+          : data;
+
+      const payload = [{ id: ROW_ID, data: merged, updated_at: new Date().toISOString() }];
       const w = await fetch(sbUrl("lobby_state"), {
         method: "POST",
         headers: { ...sbHeaders(), Prefer: "resolution=merge-duplicates,return=representation" },

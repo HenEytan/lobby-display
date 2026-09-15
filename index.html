@@ -115,6 +115,20 @@
             c.appendChild(document.createTextNode(String(detail)));
             el.appendChild(c);
           }
+          /* מסך לובי חייב להתאושש לבד ולא להישאר תקוע על מסך שגיאה עד שמישהו
+             שם לב פיזית ומרענן ידנית. מנסים רענון אוטומטי, עם נסיגה גוברת
+             (5, 10, 15... עד 60 שניות) ותקרה של 6 ניסיונות בכל טעינה, כדי לא
+             ליצור לולאת קריסה-רענון מהירה ואינסופית אם התקלה חוזרת בכל עלייה
+             (המונה מתאפס לאחר עלייה יציבה — ראו main.jsx). */
+          try {
+            var n = Number(sessionStorage.getItem('lobby_crash_count') || '0') + 1;
+            sessionStorage.setItem('lobby_crash_count', String(n));
+            if (n <= 6) {
+              setTimeout(function () { location.reload(); }, Math.min(60000, 5000 * n));
+            }
+          } catch (e) {
+            setTimeout(function () { location.reload(); }, 15000);
+          }
         }
         window.__lobbyBootError = show;
         window.addEventListener('error', function (e) {

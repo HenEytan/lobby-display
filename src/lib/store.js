@@ -171,7 +171,18 @@ function applySnapshot(data) {
   let changed = false;
   for (const k of KEYS) {
     if (data[k] === undefined) continue;
-    const next = JSON.stringify(data[k]);
+    let value = data[k];
+    // השרת לעולם לא שולח את ה-PIN חזרה (הוא מוסתר מתשובת ה-GET — ראו api/state.js).
+    // משמרים את זה שכבר ידוע במכשיר; ואם אינו ידוע — משאירים null, כלומר "לא ידוע".
+    //
+    // חשוב שלא ליפול כאן ל-DEFAULT_SETTINGS.pin: שער הניהול משווה מול הערך המקומי,
+    // כך שמכשיר חדש (או כזה שהמטמון שלו נוקה) היה נפתח עם קוד ברירת המחדל הפומבי,
+    // ופרסום ממנו היה כותב אותו לשרת. null מוביל את השער לאימות מול השרת במקום.
+    if (k === "settings" && value && value.pin === undefined) {
+      const prev = parse(localStorage.getItem(LIVE(k)));
+      value = { ...value, pin: (prev && prev.pin) ?? null };
+    }
+    const next = JSON.stringify(value);
     if (localStorage.getItem(LIVE(k)) !== next) {
       localStorage.setItem(LIVE(k), next);
       changed = true;
@@ -309,8 +320,17 @@ export function useLobbyData(draftMode = false) {
 
 // ─── עזרי תזמון: פריט פעיל לפי טווח תאריכים ───
 
+// "היום" לפי שדות מקומיים של now (ולא toISOString, שמייצג תמיד את התאריך ב-UTC —
+// בהפרש 2-3 שעות מהיום בישראל סביב חצות, מה שהזיז את תחילת/סוף טווח הבאנרים).
+function localYmd(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 export function inDateRange(item, now = new Date()) {
-  const day = now.toISOString().slice(0, 10);
+  const day = localYmd(now);
   if (item.start && day < item.start) return false;
   if (item.end && day > item.end) return false;
   return true;

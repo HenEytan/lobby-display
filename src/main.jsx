@@ -10,3 +10,9 @@ createRoot(document.getElementById('root')).render(
     <App />
   </StrictMode>,
 )
+
+// עלייה יציבה — מאפסים את מונה לולאת הקריסה מ-index.html כדי שתקלה חד-פעמית
+// לא תיחשב לחלק מרצף קריסות בעלייה הבאה.
+setTimeout(() => {
+  try { sessionStorage.removeItem('lobby_crash_count'); } catch { /* ignore */ }
+}, 60000);

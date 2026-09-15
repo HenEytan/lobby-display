@@ -488,7 +488,7 @@ function WeatherStatus({ weather }) {
               <div className="sb-wx-day" key={i}>
                 <span>{dayName(d.date)}</span>
                 <span className="sb-wx-day-icon">{weatherIcon(d.code)}</span>
-                <span>{d.max}°/{d.min}°</span>
+                <span>{"⁦" + d.max + "°/" + d.min + "°⁩"}</span>
               </div>
             ))}
           </div>

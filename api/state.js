@@ -4,6 +4,40 @@
 
 const ROW_ID = "yesod9";
 
+// ─── הגנת PIN: מגבילים ניסיונות שגויים לכל IP ───
+// מונה בזיכרון התהליך בלבד (לא מבוזר בין מופעי serverless) — לא מונע ניחוש
+// מבוזר על פני מופעים רבים, אך חוסם ניחוש-סדרתי מהיר על אותו מופע חם, וזול
+// ליישום בלי תשתית נוספת. חלון: מקסימום 8 ניסיונות שגויים כל 5 דקות ל-IP.
+const failedAttempts = new Map();
+const PIN_WINDOW_MS = 5 * 60 * 1000;
+const PIN_MAX_ATTEMPTS = 8;
+
+function clientIp(req) {
+  const fwd = req.headers["x-forwarded-for"];
+  if (typeof fwd === "string" && fwd) return fwd.split(",")[0].trim();
+  return req.socket && req.socket.remoteAddress ? req.socket.remoteAddress : "unknown";
+}
+
+function isRateLimited(ip) {
+  const rec = failedAttempts.get(ip);
+  if (!rec) return false;
+  if (Date.now() - rec.windowStart > PIN_WINDOW_MS) {
+    failedAttempts.delete(ip);
+    return false;
+  }
+  return rec.count >= PIN_MAX_ATTEMPTS;
+}
+
+function registerFailedAttempt(ip) {
+  const now = Date.now();
+  const rec = failedAttempts.get(ip);
+  if (!rec || now - rec.windowStart > PIN_WINDOW_MS) {
+    failedAttempts.set(ip, { count: 1, windowStart: now });
+  } else {
+    rec.count += 1;
+  }
+}
+
 function sbHeaders() {
   const key = process.env.SUPABASE_ANON_KEY;
   return {
@@ -38,15 +72,27 @@ export default async function handler(req, res) {
   try {
     if (req.method === "GET") {
       const row = await readRow();
+      // ה-PIN הוא סוד האימות לכתיבה — אסור שיחזור בתשובת קריאה ציבורית וללא אימות,
+      // אחרת כל מי שפונה ל-GET הזה (ללא סיסמה) מקבל אותו כטקסט גלוי.
+      let data = row ? row.data : null;
+      if (data && data.settings && data.settings.pin !== undefined) {
+        data = { ...data, settings: { ...data.settings, pin: undefined } };
+      }
       res.status(200).json({
         ok: true,
-        data: row ? row.data : null,
+        data,
         updatedAt: row ? row.updated_at : null,
       });
       return;
     }
 
     if (req.method === "POST") {
+      const ip = clientIp(req);
+      if (isRateLimited(ip)) {
+        res.status(429).json({ ok: false, error: "too many attempts, try again later" });
+        return;
+      }
+
       const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body || {};
       const { pin, data } = body;
       if (!data || typeof data !== "object") {
@@ -62,6 +108,7 @@ export default async function handler(req, res) {
           ? existing.data.settings.pin
           : null;
       if (currentPin != null && String(pin) !== String(currentPin)) {
+        registerFailedAttempt(ip);
         res.status(403).json({ ok: false, error: "bad pin" });
         return;
       }

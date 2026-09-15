@@ -3,6 +3,8 @@
 
 const CACHE_KEY = "ynet_cache";
 const REFRESH_MS = 10 * 60 * 1000; // רענון כל 10 דקות
+// גיל מרבי למטמון בנפילה חזרה — אחרי זה מבזק ישן מפסיק להיחשב "מבזק" ומוסתר
+const MAX_CACHE_AGE_MS = 3 * 60 * 60 * 1000;
 
 export async function fetchNews() {
   try {
@@ -26,7 +28,10 @@ export async function fetchNews() {
   } catch {
     try {
       const cached = localStorage.getItem(CACHE_KEY);
-      if (cached) return JSON.parse(cached);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Date.now() - (parsed.updated || 0) <= MAX_CACHE_AGE_MS) return parsed;
+      }
     } catch { /* ignore */ }
     return { items: [], updated: 0 };
   }

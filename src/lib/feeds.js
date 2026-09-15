@@ -3,6 +3,9 @@
 // וגם מכשירים ישנים (עם מאגר תעודות SSL מיושן) מקבלים מידע מלא.
 
 const CACHE_KEY = "weather_cache";
+// גיל מרבי למטמון: מעבר לזה, מזג אוויר ישן מפסיק להיחשב "עדכני" ומוסתר —
+// עדיף בלי כרטיס מאשר תחזית בת ימים שמוצגת כאילו היא עכשווית.
+const MAX_CACHE_AGE_MS = 3 * 60 * 60 * 1000;
 
 export async function fetchWeather() {
   try {
@@ -18,15 +21,18 @@ export async function fetchWeather() {
     const d = await res.json();
     if (!d.ok || !d.current) throw new Error("weather unavailable");
 
-    const payload = { current: d.current, days: Array.isArray(d.days) ? d.days : [] };
+    const payload = { current: d.current, days: Array.isArray(d.days) ? d.days : [], fetchedAt: Date.now() };
     try { localStorage.setItem(CACHE_KEY, JSON.stringify(payload)); } catch { /* ignore */ }
     return payload;
   } catch {
     try {
       const cached = localStorage.getItem(CACHE_KEY);
-      if (cached) return JSON.parse(cached);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Date.now() - (parsed.fetchedAt || 0) <= MAX_CACHE_AGE_MS) return parsed;
+      }
     } catch { /* ignore */ }
-    return null; // אין נתונים — הכרטיס פשוט לא יוצג, בלי להמציא מספרים
+    return null; // אין נתונים עדכניים — הכרטיס פשוט לא יוצג, בלי להמציא מספרים
   }
 }
 

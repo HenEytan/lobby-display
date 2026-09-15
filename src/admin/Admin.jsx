@@ -93,7 +93,7 @@ function AdminPanel({ onLogout }) {
               <div className="storage-bar">
                 <div style={{ width: `${Math.min(100, (store.usage / store.quota) * 100)}%` }} />
               </div>
-              <span>{fmtBytes(store.usage)} / {fmtBytes(store.quota)}</span>
+              <span>{"⁦" + fmtBytes(store.usage) + " / " + fmtBytes(store.quota) + "⁩"}</span>
             </div>
           )}
           <a className="btn ghost" href="#preview">👁 תצוגה מקדימה</a>

@@ -65,11 +65,17 @@ function parseRow(text, href) {
   const month = parseInt(mm, 10) - 1;
   if (month < now.getMonth() - 6) year += 1;
   const date = new Date(year, month, parseInt(dd, 10), 0, 0, 0);
+  // מחרוזת מקומית ללא 'Z': כמו ב-SAMPLE_EVENTS, כך שהלקוח יפרש אותה כזמן מקומי.
+  // date.toISOString() היה מייצר חותמת UTC אמיתית (השרת רץ ב-UTC) — הלקוח, הרץ
+  // בשעון ישראל, קרא אותה כ-03:00/02:00 ולא כ-00:00, ומרגע שהשעה אינה 00:00
+  // formatEventWhen מפסיק להתייחס אליה כ"שעה לא ידועה" ומציג שעה שגויה שלא קיימת במקור.
+  const pad2 = (n) => String(n).padStart(2, "0");
+  const localIso = `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}T00:00:00`;
 
   return {
     title: rest,
     location: venue || "הוד השרון",
-    datetime: date.toISOString(),
+    datetime: localIso,
     category: categorize(rest, venue),
     link: href,
   };

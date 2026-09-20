@@ -187,7 +187,9 @@ function Display({ previewMode }) {
 
   // ─── בניית שקופיות האזור הראשי ───
   const holidayBanners = useMemo(
-    () => (settings.showHolidayBanners ? holidayBannerSchedule(now) : []),
+    // ‎!== false‎ ולא בדיקת אמת: כך גם הגדרות שאין בהן המפתח (מכשיר שסונכרן
+    // ממסמך ישן) מקבלות באנרי חגים, בדיוק כפי שמתג הניהול מציג אותם כדולקים
+    () => (settings.showHolidayBanners !== false ? holidayBannerSchedule(now) : []),
     [settings.showHolidayBanners, now.getDate()]
   );
   // מוצאי שבת — אחרי ההבדלה עולה באנר "שבוע טוב" שמוביל את הסבב עד חצות
@@ -222,7 +224,25 @@ function Display({ previewMode }) {
         bg: "motzash", image: null,
       },
     }] : [];
-    const s = [...fridayNow, ...motzashNow, ...holidayNow, ...regular]; // שישי/מוצ״ש ראשונים, אחריהם חגים
+    // באנר חג פעיל הוא העיקר על המסך, לא עוד שקופית בתור: הוא פותח את הסבב
+    // וחוזר בין שקופית לשקופית, כך שהחג נוכח בערך במחצית הזמן. קודם הוא היה
+    // אחד מתוך ארבע שקופיות — בערב יום כיפור דייר שעבר בלובי ראה בסבירות
+    // גבוהה "פינוי גזם" ולא את ברכת החג.
+    const rest = [...fridayNow, ...motzashNow, ...regular]; // שישי/מוצ״ש ראשונים
+    const s = [];
+    if (holidayNow.length === 0) {
+      s.push(...rest);
+    } else if (rest.length === 0) {
+      s.push(...holidayNow);
+    } else {
+      rest.forEach((item, i) => {
+        const hol = holidayNow[i % holidayNow.length];
+        // מפתח ייחודי לכל הופעה: אותו באנר חוזר כמה פעמים בסבב, ורשימת
+        // הנקודות שמתחת למסך היא רשימת React אמיתית שמפתח כפול שובר
+        s.push({ ...hol, key: `${hol.key}_${i}` });
+        s.push(item);
+      });
+    }
     // תזכורת דמי ועד — נכנסת במקום השני בסבב
     if (showVaadBanner) {
       s.splice(Math.min(1, s.length), 0, {
@@ -236,7 +256,9 @@ function Display({ previewMode }) {
       });
     }
     // אירועי הוד השרון אינם בסבב — הם מוצגים בסבב מתגלגל בעמודה הצדדית
-    if (holiday) s.push({ type: "holiday", key: "holiday" });
+    // שקופית הברכה הגנרית עולה רק כשאין באנר חג — כשיש אחד הוא כבר נושא את
+    // אותה ברכה, על איור החג, ושתיהן יחד נקראו ככפילות
+    if (holiday && holidayNow.length === 0) s.push({ type: "holiday", key: "holiday" });
     if (s.length === 0) s.push({ type: "welcome", key: "welcome" });
     return s;
   }, [data.rev, data.banners, holidayBanners, holiday, isMotzash, showVaadBanner, settings.buildingName, musicOn, now.getDate()]);

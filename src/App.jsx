@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { VERSION, CHANGELOG } from "./version";
-import { gregDateHe, hebrewDate, dailyGreeting, todayHoliday, shabbatInfo, yomTovInfo, holidayBannerSchedule } from "./lib/hebrew";
+import { gregDateHe, hebrewDate, dailyGreeting, todayHoliday, shabbatInfo, yomTovInfo, holidayBannerSchedule, isHolidayDay } from "./lib/hebrew";
 import { eventsThisWeek, eventDayLabel, formatEventWhen, fetchAlumaEvents, EVENTS_REFRESH_MS, CATEGORY_BG } from "./lib/events";
 import { fetchWeather, weatherIcon, uvLevel } from "./lib/feeds";
 import { syncTime, israelNow, TIME_SYNC_MS } from "./lib/time";
@@ -229,6 +229,10 @@ function Display({ previewMode }) {
     // אחד מתוך ארבע שקופיות — בערב יום כיפור דייר שעבר בלובי ראה בסבירות
     // גבוהה "פינוי גזם" ולא את ברכת החג.
     const rest = [...fridayNow, ...motzashNow, ...regular]; // שישי/מוצ״ש ראשונים
+    // ביום החג עצמו (מערב החג ועד סופו) מוצג רק באנר החג — בלי פינוי אשפה,
+    // מצלמות, ועד בית וכו׳. הסבב המשולב נשאר רק לימי ההקדמה שלפני החג.
+    const holidayDayNow = holidayNow.filter((h) => isHolidayDay(h.banner, now));
+    if (holidayDayNow.length > 0) return holidayDayNow;
     const s = [];
     if (holidayNow.length === 0) {
       s.push(...rest);

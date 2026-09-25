@@ -335,6 +335,10 @@ export function holidayBannerSchedule(now = new Date()) {
 
     const startDate = new Date(r.first);
     if (!def.noEve) startDate.setDate(startDate.getDate() - BANNER_LEAD_DAYS);
+    // "יום החג" — מערב החג ועד סופו (מועדי noEve: מהיום עצמו). בימים אלה
+    // הבאנר הוא השקופית היחידה בסבב; בימי ההקדמה שלפניו הוא משולב בסבב.
+    const dayOf = new Date(r.first);
+    if (!def.noEve) dayOf.setDate(dayOf.getDate() - 1);
     out.push({
       id: `hb_${def.key}`,
       title: def.title,
@@ -343,12 +347,19 @@ export function holidayBannerSchedule(now = new Date()) {
       image: null,
       start: ymdLocal(startDate),
       end: ymdLocal(r.last),
+      dayOf: ymdLocal(dayOf),
       active: true,
       firstDate: r.first,
     });
   }
   out.sort((a, b) => a.firstDate - b.firstDate);
   return out.map(({ firstDate, ...rest }) => rest);
+}
+
+// האם באנר חג (מתוך holidayBannerSchedule) נמצא ב"יום החג" עצמו ולא בימי
+// ההקדמה שלפניו
+export function isHolidayDay(banner, now = new Date()) {
+  return !!banner.dayOf && ymdLocal(now) >= banner.dayOf && ymdLocal(now) <= banner.end;
 }
 
 // ─── ימים טובים — מסך מלא סטטי, בדיוק כמו בשבת ───

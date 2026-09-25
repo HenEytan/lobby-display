@@ -709,6 +709,61 @@ function MusicTab({ data }) {
 
 // ═══════════════ הגדרות ═══════════════
 
+// ─── התקנה במכשיר התצוגה ───
+// המסך בלובי רץ על מכשיר אנדרואיד עם Fully Kiosk Browser: האפליקציה נפתחת
+// בהדלקת המכשיר ישר על התצוגה, במסך מלא. קובץ ההתקנה אינו נשמר בפרויקט —
+// זו אפליקציה של צד שלישי, והורדה מהמקור הרשמי מבטיחה גרסה עדכנית ובטוחה.
+const FULLY_PLAY_URL = "https://play.google.com/store/apps/details?id=de.ozerov.fully";
+const FULLY_SITE_URL = "https://www.fully-kiosk.com/";
+
+function DeviceSetupCard() {
+  // כתובת התצוגה — שורש האתר, בלי #admin
+  const displayUrl = `${window.location.origin}/`;
+  const [copied, setCopied] = useState(false);
+  const copy = () => {
+    navigator.clipboard?.writeText(displayUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }).catch(() => {});
+  };
+
+  return (
+    <div className="item-card device-card">
+      <h3>📺 התקנה במכשיר התצוגה</h3>
+      <p className="hint" style={{ marginTop: 0 }}>
+        כדי שהמכשיר יציג את התצוגה במסך מלא מיד כשהוא נדלק, מתקינים עליו את
+        האפליקציה Fully Kiosk Browser (אנדרואיד).
+      </p>
+      <div className="device-links">
+        <a className="btn primary tiny" href={FULLY_PLAY_URL} target="_blank" rel="noopener noreferrer">
+          ⬇ הורדה מ-Google Play
+        </a>
+        <a className="btn ghost tiny" href={FULLY_SITE_URL} target="_blank" rel="noopener noreferrer">
+          ⬇ קובץ APK מהאתר הרשמי
+        </a>
+      </div>
+      <label>כתובת התצוגה (להדבקה ב-Start URL)
+        <div className="device-url">
+          <input value={displayUrl} readOnly dir="ltr" onFocus={(e) => e.target.select()} />
+          <button className="btn ghost tiny" onClick={copy}>{copied ? "✓ הועתק" : "העתקה"}</button>
+        </div>
+      </label>
+      <ol className="device-steps">
+        <li>מתקינים את האפליקציה ופותחים אותה.</li>
+        <li><b>Settings → Web Content Settings → Start URL</b> — מדביקים את הכתובת שלמעלה.</li>
+        <li><b>Settings → Device Management</b> — מפעילים <b>Launch on Boot</b> ו-<b>Keep Screen On</b>.</li>
+        <li><b>Settings → Web Browsing Settings</b> או <b>Appearance</b> — מפעילים <b>Fullscreen Mode</b> ומכבים את סרגל הכתובת.</li>
+        <li><b>Settings → Web Content Settings</b> — מפעילים <b>Autoplay Videos</b> כדי שמוזיקת הרקע תתנגן בלי לחיצה.</li>
+        <li>מכבים ומדליקים את המכשיר ובודקים שהתצוגה עולה לבד.</li>
+      </ol>
+      <p className="hint" style={{ marginTop: 0 }}>
+        כדאי גם לוודא שהמכשיר מתחבר ל-Wi-Fi אוטומטית ושהשינה/שומר המסך כבויים.
+        שמות התפריטים עשויים להשתנות מעט בין גרסאות האפליקציה.
+      </p>
+    </div>
+  );
+}
+
 function SettingsTab({ data }) {
   const s = data.settings;
   const save = (patch) => writeDraft("settings", { ...s, ...patch });
@@ -788,7 +843,9 @@ function SettingsTab({ data }) {
           </label>
         </div>
 
-                <div className="item-card">
+        <DeviceSetupCard />
+
+        <div className="item-card">
           <h3>אבטחה</h3>
           <label>קוד PIN לכניסת מנהל
             <input value={s.pin} onChange={(e) => save({ pin: e.target.value })} />

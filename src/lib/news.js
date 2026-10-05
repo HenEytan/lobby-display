@@ -22,7 +22,7 @@ export async function fetchNews() {
     if (d.ok && Array.isArray(d.items) && d.items.length > 0) {
       const payload = { items: d.items, updated: d.updated || Date.now() };
       localStorage.setItem(CACHE_KEY, JSON.stringify(payload));
-      return payload;
+      return { ...payload, live: true };
     }
     throw new Error("empty feed");
   } catch {
@@ -30,10 +30,10 @@ export async function fetchNews() {
       const cached = localStorage.getItem(CACHE_KEY);
       if (cached) {
         const parsed = JSON.parse(cached);
-        if (Date.now() - (parsed.updated || 0) <= MAX_CACHE_AGE_MS) return parsed;
+        if (Date.now() - (parsed.updated || 0) <= MAX_CACHE_AGE_MS) return { ...parsed, live: false };
       }
     } catch { /* ignore */ }
-    return { items: [], updated: 0 };
+    return { items: [], updated: 0, live: false };
   }
 }
 

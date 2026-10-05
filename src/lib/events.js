@@ -58,14 +58,37 @@ function startOfWeek(d) {
 
 export const EVENTS_REFRESH_MS = 3 * 60 * 60 * 1000; // רענון אירועים חיים כל 3 שעות
 
-// שליפת אירועי אלומה מה-proxy בצד השרת; נפילה חיננית לנתוני הדוגמה המקומיים.
+const CACHE_KEY = "aluma_cache";
+
+// שליפת אירועי אלומה מה-proxy בצד השרת. ‎live‎ מסמן אם הנתונים הגיעו עכשיו מהשרת —
+// כך המסך יודע לנסות שוב תוך דקה במקום לחכות שלוש שעות לסבב הרענון הבא.
+// בנפילה: הרשימה האחרונה שנשמרה (האירועים מתוארכים, ולכן רשימה ישנה עדיין מסננת
+// נכון את השבוע הקרוב), ורק אם אין כזו — נתוני הדוגמה המקומיים.
 export async function fetchAlumaEvents() {
   try {
-    const res = await fetch("/api/aluma-events", { cache: "no-store" });
+    // AbortController במקום AbortSignal.timeout — נתמך גם בדפדפני טלוויזיה/מכשירים ישנים
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 15000);
+    let res;
+    try {
+      res = await fetch("/api/aluma-events", { cache: "no-store", signal: ctrl.signal });
+    } finally {
+      clearTimeout(timer);
+    }
+    if (!res.ok) throw new Error("events source error");
     const d = await res.json();
-    if (d.ok && Array.isArray(d.events) && d.events.length) return d.events;
-  } catch { /* אין רשת — נשארים על הגיבוי המקומי */ }
-  return SAMPLE_EVENTS;
+    if (d.ok && Array.isArray(d.events) && d.events.length) {
+      try { localStorage.setItem(CACHE_KEY, JSON.stringify(d.events)); } catch { /* ignore */ }
+      return { events: d.events, live: true };
+    }
+    throw new Error("empty events");
+  } catch {
+    try {
+      const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || "null");
+      if (Array.isArray(cached) && cached.length) return { events: cached, live: false };
+    } catch { /* ignore */ }
+    return { events: SAMPLE_EVENTS, live: false };
+  }
 }
 
 // אירועי שבעת הימים הקרובים (מהיום ואילך), ממוינים לפי זמן.

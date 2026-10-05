@@ -111,6 +111,40 @@ function useClock() {
   return now;
 }
 
+// מקור חיצוני (מבזקים, אירועים) עם רענון קבוע. כשהטעינה נכשלת (‎live: false‎) —
+// למשל מכשיר שעלה לפני שהרשת התחברה — מנסים שוב תוך דקה ולא מחכים לסבב הרגיל,
+// שבאירועים אורך שלוש שעות; וכשהרשת חוזרת (אירוע ‎online‎) טוענים מיד.
+const FEED_RETRY_MS = 60 * 1000;
+
+function usePolledFeed(enabled, load, refreshMs) {
+  const [value, setValue] = useState(null);
+  useEffect(() => {
+    if (!enabled) return;
+    let alive = true;
+    let busy = false;
+    let timer = null;
+    const run = async () => {
+      if (busy) return;
+      busy = true;
+      clearTimeout(timer);
+      let v = null;
+      try { v = await load(); } catch { /* הטוען עצמו נופל בחזרה למטמון */ }
+      busy = false;
+      if (!alive) return;
+      if (v) setValue(v);
+      timer = setTimeout(run, v && v.live ? refreshMs : FEED_RETRY_MS);
+    };
+    run();
+    window.addEventListener("online", run);
+    return () => {
+      alive = false;
+      clearTimeout(timer);
+      window.removeEventListener("online", run);
+    };
+  }, [enabled, load, refreshMs]);
+  return value;
+}
+
 export default function App() {
   const route = useHashRoute();
   if (route === "admin") return <Admin />;
@@ -140,13 +174,7 @@ function Display({ previewMode }) {
     return () => clearInterval(t);
   }, []);
 
-  const [news, setNews] = useState({ items: [] });
-  useEffect(() => {
-    if (!settings.showNews) return;
-    fetchNews().then(setNews);
-    const t = setInterval(() => fetchNews().then(setNews), NEWS_REFRESH_MS);
-    return () => clearInterval(t);
-  }, [settings.showNews]);
+  const news = usePolledFeed(settings.showNews, fetchNews, NEWS_REFRESH_MS) || { items: [] };
 
   const holiday = useMemo(() => todayHoliday(now), [now.getDate(), now.getMonth()]);
   const shabbat = useMemo(() => shabbatInfo(now), [Math.floor(now.getTime() / 60000)]);
@@ -156,13 +184,8 @@ function Display({ previewMode }) {
     [Math.floor(now.getTime() / 60000), settings.showHolidayScreen]
   );
   // אירועי אלומה — נטענים מה-API החי ומתרעננים כל כמה שעות
-  const [alumaEvents, setAlumaEvents] = useState(null);
-  useEffect(() => {
-    if (!settings.showEvents) return;
-    fetchAlumaEvents().then(setAlumaEvents);
-    const t = setInterval(() => fetchAlumaEvents().then(setAlumaEvents), EVENTS_REFRESH_MS);
-    return () => clearInterval(t);
-  }, [settings.showEvents]);
+  const alumaFeed = usePolledFeed(settings.showEvents, fetchAlumaEvents, EVENTS_REFRESH_MS);
+  const alumaEvents = alumaFeed ? alumaFeed.events : null;
   const events = useMemo(
     () => eventsThisWeek(now, alumaEvents || undefined),
     [now.getDate(), alumaEvents]

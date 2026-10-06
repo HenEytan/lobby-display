@@ -23,7 +23,7 @@ _[FILL IN: the boundary rule between them — what may import what, and where a 
 
 ## Public contracts
 
-- The HTTP endpoints under `api/`: `GET`/`POST /api/state` (PIN-authenticated write of the shared screen state, Supabase table `lobby_state`, row `yesod9`), `GET /api/weather`, `GET /api/ynet`, `GET /api/news`, `GET /api/aluma-events`, `GET /api/time` — the display devices in the field call these on every refresh.
+- The HTTP endpoints under `api/`: `GET`/`POST /api/state` (PIN-authenticated write of the shared screen state, Supabase table `lobby_state`, row `yesod9`; with no PIN stored every write is refused unless it carries the `LOBBY_ADMIN_PIN` env secret, which then becomes the stored PIN), `GET /api/weather`, `GET /api/ynet`, `GET /api/news`, `GET /api/aluma-events`, `GET /api/time` — the display devices in the field call these on every refresh.
 - The hash routes `/`, `/#admin`, `/#preview` — the kiosk device's Start URL points at the display route.
 - The browser storage the field devices already hold: `localStorage` keys `lobby_*` / `lobby_draft_*` and the IndexedDB database `lobby-media`. A shape change needs a `migrateOnce` migration in `src/lib/store.js`, because deployed screens are not touched by hand.
 - The Vercel config in `vercel.json` (SPA rewrite that spares `api/`, `no-store` on `/` and `/index.html`, which the auto-update check in `src/lib/autoUpdate.js` relies on).
@@ -50,7 +50,7 @@ Docs mirror rules and code for humans. When a change makes a guide, design doc, 
 | `npm run build` | Production build to `dist/` (the command Vercel runs) |
 | `npm run preview` | Serve the built `dist/` locally |
 | `npm run lint` | Lint with oxlint (`.oxlintrc.json`) |
-| _[FILL IN: test command — no test runner is configured yet]_ | Run the tests |
+| `npm test` | Run the tests (`node --test`; `*.test.js`, kept off Vercel by `.vercelignore`) |
 | `npm run lint && npm run build` | The aggregate check (lint, then build) |
 
 `npm run lint && npm run build` is the aggregate check. _[FILL IN: turn it into one `npm run check` script; say which checks it skips — the browser run on the kiosk device, the `api/` functions against live Supabase — and when to run those by hand.]_

@@ -100,14 +100,20 @@ export default async function handler(req, res) {
         return;
       }
 
-      // אימות: הקוד הנוכחי השמור בשרת הוא המקור הקובע.
-      // בכתיבה הראשונה (עוד אין נתונים) — מותר, וכך נקבע הקוד ההתחלתי.
+      // אימות: הקוד השמור בשרת הוא המקור הקובע. כשאין קוד שמור — נכשלים סגור:
+      // אחרת כל אחד יכול לכתוב (ולקבוע קוד משלו). הקוד ההתחלתי מגיע רק מסוד השרת
+      // LOBBY_ADMIN_PIN, והכתיבה הראשונה שמאומתת מולו שומרת אותו במסמך.
       const existing = await readRow();
-      const currentPin =
+      const storedPin =
         existing && existing.data && existing.data.settings
           ? existing.data.settings.pin
           : null;
-      if (currentPin != null && String(pin) !== String(currentPin)) {
+      const currentPin = storedPin != null ? storedPin : process.env.LOBBY_ADMIN_PIN || null;
+      if (currentPin == null) {
+        res.status(403).json({ ok: false, error: "no admin pin configured" });
+        return;
+      }
+      if (String(pin) !== String(currentPin)) {
         registerFailedAttempt(ip);
         res.status(403).json({ ok: false, error: "bad pin" });
         return;

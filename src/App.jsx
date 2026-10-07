@@ -358,7 +358,7 @@ function Display({ previewMode }) {
 
         <aside className="side">
           {settings.showEvents && events.length > 0 && <EventsRail events={events} />}
-          <AnnouncementsCard anns={anns} />
+          {anns.length > 0 && <AnnouncementsCard anns={anns} />}
         </aside>
       </div>
 

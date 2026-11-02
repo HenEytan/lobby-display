@@ -83,3 +83,25 @@ test("rejects a wrong PIN when one is stored", async () => {
   const r = await post({ pin: "1111", data: screen({}) });
   assert.equal(r.status, 403);
 });
+
+// The anon key let anyone who held it skip the PIN and read the stored one, because the table had to
+// grant anon read and write. With the service key the table grants anon nothing (docs/supabase.sql).
+test("uses the service key when it is set, the anon key only until then", async () => {
+  const keys = [];
+  globalThis.fetch = async (url, opts = {}) => { keys.push(opts.headers && opts.headers.apikey); return new Response("[]", { status: 200 }); };
+  const get = async () => { const res = { setHeader() {}, status() { return this; }, json() { return this; } }; await handler({ method: "GET", headers: {}, socket: {} }, res); };
+  process.env.SUPABASE_SERVICE_ROLE_KEY = "svc";
+  try { await get(); } finally { delete process.env.SUPABASE_SERVICE_ROLE_KEY; }
+  await get();
+  assert.deepEqual(keys, ["svc", "anon"]);
+});
+
+test("with only the service key set, storage counts as configured", async () => {
+  delete process.env.SUPABASE_ANON_KEY;
+  process.env.SUPABASE_SERVICE_ROLE_KEY = "svc";
+  let body;
+  try {
+    await handler({ method: "GET", headers: {}, socket: {} }, { setHeader() {}, status() { return this; }, json(b) { body = b; return this; } });
+  } finally { delete process.env.SUPABASE_SERVICE_ROLE_KEY; }
+  assert.notEqual(body && body.error, "storage not configured");
+});

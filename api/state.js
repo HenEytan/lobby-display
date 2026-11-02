@@ -38,8 +38,16 @@ function registerFailedAttempt(ip) {
   }
 }
 
+// The service key when set: the table then grants the anon role nothing (docs/supabase.sql), so the
+// PIN check here is the only way in. The anon key needs read+write policies for anon, and anyone
+// holding it skips the PIN and can read the stored one. Anon stays as a fallback until the service
+// key is configured.
+function sbKey() {
+  return process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+}
+
 function sbHeaders() {
-  const key = process.env.SUPABASE_ANON_KEY;
+  const key = sbKey();
   return {
     apikey: key,
     Authorization: `Bearer ${key}`,
@@ -64,7 +72,7 @@ async function readRow() {
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store, max-age=0");
 
-  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
+  if (!process.env.SUPABASE_URL || !sbKey()) {
     res.status(200).json({ ok: false, error: "storage not configured" });
     return;
   }

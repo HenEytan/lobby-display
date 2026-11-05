@@ -1,8 +1,9 @@
-// פונקציית שרת — אחסון מרכזי של תוכן המסך (Supabase).
+// פונקציית שרת — אחסון מרכזי של תוכן המסך (Upstash Redis, או Supabase עד המעבר).
 // מאפשר שההגדרות יישמרו בין מכשירים: כל מסך מושך את אותו מצב.
 // אין להוסיף export const config עם runtime — Vercel מזהה Node אוטומטית.
 
 const ROW_ID = "yesod9";
+const REDIS_KEY = `lobby_state:${ROW_ID}`;
 
 // ─── הגנת PIN: מגבילים ניסיונות שגויים לכל IP ───
 // מונה בזיכרון התהליך בלבד (לא מבוזר בין מופעי serverless) — לא מונע ניחוש
@@ -59,7 +60,31 @@ function sbUrl(path) {
   return `${process.env.SUPABASE_URL}/rest/v1/${path}`;
 }
 
-async function readRow() {
+// Redis when configured: the names Vercel's Upstash integration sets. The state is one JSON value, so
+// it needs no database of its own, and the service-key and policy questions above stop applying.
+function redisConfig() {
+  const url = String(process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL || "").trim().replace(/\/$/, "");
+  const token = String(process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN || "").trim();
+  return url && token ? { url, token } : null;
+}
+
+async function redis(cfg, command) {
+  const r = await fetch(cfg.url, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${cfg.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(command),
+  });
+  if (!r.ok) throw new Error("redis failed " + r.status);
+  const out = await r.json();
+  if (out.error) throw new Error("redis failed");
+  return out.result;
+}
+
+function supabaseConfigured() {
+  return Boolean(process.env.SUPABASE_URL && sbKey());
+}
+
+async function readSupabaseRow() {
   const r = await fetch(
     sbUrl(`lobby_state?id=eq.${ROW_ID}&select=data,updated_at`),
     { headers: sbHeaders() }
@@ -69,10 +94,42 @@ async function readRow() {
   return rows && rows.length ? rows[0] : null;
 }
 
+// The first read after Redis is configured copies the Supabase row across, stored PIN included. A
+// failed Supabase read throws rather than counting as empty, so a passing outage cannot look like a
+// fresh install.
+async function readRow() {
+  const cfg = redisConfig();
+  if (!cfg) return readSupabaseRow();
+  const raw = await redis(cfg, ["GET", REDIS_KEY]);
+  if (raw) return JSON.parse(raw);
+  if (!supabaseConfigured()) return null;
+  const row = await readSupabaseRow();
+  if (row) await redis(cfg, ["SET", REDIS_KEY, JSON.stringify(row)]);
+  return row;
+}
+
+// → the saved row's updated_at.
+async function writeRow(data) {
+  const row = { data, updated_at: new Date().toISOString() };
+  const cfg = redisConfig();
+  if (cfg) {
+    await redis(cfg, ["SET", REDIS_KEY, JSON.stringify(row)]);
+    return row.updated_at;
+  }
+  const w = await fetch(sbUrl("lobby_state"), {
+    method: "POST",
+    headers: { ...sbHeaders(), Prefer: "resolution=merge-duplicates,return=representation" },
+    body: JSON.stringify([{ id: ROW_ID, ...row }]),
+  });
+  if (!w.ok) throw new Error("write failed " + w.status + " " + (await w.text()));
+  const saved = await w.json();
+  return saved[0] ? saved[0].updated_at : null;
+}
+
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store, max-age=0");
 
-  if (!process.env.SUPABASE_URL || !sbKey()) {
+  if (!redisConfig() && !supabaseConfigured()) {
     res.status(200).json({ ok: false, error: "storage not configured" });
     return;
   }
@@ -143,15 +200,7 @@ export default async function handler(req, res) {
           ? { ...data, settings: { ...incoming, pin: currentPin } }
           : data;
 
-      const payload = [{ id: ROW_ID, data: merged, updated_at: new Date().toISOString() }];
-      const w = await fetch(sbUrl("lobby_state"), {
-        method: "POST",
-        headers: { ...sbHeaders(), Prefer: "resolution=merge-duplicates,return=representation" },
-        body: JSON.stringify(payload),
-      });
-      if (!w.ok) throw new Error("write failed " + w.status + " " + (await w.text()));
-      const saved = await w.json();
-      res.status(200).json({ ok: true, updatedAt: saved[0] ? saved[0].updated_at : null });
+      res.status(200).json({ ok: true, updatedAt: await writeRow(merged) });
       return;
     }
 

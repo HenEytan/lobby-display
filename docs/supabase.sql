@@ -1,3 +1,4 @@
+-- Superseded by Upstash Redis (api/state.js): kept for a deployment that stays on Supabase.
 -- lobby-display — Supabase schema for its OWN project (it used to share PeakLook's production one).
 -- Run once in the new project's SQL editor, then set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in
 -- Vercel and remove SUPABASE_ANON_KEY.

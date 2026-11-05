@@ -16,14 +16,14 @@ The lobby screen for the residential building at Yesod HaMaala 9, Hod HaSharon: 
 | `src/admin/` | The PIN-gated admin panel (`/#admin`): settings, banners, notices, ticker, playlist, holidays, device install card | `src/lib/`, `/api/state` |
 | `src/lib/` | Shared logic: draft/publish store and one-time migrations (`store.js`), Hebrew calendar and holiday banners (`hebrew.js`), SVG artwork, themes, media in IndexedDB, feeds, server time, auto-update | `@hebcal/core`, `/api/*` |
 | `src/version.js` | Single source of truth for `VERSION` and the in-app `CHANGELOG` | — |
-| `api/` | Vercel serverless functions (Node): `state`, `weather`, `ynet`, `news`, `aluma-events`, `time` | Supabase REST, Open-Meteo, ynet RSS, alumahod.com |
+| `api/` | Vercel serverless functions (Node): `state`, `weather`, `ynet`, `news`, `aluma-events`, `time` | Upstash Redis REST, Supabase REST, Open-Meteo, ynet RSS, alumahod.com |
 | `public/` | Static assets served as-is | — |
 
 _[FILL IN: the boundary rule between them — what may import what, and where a cross-cutting helper goes.]_
 
 ## Public contracts
 
-- The HTTP endpoints under `api/`: `GET`/`POST /api/state` (PIN-authenticated write of the shared screen state, Supabase table `lobby_state`, row `yesod9`; with no PIN stored every write is refused unless it carries the `LOBBY_ADMIN_PIN` env secret, which then becomes the stored PIN), `GET /api/weather`, `GET /api/ynet`, `GET /api/news`, `GET /api/aluma-events`, `GET /api/time` — the display devices in the field call these on every refresh.
+- The HTTP endpoints under `api/`: `GET`/`POST /api/state` (PIN-authenticated write of the shared screen state, Upstash Redis key `lobby_state:yesod9` when `UPSTASH_REDIS_REST_*` or `KV_REST_API_*` is set, copied on the first read from Supabase table `lobby_state`, row `yesod9`, which is used until then; with no PIN stored every write is refused unless it carries the `LOBBY_ADMIN_PIN` env secret, which then becomes the stored PIN), `GET /api/weather`, `GET /api/ynet`, `GET /api/news`, `GET /api/aluma-events`, `GET /api/time` — the display devices in the field call these on every refresh.
 - The hash routes `/`, `/#admin`, `/#preview` — the kiosk device's Start URL points at the display route.
 - The browser storage the field devices already hold: `localStorage` keys `lobby_*` / `lobby_draft_*` and the IndexedDB database `lobby-media`. A shape change needs a `migrateOnce` migration in `src/lib/store.js`, because deployed screens are not touched by hand.
 - The Vercel config in `vercel.json` (SPA rewrite that spares `api/`, `no-store` on `/` and `/index.html`, which the auto-update check in `src/lib/autoUpdate.js` relies on).

@@ -105,3 +105,95 @@ test("with only the service key set, storage counts as configured", async () => 
   } finally { delete process.env.SUPABASE_SERVICE_ROLE_KEY; }
   assert.notEqual(body && body.error, "storage not configured");
 });
+
+// ── Redis: one JSON value instead of a table, copied from Supabase on the first read ──
+function redisEnv(prefix = "UPSTASH_REDIS_REST") {
+  process.env[prefix === "KV" ? "KV_REST_API_URL" : prefix + "_URL"] = "https://redis.test/";
+  process.env[prefix === "KV" ? "KV_REST_API_TOKEN" : prefix + "_TOKEN"] = "tok";
+}
+function clearRedisEnv() {
+  for (const k of ["UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN", "KV_REST_API_URL", "KV_REST_API_TOKEN"]) delete process.env[k];
+}
+// A fake of both stores: `redisValue` is the key's value; a Supabase call is counted, and fails on demand.
+function bothStores({ redisValue = null, sbRow = null, sbFails = false } = {}) {
+  const state = { redisValue, sbReads: 0, sbWrites: 0, redisCalls: [] };
+  globalThis.fetch = async (url, opts = {}) => {
+    if (String(url).startsWith("https://redis.test")) {
+      const [cmd, key, value] = JSON.parse(opts.body);
+      state.redisCalls.push({ url: String(url), cmd, key, auth: opts.headers.Authorization });
+      if (cmd === "SET") state.redisValue = value;
+      return new Response(JSON.stringify({ result: cmd === "GET" ? state.redisValue : "OK" }), { status: 200 });
+    }
+    if (opts.method === "POST") { state.sbWrites += 1; return new Response("[]", { status: 201 }); }
+    state.sbReads += 1;
+    if (sbFails) return new Response("down", { status: 503 });
+    return new Response(JSON.stringify(sbRow ? [sbRow] : []), { status: 200 });
+  };
+  return state;
+}
+async function getState() {
+  const out = {};
+  const res = { setHeader() {}, status(c) { out.status = c; return this; }, json(b) { out.body = b; return this; } };
+  await handler({ method: "GET", headers: {}, socket: {} }, res);
+  return out;
+}
+
+test("the first read copies the Supabase row to Redis, keeps the PIN there, and hides it from GET", async () => {
+  redisEnv();
+  try {
+    const s = bothStores({ sbRow: { data: screen({ pin: "2468", title: "old" }), updated_at: "t" } });
+    const r = await getState();
+    assert.equal(r.body.ok, true);
+    assert.equal(r.body.data.settings.title, "old");
+    assert.equal(r.body.data.settings.pin, undefined);
+    assert.equal(r.body.updatedAt, "t");
+    assert.equal(JSON.parse(s.redisValue).data.settings.pin, "2468");
+    await getState();
+    assert.equal(s.sbReads, 1, "Supabase is not read once Redis holds the value");
+  } finally { clearRedisEnv(); }
+});
+
+test("with Redis, the copied PIN still guards writes and a write never reaches Supabase", async () => {
+  redisEnv();
+  try {
+    const s = bothStores({ sbRow: { data: screen({ pin: "2468" }), updated_at: "t" } });
+    assert.equal((await post({ pin: "1111", data: screen({ title: "defaced" }) })).status, 403);
+    assert.equal(JSON.parse(s.redisValue).data.settings.title, "x");
+    const ok = await post({ pin: "2468", data: screen({ title: "new" }) });
+    assert.equal(ok.status, 200);
+    assert.ok(ok.body.updatedAt);
+    const saved = JSON.parse(s.redisValue);
+    assert.equal(saved.data.settings.title, "new");
+    assert.equal(saved.data.settings.pin, "2468", "kept when the client omits it");
+    assert.equal(s.sbWrites, 0);
+    assert.equal(s.redisCalls[0].auth, "Bearer tok");
+    assert.equal(s.redisCalls[0].url, "https://redis.test");
+    assert.equal(s.redisCalls[0].key, "lobby_state:yesod9");
+  } finally { clearRedisEnv(); }
+});
+
+test("a failed Supabase read with Redis empty is an error, never a fresh install", async () => {
+  redisEnv();
+  process.env.LOBBY_ADMIN_PIN = "4321";
+  try {
+    const s = bothStores({ sbFails: true });
+    const r = await post({ pin: "4321", data: screen({}) });
+    assert.equal(r.body.ok, false);
+    assert.equal(s.redisValue, null, "the bootstrap PIN wrote nothing");
+  } finally { clearRedisEnv(); }
+});
+
+test("Redis alone counts as configured, under either set of variable names", async () => {
+  delete process.env.SUPABASE_URL;
+  delete process.env.SUPABASE_ANON_KEY;
+  for (const prefix of ["UPSTASH_REDIS_REST", "KV"]) {
+    redisEnv(prefix);
+    try {
+      const s = bothStores();
+      const r = await getState();
+      assert.equal(r.body.ok, true);
+      assert.equal(r.body.data, null);
+      assert.equal(s.sbReads, 0);
+    } finally { clearRedisEnv(); }
+  }
+});

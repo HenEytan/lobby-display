@@ -1,24 +1,22 @@
 import { test, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
 import { createHandler } from "../../api/media.js";
-import { fakeBlob, fakeSupabase, routeFetch } from "../../testing/fakes.js";
+import { fakeBlob, mediaPaths, putStateDoc, routeFetch } from "../../testing/fakes.js";
 import { uploadMedia, downloadMedia, syncLocalMedia, serverMediaIds, PART_BYTES } from "./media.js";
 
 // The client code runs against the real api/media.js handler, over a fetch that routes to it.
 const realFetch = globalThis.fetch;
 let blob;
-beforeEach(() => {
+beforeEach(async () => {
   process.env.BLOB_READ_WRITE_TOKEN = "blob-token";
-  process.env.SUPABASE_URL = "https://sb.test";
-  process.env.SUPABASE_SERVICE_ROLE_KEY = "svc";
   blob = fakeBlob();
-  const sb = fakeSupabase({ data: { settings: { pin: "2468" } }, updated_at: "t" });
-  globalThis.fetch = routeFetch({ handlers: { "/api/media": createHandler(blob) }, fallback: sb.fetch });
+  await putStateDoc(blob, { data: { settings: { pin: "2468" } }, updated_at: "t" });
+  const unexpected = async (url) => { throw new Error("unexpected fetch " + url); };
+  globalThis.fetch = routeFetch({ handlers: { "/api/media": createHandler(blob) }, fallback: unexpected });
 });
 afterEach(() => {
   globalThis.fetch = realFetch;
   delete process.env.BLOB_READ_WRITE_TOKEN;
-  delete process.env.SUPABASE_SERVICE_ROLE_KEY;
 });
 
 // A file over one part, so the split and the reassembly both run; byte values vary, so order matters.
@@ -62,5 +60,5 @@ test("sync uploads only what the server lacks, and reports per-file failures", a
 test("sync without a PIN does nothing", async () => {
   const out = await syncLocalMedia({ pin: null, local: { ids: async () => ["x"], get: async () => new Blob(["x"]) } });
   assert.equal(out, null);
-  assert.equal(blob.files.size, 0);
+  assert.equal(mediaPaths(blob).length, 0);
 });

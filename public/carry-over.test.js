@@ -3,9 +3,9 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
 import { createHandler } from "../api/media.js";
-import stateHandler from "../api/state.js";
+import { createHandler as createStateHandler } from "../api/state.js";
 import { downloadMedia } from "../src/lib/media.js";
-import { fakeBlob, fakeSupabase, routeFetch } from "../testing/fakes.js";
+import { fakeBlob, fakeSupabase, mediaPaths, readStateDoc, routeFetch } from "../testing/fakes.js";
 
 // carry-over.js runs in a sandbox posing as the old origin's page, against the real api/state and
 // api/media handlers of the new host.
@@ -14,15 +14,16 @@ const NEW = "https://new.test";
 const realFetch = globalThis.fetch;
 let blob;
 let sb;
+const stateDoc = () => readStateDoc(blob);
 
 beforeEach(() => {
   process.env.BLOB_READ_WRITE_TOKEN = "blob-token";
   process.env.SUPABASE_URL = "https://sb.test";
   process.env.SUPABASE_SERVICE_ROLE_KEY = "svc";
   blob = fakeBlob();
-  // The new server, seeded from the Supabase copy as of the Redis switch.
+  // The new server, whose first read seeds Blob from the Supabase copy as of the Redis switch.
   sb = fakeSupabase({ data: { settings: { pin: "2468", buildingName: "seeded" }, ticker: [] }, updated_at: "2026-11-05T10:00:00+00:00" });
-  globalThis.fetch = routeFetch({ handlers: { "/api/media": createHandler(blob), "/api/state": stateHandler }, fallback: sb.fetch, origin: NEW });
+  globalThis.fetch = routeFetch({ handlers: { "/api/media": createHandler(blob), "/api/state": createStateHandler(blob) }, fallback: sb.fetch, origin: NEW });
 });
 afterEach(() => {
   globalThis.fetch = realFetch;
@@ -109,8 +110,8 @@ test("carries the kiosk's media, newer state and a localStorage backup to the ne
   const img = await downloadMedia("img_1_a");
   assert.equal(await img.text(), "jpeg-bytes");
   assert.equal((await downloadMedia("aud_2_b")).size, 3 * 1024 * 1024 + 5);
-  assert.equal(sb.row.data.settings.buildingName, "from kiosk");
-  assert.equal(sb.row.data.settings.pin, "2468", "the server keeps its PIN");
+  assert.equal(stateDoc().data.settings.buildingName, "from kiosk");
+  assert.equal(stateDoc().data.settings.pin, "2468", "the server keeps its PIN");
   const backup = JSON.parse(await (await downloadMedia("carryover_kiosk_localstorage")).text());
   assert.equal(backup.origin, "https://lobby-display-theta.vercel.app");
   assert.ok(backup.localStorage.lobby_draft_ticker, "drafts are in the backup");
@@ -120,27 +121,27 @@ test("carries the kiosk's media, newer state and a localStorage backup to the ne
 
 test("a second run uploads nothing new and leaves the state alone", async () => {
   await runCarryOver({ localStorage: oldKiosk(), files: oldMedia(), pin: "2468" });
-  const afterFirst = sb.row.updated_at;
-  const parts = [...blob.files.keys()].length;
+  const afterFirst = stateDoc().updated_at;
+  const parts = mediaPaths(blob).length;
   const { result, screen } = await runCarryOver({ localStorage: oldKiosk(), files: oldMedia(), pin: "2468" });
   assert.equal(result.ok, true, screen);
-  assert.equal(sb.row.updated_at, afterFirst);
-  assert.equal([...blob.files.keys()].length, parts);
+  assert.equal(stateDoc().updated_at, afterFirst);
+  assert.equal(mediaPaths(blob).length, parts);
   assert.match(screen, /חדש יותר/);
 });
 
 test("an older kiosk state never replaces what the server holds", async () => {
   const { result } = await runCarryOver({ localStorage: oldKiosk({ lobby_server_stamp: "2026-10-01T00:00:00.000Z" }), files: oldMedia(), pin: "2468" });
   assert.equal(result.ok, true);
-  assert.equal(sb.row.data.settings.buildingName, "seeded");
+  assert.equal(stateDoc().data.settings.buildingName, "seeded");
 });
 
 test("without a PIN the server accepts, nothing is written and the screen says why", async () => {
   const { result, screen } = await runCarryOver({ localStorage: oldKiosk(), files: oldMedia(), pin: "0000" });
   assert.equal(result.ok, false);
   assert.match(screen, /PIN/);
-  assert.equal(blob.files.size, 0);
-  assert.equal(sb.row.data.settings.buildingName, "seeded");
+  assert.equal(mediaPaths(blob).length, 0);
+  assert.equal(stateDoc().data.settings.buildingName, "seeded");
 });
 
 test("the PIN the kiosk kept locally is enough when none is injected", async () => {
@@ -153,12 +154,12 @@ test("on the new host itself it does nothing, so a left-over injection cannot lo
   const { result, screen } = await runCarryOver({ localStorage: oldKiosk(), files: oldMedia(), pin: "2468", origin: NEW });
   assert.equal(result.skipped, true);
   assert.equal(screen, "");
-  assert.equal(blob.files.size, 0);
+  assert.equal(mediaPaths(blob).length, 0);
 });
 
 test("an origin that never stored media still carries its state", async () => {
   const { result, screen } = await runCarryOver({ localStorage: oldKiosk(), files: null, pin: "2468" });
   assert.equal(result.ok, true, screen);
   assert.match(screen, /מדיה במכשיר: 0/);
-  assert.equal(sb.row.data.settings.buildingName, "from kiosk");
+  assert.equal(stateDoc().data.settings.buildingName, "from kiosk");
 });

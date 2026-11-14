@@ -3,21 +3,60 @@
 import assert from "node:assert/strict";
 import { Readable } from "node:stream";
 
-// An in-memory stand-in for the @vercel/blob calls api/media.js makes.
+class BlobError extends Error {}
+class BlobNotFoundError extends BlobError {}
+class BlobPreconditionFailedError extends BlobError {}
+
+const BLOB_ORIGIN = "https://blob.test/";
+
+// An in-memory stand-in for the @vercel/blob calls api/media.js and api/_lib/state-store.js make.
+// `files` is the store itself (what head() and a cache-busted URL see); `cdn` is what a read by
+// pathname sees. Set `frozenCdn` to keep the CDN copy from following writes, like the up-to-60 s
+// propagation of an overwrite.
 export function fakeBlob() {
-  const files = new Map(); // pathname → { body: Buffer, contentType }
-  return {
+  const files = new Map(); // pathname → { body: Buffer, contentType, etag, cacheControlMaxAge }
+  const cdn = new Map();
+  let etagSeq = 0;
+  const result = (pathname, f) => ({
+    statusCode: 200,
+    stream: Readable.toWeb(Readable.from([f.body])),
+    blob: { pathname, url: BLOB_ORIGIN + pathname, size: f.body.length, contentType: f.contentType, etag: f.etag },
+  });
+  const fake = {
     files,
+    cdn,
+    frozenCdn: false,
+    puts: [],
+    BlobError,
+    BlobNotFoundError,
+    BlobPreconditionFailedError,
     async put(pathname, body, opts) {
       assert.equal(opts.access, "public");
       assert.equal(opts.addRandomSuffix, false);
-      files.set(pathname, { body: Buffer.from(body), contentType: opts.contentType });
-      return { pathname, url: "https://blob.test/" + pathname };
+      fake.puts.push({ pathname, opts });
+      const existing = files.get(pathname);
+      if (opts.ifMatch !== undefined && (!existing || existing.etag !== opts.ifMatch)) throw new BlobPreconditionFailedError();
+      if (existing && !opts.allowOverwrite && opts.ifMatch === undefined) throw new BlobError("This blob already exists");
+      const f = { body: Buffer.from(body), contentType: opts.contentType, etag: `"e${++etagSeq}"`, cacheControlMaxAge: opts.cacheControlMaxAge };
+      files.set(pathname, f);
+      if (!fake.frozenCdn) cdn.set(pathname, f);
+      return { pathname, url: BLOB_ORIGIN + pathname, etag: f.etag };
     },
-    async get(pathname) {
+    async head(pathname) {
       const f = files.get(pathname);
-      if (!f) return null;
-      return { statusCode: 200, stream: Readable.toWeb(Readable.from([f.body])), blob: { size: f.body.length, contentType: f.contentType } };
+      if (!f) throw new BlobNotFoundError();
+      return { pathname, url: BLOB_ORIGIN + pathname, size: f.body.length, etag: f.etag };
+    },
+    async get(urlOrPathname) {
+      const s = String(urlOrPathname);
+      // A full URL carries a version query, which misses the CDN cache and reaches the store.
+      if (s.startsWith(BLOB_ORIGIN)) {
+        const pathname = s.slice(BLOB_ORIGIN.length).split("?")[0];
+        const f = files.get(pathname);
+        return f ? result(pathname, f) : null;
+      }
+      const f = cdn.get(s);
+      return f ? result(s, f) : null;
     },
     async list({ prefix, cursor }) {
       const all = [...files.keys()].filter((p) => p.startsWith(prefix)).sort();
@@ -27,13 +66,29 @@ export function fakeBlob() {
       return { blobs: page.map((pathname) => ({ pathname, url: "https://blob.test/" + pathname })), cursor: next, hasMore: Boolean(next) };
     },
     async del(urls) {
-      for (const u of [].concat(urls)) files.delete(String(u).replace("https://blob.test/", ""));
+      for (const u of [].concat(urls)) {
+        const pathname = String(u).replace(BLOB_ORIGIN, "");
+        files.delete(pathname);
+        cdn.delete(pathname);
+      }
     },
   };
+  return fake;
 }
 
+// The state document api/_lib/state-store.js keeps in the fake store, as written (or null), and a way
+// to put one there.
+export const readStateDoc = (blob) => {
+  const f = blob.files.get("state/screen.json");
+  return f ? JSON.parse(f.body.toString("utf8")) : null;
+};
+export const putStateDoc = (blob, row) =>
+  blob.put("state/screen.json", JSON.stringify(row), { access: "public", addRandomSuffix: false, allowOverwrite: true, contentType: "application/json" });
+// The media files alone, without the state document.
+export const mediaPaths = (blob) => [...blob.files.keys()].filter((p) => p.startsWith("lobby-media/"));
+
 // A fetch that sends /api/<name> to the real Vercel handlers (with Vercel's body parsing: JSON → object,
-// octet-stream → Buffer) and anything else to `fallback` (e.g. the Supabase / Redis fakes).
+// octet-stream → Buffer) and anything else to `fallback` (e.g. the legacy Supabase fake).
 export function routeFetch({ handlers, fallback, origin = "https://new.test" }) {
   let ipSeq = 0;
   return async (input, init = {}) => {

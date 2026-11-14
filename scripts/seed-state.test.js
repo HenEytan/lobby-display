@@ -1,115 +1,116 @@
-import { test, before, after, beforeEach } from "node:test";
+import { test, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
-import { createServer } from "node:http";
-import { execFile } from "node:child_process";
-import { mkdtempSync } from "node:fs";
+import { mkdtempSync, readFileSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { seedState, canonical } from "./seed-state.js";
+import { fakeBlob, putStateDoc, readStateDoc } from "../testing/fakes.js";
 
-// A fake of Supabase REST and Upstash REST on one local port; the script runs for real against it.
 const SB_KEY = "sb-secret-value";
-const REDIS_TOKEN = "redis-secret-value";
+const PIN = "24681357";
+const realFetch = globalThis.fetch;
 let sbRows;
-let redis;
-let corruptSet;
-let server;
-let base;
+let redisRow;
+let blob;
+let outDir;
+let lines;
 
-before(async () => {
-  server = createServer((req, res) => {
-    let body = "";
-    req.on("data", (c) => { body += c; });
-    req.on("end", () => {
-      res.setHeader("Content-Type", "application/json");
-      if (req.url.startsWith("/rest/v1/lobby_state")) {
-        if (req.headers.apikey !== SB_KEY) { res.statusCode = 401; res.end("{}"); return; }
-        res.end(JSON.stringify(sbRows));
-        return;
-      }
-      if (req.headers.authorization !== `Bearer ${REDIS_TOKEN}`) { res.statusCode = 401; res.end("{}"); return; }
-      const [cmd, key, value] = JSON.parse(body);
-      if (cmd === "GET") { res.end(JSON.stringify({ result: redis[key] ?? null })); return; }
-      redis[key] = corruptSet && key === "lobby_state:yesod9" ? value.replace("old", "0ld") : value;
-      res.end(JSON.stringify({ result: "OK" }));
-    });
-  });
-  await new Promise((r) => server.listen(0, "127.0.0.1", r));
-  base = `http://127.0.0.1:${server.address().port}`;
-});
-after(() => server.close());
 beforeEach(() => {
-  sbRows = [{ data: { settings: { title: "old", pin: "2468" }, ticker: [{ id: "t1" }] }, updated_at: "2026-11-05T10:00:00+00:00" }];
-  redis = {};
-  corruptSet = false;
-});
-
-function run(extraEnv = {}) {
-  const env = {
-    PATH: process.env.PATH,
-    SUPABASE_URL: base,
-    SUPABASE_SERVICE_ROLE_KEY: SB_KEY,
-    UPSTASH_REDIS_REST_URL: base + "/",
-    UPSTASH_REDIS_REST_TOKEN: REDIS_TOKEN,
-    OUT_DIR: mkdtempSync(join(tmpdir(), "seed-test-")),
-    ...extraEnv,
+  for (const k of ["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_ANON_KEY", "KV_REST_API_URL", "KV_REST_API_TOKEN", "UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN"]) delete process.env[k];
+  process.env.SUPABASE_URL = "https://sb.test";
+  process.env.SUPABASE_SERVICE_ROLE_KEY = SB_KEY;
+  sbRows = [{ data: { settings: { title: "lobby-title-xyz", pin: PIN }, ticker: [{ id: "t1" }] }, updated_at: "2026-11-05T10:00:00+00:00" }];
+  redisRow = null;
+  globalThis.fetch = async (url, opts = {}) => {
+    if (String(url).startsWith("https://sb.test/rest/v1/lobby_state")) {
+      if (opts.headers.apikey !== SB_KEY) return new Response("{}", { status: 401 });
+      return new Response(JSON.stringify(sbRows), { status: 200 });
+    }
+    if (String(url).startsWith("https://redis.test")) {
+      return new Response(JSON.stringify({ result: redisRow ? JSON.stringify(redisRow) : null }), { status: 200 });
+    }
+    throw new Error("unexpected fetch " + url);
   };
-  return new Promise((resolve) => {
-    execFile("bash", [new URL("./seed-state.sh", import.meta.url).pathname], { env }, (err, stdout, stderr) => {
-      resolve({ code: err ? err.code : 0, out: stdout + stderr });
-    });
-  });
-}
+  blob = fakeBlob();
+  outDir = join(mkdtempSync(join(tmpdir(), "seed-test-")), "out");
+  lines = [];
+});
+afterEach(() => { globalThis.fetch = realFetch; });
 
-const stored = () => JSON.parse(redis["lobby_state:yesod9"]);
+const run = (opts = {}) => seedState({ blob, outDir, log: (l) => lines.push(l), ...opts });
+const output = () => lines.join("\n");
 
-test("seeds an empty Redis, verifies it and sets the seeded marker", async () => {
-  const r = await run();
-  assert.equal(r.code, 0, r.out);
-  assert.match(r.out, /IDENTICAL sha256=[0-9a-f]{64}/);
-  assert.deepEqual(stored(), sbRows[0]);
-  assert.ok(redis["lobby_state_seeded:yesod9"]);
+test("copies the Supabase row into Blob exactly and verifies it by sha256, whole and per key", async () => {
+  assert.equal(await run(), 0, output());
+  const stored = readStateDoc(blob);
+  assert.deepEqual({ data: stored.data, updated_at: stored.updated_at }, sbRows[0]);
+  assert.equal(stored.seededFrom, "supabase");
+  const sha = output().match(/IDENTICAL sha256=([0-9a-f]{64})/);
+  assert.ok(sha, output());
+  assert.match(output(), /keys 2: settings sha256=[0-9a-f]{64}, ticker sha256=[0-9a-f]{64}/);
+  assert.equal(canonical(sbRows[0]).sha256, sha[1]);
 });
 
-test("a rerun is idempotent and only re-verifies", async () => {
+test("keeps the dump in a private directory and never prints a secret or a value", async () => {
   await run();
-  const first = redis["lobby_state:yesod9"];
-  const r = await run();
-  assert.equal(r.code, 0, r.out);
-  assert.match(r.out, /already holds the same value/);
-  assert.equal(redis["lobby_state:yesod9"], first);
+  assert.equal(statSync(outDir).mode & 0o777, 0o700);
+  assert.equal(statSync(join(outDir, "legacy.json")).mode & 0o777, 0o600);
+  assert.deepEqual(JSON.parse(readFileSync(join(outDir, "legacy.json"), "utf8")).row, sbRows[0]);
+  for (const secret of [PIN, SB_KEY, "lobby-title-xyz"]) assert.ok(!output().includes(secret), secret);
 });
 
-test("never overwrites a differing Redis value without FORCE", async () => {
-  redis["lobby_state:yesod9"] = JSON.stringify({ data: { settings: { title: "newer" } }, updated_at: "2026-11-14T00:00:00Z" });
-  const r = await run();
-  assert.equal(r.code, 3, r.out);
-  assert.equal(stored().data.settings.title, "newer");
-  assert.equal(redis["lobby_state_seeded:yesod9"], undefined);
+test("a rerun only re-verifies and writes nothing", async () => {
+  await run();
+  const puts = blob.puts.length;
+  lines = [];
+  assert.equal(await run(), 0);
+  assert.equal(blob.puts.length, puts);
+  assert.match(output(), /already holds the same state/);
 });
 
-test("FORCE=1 replaces a differing value", async () => {
-  redis["lobby_state:yesod9"] = JSON.stringify({ data: { settings: { title: "newer" } }, updated_at: "2026-11-14T00:00:00Z" });
-  const r = await run({ FORCE: "1" });
-  assert.equal(r.code, 0, r.out);
-  assert.deepEqual(stored(), sbRows[0]);
+test("takes the newer of Redis and Supabase", async () => {
+  process.env.KV_REST_API_URL = "https://redis.test/";
+  process.env.KV_REST_API_TOKEN = "tok";
+  redisRow = { data: { settings: { title: "redis", pin: PIN } }, updated_at: "2026-11-12T08:00:00.000Z" };
+  assert.equal(await run(), 0);
+  assert.equal(readStateDoc(blob).data.settings.title, "redis");
+  assert.equal(readStateDoc(blob).seededFrom, "redis");
 });
 
-test("fails verification when what Redis holds differs from the source", async () => {
-  corruptSet = true;
-  const r = await run();
-  assert.equal(r.code, 4, r.out);
-  assert.match(r.out, /verification failed/);
-  assert.equal(redis["lobby_state_seeded:yesod9"], undefined);
+test("a differing Blob state is newer work: exit 3, untouched, unless FORCE, which backs it up first", async () => {
+  const published = { data: { settings: { title: "published", pin: PIN } }, updated_at: "2026-11-14T09:00:00.000Z" };
+  await putStateDoc(blob, published);
+  assert.equal(await run(), 3);
+  assert.equal(readStateDoc(blob).data.settings.title, "published");
+  assert.equal(await run({ force: true }), 0, output());
+  assert.equal(readStateDoc(blob).data.settings.title, "lobby-title-xyz");
+  assert.deepEqual(JSON.parse(readFileSync(join(outDir, "blob.before.json"), "utf8")), published);
 });
 
-test("exits 2 when Supabase has no row, and writes nothing", async () => {
+test("an empty start the app already wrote is replaced without FORCE", async () => {
+  await putStateDoc(blob, { data: null, updated_at: null, seededFrom: "none" });
+  assert.equal(await run(), 0, output());
+  assert.equal(readStateDoc(blob).data.settings.title, "lobby-title-xyz");
+});
+
+test("no legacy row: exit 2, nothing written", async () => {
   sbRows = [];
-  const r = await run();
-  assert.equal(r.code, 2, r.out);
-  assert.deepEqual(redis, {});
+  assert.equal(await run(), 2);
+  assert.equal(blob.files.size, 0);
 });
 
-test("never prints a secret or the PIN", async () => {
-  const r = await run();
-  for (const secret of [SB_KEY, REDIS_TOKEN, "2468"]) assert.ok(!r.out.includes(secret), secret);
+test("no legacy store configured, or no Blob token: exit 1", async () => {
+  delete process.env.SUPABASE_URL;
+  assert.equal(await run(), 1);
+  process.env.SUPABASE_URL = "https://sb.test";
+  assert.equal(await run({ blob: undefined }), 1);
+  assert.equal(blob.files.size, 0);
+});
+
+test("a stored copy that does not match fails verification with exit 4", async () => {
+  const realPut = blob.put;
+  blob.put = (p, body, opts) => realPut(p, String(body).replace('"lobby-title-xyz"', '"0ld"'), opts);
+  assert.equal(await run(), 4);
+  assert.match(output(), /MISMATCH.*settings/);
+  assert.ok(!/IDENTICAL/.test(output()));
 });

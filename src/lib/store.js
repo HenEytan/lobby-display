@@ -4,6 +4,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { ART_BG, HOLIDAY_ART, VAAD_BG, CAMERA_BG, GIZUM_BG, SCHOOL_BG } from "./artwork.jsx";
+import { isOlderStamp } from "./syncStamp.js";
 
 export const KEYS = ["settings", "banners", "announcements", "ticker", "music"];
 const LIVE = (k) => `lobby_${k}`;
@@ -154,7 +155,7 @@ export function publishAll() {
   pushToServer();
 }
 
-// ═══════════ סנכרון בין מכשירים (Supabase דרך /api/state) ═══════════
+// ═══════════ סנכרון בין מכשירים (Vercel Blob דרך /api/state) ═══════════
 // ההגדרות נשמרות מרכזית, כך שאותו תוכן מוצג מכל מכשיר.
 // תמונות וקבצי אודיו שהועלו מסונכרנים בנפרד, דרך /api/media (ראו lib/media.js).
 
@@ -217,7 +218,8 @@ export async function pullFromServer() {
     // אין עדיין נתונים בשרת — מעלים את המצב המקומי כבסיס
     if (!d.data || Object.keys(d.data).length === 0) { await pushToServer(); return false; }
 
-    if (d.updatedAt && localStorage.getItem(SYNC_STAMP) === d.updatedAt) return false;
+    const localStamp = localStorage.getItem(SYNC_STAMP);
+    if (d.updatedAt && (localStamp === d.updatedAt || isOlderStamp(d.updatedAt, localStamp))) return false;
     const changed = applySnapshot(d.data);
     if (d.updatedAt) localStorage.setItem(SYNC_STAMP, d.updatedAt);
     if (changed) notify();

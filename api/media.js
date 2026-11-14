@@ -16,7 +16,7 @@
 
 import { createHash } from "node:crypto";
 import * as vercelBlob from "@vercel/blob";
-import { applyCors, checkPin } from "./_lib/state-store.js";
+import { applyCors, createStateStore } from "./_lib/state-store.js";
 
 const PREFIX = "lobby-media/";
 export const PART_MAX_BYTES = 4 * 1024 * 1024;
@@ -54,6 +54,9 @@ function partIndex(raw) {
 }
 
 export function createHandler(blob) {
+  // The PIN is checked against the state document in the same Blob store; a media write changes no
+  // state, so the cached copy is enough.
+  const { checkPin } = createStateStore(blob);
   const opts = (contentType) => ({ access: "public", addRandomSuffix: false, allowOverwrite: true, contentType });
 
   async function readManifest(id) {

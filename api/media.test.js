@@ -2,26 +2,24 @@ import { test, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
 import { Readable } from "node:stream";
 import { createHandler, PART_MAX_BYTES } from "./media.js";
-import { fakeBlob } from "../testing/fakes.js";
+import { fakeBlob, mediaPaths, putStateDoc } from "../testing/fakes.js";
 
 const realFetch = globalThis.fetch;
 let blob;
 let handler;
 let ipSeq = 0;
-beforeEach(() => {
+beforeEach(async () => {
   process.env.BLOB_READ_WRITE_TOKEN = "blob-token";
-  process.env.SUPABASE_URL = "https://sb.test";
-  process.env.SUPABASE_SERVICE_ROLE_KEY = "svc";
   delete process.env.LOBBY_ADMIN_PIN;
-  // The stored state the PIN is checked against.
-  globalThis.fetch = async () => new Response(JSON.stringify([{ data: { settings: { pin: "2468" } }, updated_at: "t" }]), { status: 200 });
+  globalThis.fetch = async (url) => { throw new Error("unexpected fetch " + url); };
   blob = fakeBlob();
+  // The stored state the PIN is checked against, in the same store.
+  await putStateDoc(blob, { data: { settings: { pin: "2468" } }, updated_at: "t" });
   handler = createHandler(blob);
 });
 afterEach(() => {
   globalThis.fetch = realFetch;
   delete process.env.BLOB_READ_WRITE_TOKEN;
-  delete process.env.SUPABASE_SERVICE_ROLE_KEY;
 });
 
 async function call({ method = "GET", query = {}, body, pin, origin }) {
@@ -71,7 +69,7 @@ test("the list of stored ids covers every page and only committed files", async 
 test("every write needs the stored PIN", async () => {
   const r = await call({ method: "POST", query: { id: "img_1_a", part: "0" }, body: Buffer.from("x"), pin: "0000" });
   assert.equal(r.status, 403);
-  assert.equal(blob.files.size, 0);
+  assert.equal(mediaPaths(blob).length, 0);
   const d = await call({ method: "DELETE", query: { id: "img_1_a" } });
   assert.equal(d.status, 403);
 });
@@ -98,7 +96,7 @@ test("delete removes the manifest and every part", async () => {
   await upload("img_1_a", Buffer.from("0123456789"));
   const d = await call({ method: "DELETE", query: { id: "img_1_a" }, pin: "2468" });
   assert.equal(d.status, 200);
-  assert.equal(blob.files.size, 0);
+  assert.equal(mediaPaths(blob).length, 0);
 });
 
 test("reads a part body from the request stream when no parsed body is given", async () => {

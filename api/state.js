@@ -2,134 +2,13 @@
 // מאפשר שההגדרות יישמרו בין מכשירים: כל מסך מושך את אותו מצב.
 // אין להוסיף export const config עם runtime — Vercel מזהה Node אוטומטית.
 
-const ROW_ID = "yesod9";
-const REDIS_KEY = `lobby_state:${ROW_ID}`;
-
-// ─── הגנת PIN: מגבילים ניסיונות שגויים לכל IP ───
-// מונה בזיכרון התהליך בלבד (לא מבוזר בין מופעי serverless) — לא מונע ניחוש
-// מבוזר על פני מופעים רבים, אך חוסם ניחוש-סדרתי מהיר על אותו מופע חם, וזול
-// ליישום בלי תשתית נוספת. חלון: מקסימום 8 ניסיונות שגויים כל 5 דקות ל-IP.
-const failedAttempts = new Map();
-const PIN_WINDOW_MS = 5 * 60 * 1000;
-const PIN_MAX_ATTEMPTS = 8;
-
-function clientIp(req) {
-  const fwd = req.headers["x-forwarded-for"];
-  if (typeof fwd === "string" && fwd) return fwd.split(",")[0].trim();
-  return req.socket && req.socket.remoteAddress ? req.socket.remoteAddress : "unknown";
-}
-
-function isRateLimited(ip) {
-  const rec = failedAttempts.get(ip);
-  if (!rec) return false;
-  if (Date.now() - rec.windowStart > PIN_WINDOW_MS) {
-    failedAttempts.delete(ip);
-    return false;
-  }
-  return rec.count >= PIN_MAX_ATTEMPTS;
-}
-
-function registerFailedAttempt(ip) {
-  const now = Date.now();
-  const rec = failedAttempts.get(ip);
-  if (!rec || now - rec.windowStart > PIN_WINDOW_MS) {
-    failedAttempts.set(ip, { count: 1, windowStart: now });
-  } else {
-    rec.count += 1;
-  }
-}
-
-// The service key when set: the table then grants the anon role nothing (docs/supabase.sql), so the
-// PIN check here is the only way in. The anon key needs read+write policies for anon, and anyone
-// holding it skips the PIN and can read the stored one. Anon stays as a fallback until the service
-// key is configured.
-function sbKey() {
-  return process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
-}
-
-function sbHeaders() {
-  const key = sbKey();
-  return {
-    apikey: key,
-    Authorization: `Bearer ${key}`,
-    "Content-Type": "application/json",
-  };
-}
-
-function sbUrl(path) {
-  return `${process.env.SUPABASE_URL}/rest/v1/${path}`;
-}
-
-// Redis when configured: the names Vercel's Upstash integration sets. The state is one JSON value, so
-// it needs no database of its own, and the service-key and policy questions above stop applying.
-function redisConfig() {
-  const url = String(process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL || "").trim().replace(/\/$/, "");
-  const token = String(process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN || "").trim();
-  return url && token ? { url, token } : null;
-}
-
-async function redis(cfg, command) {
-  const r = await fetch(cfg.url, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${cfg.token}`, "Content-Type": "application/json" },
-    body: JSON.stringify(command),
-  });
-  if (!r.ok) throw new Error("redis failed " + r.status);
-  const out = await r.json();
-  if (out.error) throw new Error("redis failed");
-  return out.result;
-}
-
-function supabaseConfigured() {
-  return Boolean(process.env.SUPABASE_URL && sbKey());
-}
-
-async function readSupabaseRow() {
-  const r = await fetch(
-    sbUrl(`lobby_state?id=eq.${ROW_ID}&select=data,updated_at`),
-    { headers: sbHeaders() }
-  );
-  if (!r.ok) throw new Error("read failed " + r.status);
-  const rows = await r.json();
-  return rows && rows.length ? rows[0] : null;
-}
-
-// The first read after Redis is configured copies the Supabase row across, stored PIN included. A
-// failed Supabase read throws rather than counting as empty, so a passing outage cannot look like a
-// fresh install.
-async function readRow() {
-  const cfg = redisConfig();
-  if (!cfg) return readSupabaseRow();
-  const raw = await redis(cfg, ["GET", REDIS_KEY]);
-  if (raw) return JSON.parse(raw);
-  if (!supabaseConfigured()) return null;
-  const row = await readSupabaseRow();
-  if (row) await redis(cfg, ["SET", REDIS_KEY, JSON.stringify(row)]);
-  return row;
-}
-
-// → the saved row's updated_at.
-async function writeRow(data) {
-  const row = { data, updated_at: new Date().toISOString() };
-  const cfg = redisConfig();
-  if (cfg) {
-    await redis(cfg, ["SET", REDIS_KEY, JSON.stringify(row)]);
-    return row.updated_at;
-  }
-  const w = await fetch(sbUrl("lobby_state"), {
-    method: "POST",
-    headers: { ...sbHeaders(), Prefer: "resolution=merge-duplicates,return=representation" },
-    body: JSON.stringify([{ id: ROW_ID, ...row }]),
-  });
-  if (!w.ok) throw new Error("write failed " + w.status + " " + (await w.text()));
-  const saved = await w.json();
-  return saved[0] ? saved[0].updated_at : null;
-}
+import { applyCors, checkPin, readRow, storageConfigured, writeRow } from "./_lib/state-store.js";
 
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store, max-age=0");
+  if (applyCors(req, res)) return;
 
-  if (!redisConfig() && !supabaseConfigured()) {
+  if (!storageConfigured()) {
     res.status(200).json({ ok: false, error: "storage not configured" });
     return;
   }
@@ -152,43 +31,41 @@ export default async function handler(req, res) {
     }
 
     if (req.method === "POST") {
-      const ip = clientIp(req);
-      if (isRateLimited(ip)) {
-        res.status(429).json({ ok: false, error: "too many attempts, try again later" });
-        return;
-      }
-
       const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body || {};
-      const { pin, data } = body;
+      const { pin, data, carryOver } = body;
       if (!data || typeof data !== "object") {
         res.status(400).json({ ok: false, error: "missing data" });
         return;
       }
 
-      // אימות: הקוד השמור בשרת הוא המקור הקובע. כשאין קוד שמור — נכשלים סגור:
-      // אחרת כל אחד יכול לכתוב (ולקבוע קוד משלו). הקוד ההתחלתי מגיע רק מסוד השרת
-      // LOBBY_ADMIN_PIN, והכתיבה הראשונה שמאומתת מולו שומרת אותו במסמך.
-      const existing = await readRow();
-      const storedPin =
-        existing && existing.data && existing.data.settings
-          ? existing.data.settings.pin
-          : null;
-      const currentPin = storedPin != null ? storedPin : process.env.LOBBY_ADMIN_PIN || null;
-      if (currentPin == null) {
-        res.status(403).json({ ok: false, error: "no admin pin configured" });
+      const auth = await checkPin(req, pin);
+      if (!auth.ok) {
+        res.status(auth.status).json({ ok: false, error: auth.error });
         return;
       }
-      if (String(pin) !== String(currentPin)) {
-        registerFailedAttempt(ip);
-        res.status(403).json({ ok: false, error: "bad pin" });
-        return;
-      }
+      const { row: existing, currentPin } = auth;
 
       // בקשת אימות בלבד: הקוד נבדק למעלה ולא נכתב דבר. זה מה שמאפשר למסך הניהול
       // לאמת קוד במכשיר שלא מכיר אותו מקומית, בלי שה-GET יחזיר אותו לעולם.
       if (body.verify === true) {
         res.status(200).json({ ok: true, verified: true });
         return;
+      }
+
+      // public/carry-over.js sends the old kiosk's last-pulled state with the updatedAt it pulled. It
+      // lands only when it is newer than what the server holds (the Supabase seed predates the Redis
+      // switch); a manager who already published on the new host wins.
+      if (carryOver) {
+        const stamp = Date.parse(carryOver.stamp);
+        if (Number.isNaN(stamp)) {
+          res.status(400).json({ ok: false, error: "bad carry-over stamp" });
+          return;
+        }
+        const serverStamp = existing ? Date.parse(existing.updated_at) : NaN;
+        if (!Number.isNaN(serverStamp) && stamp <= serverStamp) {
+          res.status(409).json({ ok: false, error: "server state is newer", updatedAt: existing.updated_at });
+          return;
+        }
       }
 
       // ה-PIN מוסתר מה-GET, ולכן מכשיר שסונכרן מהשרת פשוט לא מחזיק אותו ולא שולח

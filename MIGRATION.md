@@ -1,229 +1,236 @@
-# Migration: Vercel team "peaku" → personal Vercel account "hen"
+# Migration: Vercel team "peaku" → Vercel Hobby team "hen-projects1"
 
-The Vercel team **peaku** is blocked ("Account is blocked"), so the `lobby-display` project there can no
-longer deploy. The app stays on Vercel; it moves to Hen's personal account **hen** as a new project
-built from the same GitHub repo. Phase 1 (this PR) prepares the move; nothing is deployed, no data is
-touched, no DNS changes.
+The peaku team is blocked: `https://lobby-display-theta.vercel.app` answers `402 DEPLOYMENT_DISABLED`
+for every path. The app moves to a new Vercel project in **hen-projects1**, built from the same GitHub
+repo. Phase 1 (#13) prepared the move; this phase (v3.20.0) makes it lossless:
 
-The code needs no platform change: every browser call is a relative `/api/*` path, the admin
-install card builds the display URL from `window.location.origin` (`src/admin/Admin.jsx`), and
-`vercel.json` moves as-is. What this PR adds:
+- **Media gets a server copy** (Vercel Blob, [`api/media.js`](api/media.js)). Until now uploaded images
+  and MP3s lived only in the IndexedDB of the device that uploaded them.
+- **Supabase is read once.** [`api/state.js`](api/state.js) copies the Supabase row into Redis on the
+  first read and marks it done; [`scripts/seed-state.sh`](scripts/seed-state.sh) does the same copy by
+  hand, with verification.
+- **A one-time carry-over** ([`public/carry-over.js`](public/carry-over.js)) runs on the kiosk under
+  the old origin and sends its media and its last-pulled state to the new host.
 
-- [`vercel.config.test.js`](vercel.config.test.js): fails `npm test` if `vercel.json` loses
-  `Cache-Control: no-store` on `/` or `/index.html` (the kiosk auto-update in
-  [`src/lib/autoUpdate.js`](src/lib/autoUpdate.js) depends on it), the SPA rewrite starts swallowing
-  `/api/*`, or the build output changes.
-- [`.env.example`](.env.example): every env var name the code reads, no values.
-- This file.
+## Hosts
 
-## Current setup (peaku)
+| | Host |
+| - | - |
+| Old (dead) | `https://lobby-display-theta.vercel.app` — 402 on every path. Kept in the code only as the CORS allow-list entry for the carry-over ([`api/_lib/state-store.js`](api/_lib/state-store.js)). |
+| New | The production domain of the project `lobby-display` in `hen-projects1` (Vercel → project → Settings → Domains). Called **`NEW_HOST`** below. |
 
-| Piece | Where |
-| ----- | ----- |
-| Hosting | Vercel team `peaku`, project `lobby-display`, Git-connected to `github.com/HenEytan/lobby-display` (`main` → production). Production URL: whatever is in the kiosk's Fully Kiosk **Start URL** (most likely `https://lobby-display.vercel.app/`, not verified from here). |
-| Build | `npm run build` → `dist/` (Vite, target `es2015`/`chrome61`/`safari11`) |
-| Functions | `api/state.js`, `api/weather.js`, `api/ynet.js`, `api/news.js`, `api/aluma-events.js`, `api/time.js` (Node, auto-detected; no `export const config`) |
-| Headers / routing | `vercel.json`: `no-store, must-revalidate` on `/` and `/index.html`; rewrite `/((?!api/).*)` → `/` |
-| Screen state | `api/state.js`: Upstash Redis key `lobby_state:yesod9` when `UPSTASH_REDIS_REST_*` or `KV_REST_API_*` is set (since #12); otherwise Supabase table `public.lobby_state`, row `id = 'yesod9'`. On the first read with Redis configured and the key missing, the Supabase row is copied into Redis; after that **Redis is the only copy that gets writes and Supabase goes stale.** |
-| Device-local data | On each kiosk, per origin: `localStorage` `lobby_*` / `lobby_draft_*`, IndexedDB `lobby-media` (uploaded images and MP3s, **never synced to the server**) |
+The code holds no hostname of its own: the browser calls relative `/api/*` paths, and the admin install
+card builds the display URL from `window.location.origin`. Hen's decided hostnames under `upeak.io`
+(coach, look, clothes, voucher, finance) do not include this app, so no custom domain is assumed. If
+one is attached later (e.g. `lobby.upeak.io`), the media and state are server-side now, so changing
+the kiosk's Start URL is the whole move.
 
-## Target setup (hen)
+## Secret names
 
-| Piece | Where |
-| ----- | ----- |
-| Hosting | Vercel personal account `hen`, new project `lobby-display`, imported from the same GitHub repo, production branch `main`, Framework preset **Vite** (or "Other" — `vercel.json` sets build command and output dir either way). Node version: project default. |
-| Production URL | A new `*.vercel.app` hostname (`lobby-display.vercel.app` stays held by the peaku project while it exists, so the new project gets a different one, e.g. `lobby-display-hen.vercel.app`). **Recommended:** attach a custom domain Hen owns (e.g. `lobby.<domain>`), so a future move never touches the kiosk again. |
-| Screen state | Upstash Redis key `lobby_state:yesod9` — see [Storage decision](#storage-decision). |
-| Supabase | Left as is, untouched, as a cold backup of the pre-Redis state. Not wired to the new project unless Redis is not used. |
+Set on the new project for **Production** and **Preview**. Values are never in the repo.
 
-## Env vars
+| Name | Needed | Notes |
+| ---- | ------ | ----- |
+| `UPSTASH_REDIS_REST_URL` | Yes (or the `KV_*` pair) | Redis that holds `lobby_state:yesod9`. |
+| `UPSTASH_REDIS_REST_TOKEN` | Yes (or the `KV_*` pair) | Read-write token. |
+| `KV_REST_API_URL` / `KV_REST_API_TOKEN` | Alternative | Injected when the Upstash database is connected through the Vercel Marketplace. `UPSTASH_*` wins if both are set. |
+| `BLOB_READ_WRITE_TOKEN` | Yes | Injected when a Vercel Blob store is connected to the project. Create the store with **public** access: `api/media.js` writes with `access: "public"`. |
+| `LOBBY_ADMIN_PIN` | Yes | Same value as on the old project. Only used while no PIN is stored in the state; after the seed, the stored PIN rules. |
+| `SUPABASE_URL` | Until the seed has run | Supabase → Project Settings → API. |
+| `SUPABASE_SERVICE_ROLE_KEY` | Until the seed has run | Secret key. Can be removed once `lobby_state_seeded:yesod9` exists in Redis. |
+| `SUPABASE_ANON_KEY` | No — do not set | Legacy fallback; the table has no anon policies. |
 
-Only `api/state.js` reads env (`grep -rn process.env api src`). `weather`, `ynet`, `news`,
-`aluma-events` and `time` need nothing. Set on the new project for **Production** and **Preview**.
+`scripts/seed-state.sh` reads `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` and the Redis pair from the
+shell it runs in.
 
-| Name | Needed | Value comes from |
-| ---- | ------ | ---------------- |
-| `UPSTASH_REDIS_REST_URL` | Yes (or the `KV_*` pair) | Upstash console → database → REST API |
-| `UPSTASH_REDIS_REST_TOKEN` | Yes (or the `KV_*` pair) | same place (the read-write token, not the read-only one) |
-| `KV_REST_API_URL` | Alternative to the above | injected automatically when the Upstash database is connected through the Vercel Marketplace integration |
-| `KV_REST_API_TOKEN` | Alternative to the above | same; `KV_REST_API_READ_ONLY_TOKEN` / `KV_URL` / `REDIS_URL` may also be injected and are unused |
-| `LOBBY_ADMIN_PIN` | Recommended | Same value as on the peaku project. Only used while no PIN is stored in the state; with the state copied it is a safety net, not the live PIN. |
-| `SUPABASE_URL` | Only if Redis is not used | Supabase → Project Settings → API |
-| `SUPABASE_SERVICE_ROLE_KEY` | Only if Redis is not used | Supabase → Project Settings → API keys (secret / service_role) |
-| `SUPABASE_ANON_KEY` | No — do not set | Legacy fallback; the table has no anon policies (`docs/supabase.sql`) |
+## Sign-in methods
 
-If both `UPSTASH_*` and `KV_*` are set, `UPSTASH_*` wins.
+| Method | After the move | Same account |
+| ------ | -------------- | ------------ |
+| Admin PIN at `/#admin` (the only one) | Unchanged. The PIN is stored inside the state (`settings.pin`), checked server-side by [`checkPin`](api/_lib/state-store.js) for `/api/state` and `/api/media` writes, hidden from every GET. | The seed copies the stored PIN with the state, so the existing PIN works on the new host. `LOBBY_ADMIN_PIN` is the bootstrap if no PIN was ever stored. |
 
-## Storage decision
+There are no user accounts: no Supabase Auth, no Google/Facebook/magic link/email+password
+(`grep -ri "supabase.auth\|signIn\|oauth\|/auth/v1"` finds nothing in the code). The screen itself
+needs no sign-in. The admin session lives in `sessionStorage`, per origin, so a manager enters the PIN
+once on the new host.
 
-The state is one JSON value under one Redis key. Whichever database holds it, the move is: **copy the
-key before the new project serves its first request.** Order matters: if the new project has
-Supabase vars and an empty Redis, its first `GET /api/state` copies the stale Supabase row into Redis.
+## Data, and where it lives
 
-1. **Find out where the live state is.** In the peaku project's env vars (if the dashboard still
-   opens), `UPSTASH_REDIS_REST_*` or `KV_REST_API_*` present → Redis. Otherwise: if the old URL still
-   serves, `curl -s https://<old-host>/api/state | jq .updatedAt` and compare with Supabase
-   `select updated_at from public.lobby_state where id = 'yesod9';` — a newer value from the API means
-   Redis is live.
-2. **Who owns the Redis database?**
-   - Created at console.upstash.com under Hen's own login → **keep it.** Put its URL/token on the new
-     project; no data moves.
-   - Created through the Vercel Marketplace inside peaku (env names `KV_REST_API_*`, database visible
-     in Upstash only via "Open in Upstash" from Vercel) → its lifetime is tied to the blocked team.
-     **Copy it** into a new database owned by `hen` (Marketplace integration in the new account, or
-     directly on console.upstash.com), with the commands below.
-3. **Redis never configured** → create a Redis database for `hen` anyway (free tier is ample) and seed
-   it from Supabase (below), or, simpler but leaving the anon-key question open, run on Supabase
-   alone with `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`.
+| Data | Lives in | How it reaches the new host |
+| ---- | -------- | --------------------------- |
+| Screen state (settings, banners, notices, ticker, playlist), PIN included | Old Redis `lobby_state:yesod9` — credentials are Vercel "sensitive" on the blocked team, **unreadable** | Not directly. See the next two rows. |
+| Same, as of the switch to Redis (#12, 2026-11-05) | Supabase `public.lobby_state`, row `id = 'yesod9'` | `scripts/seed-state.sh` (below), or the first `GET /api/state`. |
+| Same, as of the kiosk's last pull before the block | Kiosk, old origin, `localStorage` `lobby_*` and `lobby_server_stamp` | The carry-over posts it to `/api/state`; it lands only if its stamp is newer than the server's. |
+| Uploaded images and MP3s | Kiosk, old origin, IndexedDB `lobby-media`, store `files` (key = media id, value = Blob) | The carry-over uploads each one to `/api/media`. |
+| Unpublished drafts, other `lobby_*` keys | Kiosk, old origin, `localStorage` | The carry-over stores them, PIN stripped, as the media item `carryover_kiosk_localstorage` (JSON) for a manual restore. |
+| Media uploaded from a manager's own phone or laptop | That device, old origin | Cannot be carried over: the old origin no longer serves a page that device can open into. Only if the same device runs the carry-over the way the kiosk does (DevTools route below). Otherwise re-upload in `/#admin`. |
 
-## Data migration commands
+After the move every upload goes to the server as well, and a device that lacks a file locally
+downloads it, so this table never has to be redone.
 
-Run from a shell with `curl` and `jq`, **outside the repo** (the backup holds the admin PIN). Paste
-the credentials into env vars in that shell; nothing is written to the repo.
+### What cannot be recovered without the old host
 
-```bash
-mkdir -p ~/lobby-migration && cd ~/lobby-migration
-export OLD_URL='<old Upstash REST URL>' OLD_TOKEN='<old token>'
-export NEW_URL='<new Upstash REST URL>' NEW_TOKEN='<new read-write token>'
-KEY='lobby_state:yesod9'
+- **State published after the kiosk's last pull** that only the old Redis holds. In practice the kiosk
+  pulled every 60 s, so this is at most the last minute before the block, unless the kiosk was off.
+- If the kiosk's local data was cleared, or the carry-over cannot run on it: everything published
+  between 2026-11-05 (the Supabase copy) and the block, and all uploaded media. Managers re-enter
+  those in `/#admin`.
 
-# 1. Back up the live value (from Redis).
-curl -sf "$OLD_URL/get/$KEY" -H "Authorization: Bearer $OLD_TOKEN" > state.redis.json
-jq -r '.result' state.redis.json | jq '{updated_at, keys: (.data | keys)}'   # sanity: non-null, keys like settings, banners…
+## Data migration commands (state)
 
-# 2. Write it into the new database (SET overwrites; the value is the same JSON string).
-jq -c --arg k "$KEY" '["SET", $k, .result]' state.redis.json \
-  | curl -sf -X POST "$NEW_URL" -H "Authorization: Bearer $NEW_TOKEN" -H "Content-Type: application/json" -d @-
-# → {"result":"OK"}
-
-# 3. Read it back and compare.
-curl -sf "$NEW_URL/get/$KEY" -H "Authorization: Bearer $NEW_TOKEN" | jq -r '.result' | jq -S . > new.json
-jq -r '.result' state.redis.json | jq -S . > old.json
-diff old.json new.json && echo IDENTICAL
-```
-
-Seeding from Supabase instead (state never in Redis, or Redis lost):
+Run from a shell with `bash`, `curl`, `jq` and `shasum`, before the new project serves the kiosk. The
+values go into env vars in that shell only.
 
 ```bash
-export SUPABASE_URL='<url>' SB_KEY='<service_role key>'
-curl -sf "$SUPABASE_URL/rest/v1/lobby_state?id=eq.yesod9&select=data,updated_at" \
-  -H "apikey: $SB_KEY" -H "Authorization: Bearer $SB_KEY" > state.supabase.json
-jq '.[0] | {updated_at, keys: (.data | keys)}' state.supabase.json
-jq -c --arg k "$KEY" '["SET", $k, (.[0] | tojson)]' state.supabase.json \
-  | curl -sf -X POST "$NEW_URL" -H "Authorization: Bearer $NEW_TOKEN" -H "Content-Type: application/json" -d @-
+export SUPABASE_URL=… SUPABASE_SERVICE_ROLE_KEY=…
+export UPSTASH_REDIS_REST_URL=… UPSTASH_REDIS_REST_TOKEN=…   # the NEW Redis
+export OUT_DIR=~/lobby-migration                              # outside the repo: the backup holds the PIN
+./scripts/seed-state.sh
+# → seed-state: IDENTICAL sha256=<64 hex>   (exit 0)
 ```
 
-Equivalent without curl: Supabase SQL editor `select data, updated_at from public.lobby_state where
-id = 'yesod9';`, then in the Upstash console CLI `SET lobby_state:yesod9 '<{"data":…,"updated_at":"…"}>'`.
+What it does, in order: dumps the Supabase row to `$OUT_DIR/supabase.json`; compares it with what Redis
+holds; writes `lobby_state:yesod9` (the same `{data, updated_at}` JSON string `api/state.js` stores);
+reads it back and checks **`diff` of the sorted JSON (`jq -S`)** and the **sha256** of both canonical
+forms; sets `lobby_state_seeded:yesod9`, after which the API never reads Supabase again.
 
-If neither the old Redis nor the old deployment is reachable, the newest surviving copy is the
-Supabase row (state as of the Redis switch, #12); anything changed since is re-entered in `/#admin`.
+| Exit | Meaning |
+| ---- | ------- |
+| 0 | Verified identical (fresh seed, or a rerun that found the same value). |
+| 2 | No Supabase row — nothing written. |
+| 3 | Redis already holds a **different** value (published on the new host, or carried over). Nothing written: that value is newer. `FORCE=1` overwrites it, keeping the old one in `$OUT_DIR/redis.before.canonical.json`. |
+| 4 | Verification failed after the write; the marker is not set. |
 
-## The kiosk screen URL
+Rerunning is safe. Run it **before** the carry-over: the carry-over then replaces the seed only with a
+newer kiosk state, and a rerun of the script afterwards exits 3 instead of undoing it.
 
-The URL changes (new `*.vercel.app` or a custom domain), and **browser storage is per origin**, so
-on the new URL the display device starts with empty storage:
+Media has no server-side data to migrate: the Blob store is new and fills from the carry-over.
 
-- Text content (settings, banners, notices, ticker, playlist, holidays toggle) comes back on its
-  own: the screen pulls `/api/state` on load and every 60 s.
-- **Uploaded images and MP3 files do not come back.** They live in IndexedDB `lobby-media` on the
-  device and are not synced (`src/lib/store.js`). Before cutover, note which banners use an uploaded
-  photo and which uploaded tracks are in the playlist, and have the files at hand; after cutover
-  re-upload them **on the kiosk device itself** through `/#admin` (media uploaded elsewhere stays on
-  that other device). YouTube background music and the built-in SVG artwork need nothing.
-- The admin PIN is not stored locally on the new origin; the admin gate verifies it against the
-  server, so the existing PIN keeps working.
+## Carry-over (on the kiosk)
 
-What must be changed on the physical display (Fully Kiosk Browser on the Android TV / MX box):
+The old page is dead, but a page served by the old host (even the 402 text) still runs with the old
+**origin**, and only that origin can read the kiosk's old IndexedDB and localStorage. `carry-over.js`,
+loaded into that page from `NEW_HOST`:
 
-1. Fully Kiosk → **Settings** (swipe from the left edge, or the remote's menu; enter the Fully
-   settings password if one is set) → **Web Content Settings** → **Start URL** → the new production
-   URL with a trailing `/` (e.g. `https://lobby-display-hen.vercel.app/`). No `#admin`.
-   If Fully Remote Admin / Fully Cloud is enabled on the device, the same field can be changed there
-   remotely.
-2. Back out of settings → menu → **Reload Start URL** (or reboot the box).
-3. Confirm **Launch on Boot**, **Keep Screen On**, **Fullscreen Mode** and **Autoplay** are still on
-   (they are device settings and do not change, but check once).
-4. Re-upload device-local media (above).
-5. Update any bookmarks the building managers keep for `/#admin` and `/#preview`.
+1. Verifies a PIN against `NEW_HOST/api/state` (`window.LOBBY_PIN` from the injection, else the PIN
+   the kiosk kept locally). Without a verified PIN it stops and writes nothing.
+2. Uploads the localStorage backup (`carryover_kiosk_localstorage`, PIN removed).
+3. Uploads every IndexedDB `lobby-media` file the server does not hold yet (3 MB parts, then a commit
+   that re-hashes the stored parts and checks the total size).
+4. Posts the kiosk's last-pulled state with its `lobby_server_stamp`; `/api/state` takes it only when
+   the stamp is newer than the server's `updated_at` (409 otherwise). The PIN is stripped first; the
+   server keeps its own.
+5. Shows each step on screen. All done → opens `NEW_HOST/` after 15 s. Anything failed → stays, so a
+   reload retries; everything is idempotent. On `NEW_HOST` itself it does nothing.
 
-## Cutover steps (phase 2)
+`/api/state` and `/api/media` allow CORS from `https://lobby-display-theta.vercel.app` only, for this.
 
-1. Hen does the [Needs Hen](#needs-hen) items 1–4 (new Vercel project, Redis, env vars) — **do not
-   let the new project serve the kiosk yet.** Creating the project triggers a first production build;
-   that is fine as long as no device points at it and the Redis key is copied before anyone opens
-   `/api/state`. Safer: set env vars and copy data first, then click **Redeploy**.
-2. Run the [data migration commands](#data-migration-commands); confirm `IDENTICAL`.
-3. Redeploy production on the new project (Deployments → latest → Redeploy) so it picks up the env.
-4. Run the [verification checks](#verification-checks) against the new URL.
-5. Freeze edits: tell the managers not to publish from `/#admin` on the old URL from now on. If
-   anything was published on the old URL after step 2, repeat step 2.
-6. Change the kiosk Start URL and re-upload media ([above](#the-kiosk-screen-url)).
-7. Watch the screen for a full slide cycle; open `/#admin` on the new URL and log in with the
-   existing PIN.
-8. After a week stable: update the published artifact in `docs/artifacts.json` (hosting/setup
-   changed) and bump its `asOf`; decide on deleting the peaku project and the old Redis (phase 3,
-   not part of this PR).
+## The Fully Kiosk step
+
+On the kiosk (Fully Kiosk Browser on the Android TV / MX box). Fully settings: swipe from the left
+edge or the remote's menu key → Settings; the Fully settings password if one is set.
+
+**With Fully PLUS** (Inject JavaScript is a PLUS feature):
+
+1. **Advanced Web Settings → Inject JavaScript** — paste, with the two values filled in:
+
+   ```js
+   window.LOBBY_PIN='<admin PIN>';var s=document.createElement('script');s.src='https://<NEW_HOST>/carry-over.js';(document.head||document.documentElement).appendChild(s);
+   ```
+
+2. Leave the Start URL as is (the old address). Back out → menu → **Reload Start URL**. The screen
+   lists each step; when it says it is done it opens the new address by itself.
+3. **Web Content Settings → Start URL** → `https://<NEW_HOST>/`. Clear **Inject JavaScript**. Reload.
+
+**Without PLUS:** the same snippet in a DevTools console. Fully → **Advanced Web Settings → Enable
+Remote Debugging** (WebView contents debugging; the label may differ by Fully version), connect a
+laptop with `adb connect <kiosk IP>`, open `chrome://inspect` in Chrome, **inspect** the old page,
+paste the snippet into the console. Then step 3.
+
+**If neither is possible:** step 3 alone. The screen comes back with the Supabase copy of the state
+(2026-11-05); managers re-upload images/MP3s and re-enter later changes in `/#admin` — on any
+device now, since media syncs.
+
+Check once afterwards that **Launch on Boot**, **Keep Screen On**, **Fullscreen Mode** and
+**Autoplay** are still on.
+
+## Cutover order
+
+1. Create the project in hen-projects1, connect an Upstash Redis database and a **public** Vercel
+   Blob store, set the [secrets](#secret-names). Do not point the kiosk at it yet.
+2. Run [`scripts/seed-state.sh`](#data-migration-commands-state); confirm `IDENTICAL`.
+3. Redeploy production so it picks up the env; run the [verification checks](#verification-checks).
+4. On the kiosk: [the Fully Kiosk step](#the-fully-kiosk-step).
+5. Watch a full slide cycle (uploaded banner images and MP3s play), log in at `NEW_HOST/#admin` with
+   the existing PIN.
+6. Give the managers the new `/#admin` address.
 
 ## Verification checks
 
 ```bash
-NEW=https://<new-host>
-curl -sI "$NEW/"            | grep -i '^cache-control'   # no-store, must-revalidate
-curl -sI "$NEW/index.html"  | grep -i '^cache-control'   # no-store, must-revalidate
-curl -sI "$NEW/admin"       | head -1                    # 200 (SPA rewrite)
-curl -s  "$NEW/api/state"   | jq '{ok, updatedAt, keys: (.data | keys), pinHidden: (.data.settings.pin == null)}'
-#   ok: true, updatedAt equal to the backup's updated_at, pinHidden: true
+NEW=https://<NEW_HOST>
+curl -sI "$NEW/"               | grep -i '^cache-control'   # no-store, must-revalidate
+curl -sI "$NEW/index.html"     | grep -i '^cache-control'   # no-store, must-revalidate
+curl -sI "$NEW/admin"          | head -1                    # 200 (SPA rewrite)
+curl -s  "$NEW/carry-over.js"  | head -2                    # the script, not index.html
+curl -s  "$NEW/api/state"      | jq '{ok, updatedAt, keys: (.data | keys), pinHidden: (.data.settings.pin == null)}'
+#   ok: true, updatedAt = the seed's (or the carried-over) updated_at, pinHidden: true
+curl -s  "$NEW/api/media"      | jq '{ok, n: (.ids | length)}'   # ok: true (n: 0 before the carry-over)
+curl -s -X OPTIONS -H 'Origin: https://lobby-display-theta.vercel.app' -D - -o /dev/null "$NEW/api/media" \
+  | grep -i '^access-control-allow-origin'                  # the theta origin
 for f in weather ynet news aluma-events time; do
   printf '%-13s ' "$f"; curl -s -o /dev/null -w '%{http_code} %{content_type}\n' "$NEW/api/$f"
-done                                                      # 200 application/json for each
+done                                                         # 200 application/json for each
 ```
 
-- The response is the app, not a Vercel login page: if `curl -sI "$NEW/"` returns `401` or redirects
-  to `vercel.com/login`, turn off Deployment Protection for production (Settings → Deployment
-  Protection; "Standard Protection" protects previews only, which is fine).
-- Admin login at `$NEW/#admin` with the existing PIN succeeds, and a publish (e.g. toggle a ticker
-  line and back) shows up on the screen within a minute.
-- Auto-update: after the next merge to `main`, the kiosk reloads on its own within ~4 minutes
-  (version badge in the corner shows the new `VERSION`).
-- Locally, before cutover: `npm ci && npm run lint && npm run build && npm test`.
+After the carry-over: `curl -s "$NEW/api/media" | jq .ids` lists the kiosk's media ids, and each id
+in `/api/state`'s `banners[].image` / `music.tracks[].mediaId` has a manifest at
+`$NEW/api/media?id=<id>` (`size` and per-part `sha256`).
+
+If `curl -sI "$NEW/"` returns 401 or a Vercel login page, turn off Deployment Protection for
+production (Settings → Deployment Protection).
+
+Locally: `npm ci && npm run lint && npm run build && npm test`.
 
 ## Rollback
 
-Nothing on the old side is modified: the peaku project, its Redis database and the Supabase row
-are only read.
+Nothing old is modified: Supabase is only read, the old Redis and old project are unreachable anyway.
+On the new side, `$OUT_DIR` holds the Supabase dump and any Redis value the script replaced
+(`redis.before.canonical.json`; to put it back, `SET lobby_state:yesod9` to that file's contents in
+the Upstash console). The carry-over only adds media and replaces the state with a newer one; its
+backup item keeps the kiosk's raw localStorage. Reverting this PR's code keeps state working (Redis
+as before) but stops media sync; the Blob store can stay.
 
-- Kiosk: set Fully Kiosk Start URL back to the old URL (only useful while the old deployment still
-  serves — a blocked team may stop serving at any time). The old origin's storage, media included,
-  is still on the device.
-- State: if managers published on the new URL and you roll back, copy the key the other way (swap
-  `OLD_*` and `NEW_*` in the commands above) — only if the old Redis still accepts writes.
-- Code: this PR only adds a test, `.env.example` and docs; reverting it changes no behavior.
+## Decisions (made without Hen, 2026-11-14)
+
+- **Vercel Blob over Redis for media**: MP3s run to several MB, a poor fit for a free Redis
+  database's request and storage limits. Blob sits in the same Vercel account and is included in Hobby
+  within its storage/transfer allowance; a handful of images and MP3s is far below it.
+- **New dependency `@vercel/blob`** (server only; the browser code uses plain `fetch`). Its transitive
+  `zod@4.1.11` has a high advisory (GHSA-mrhx-c7xc-m3w5); `package.json` overrides it to `^4.6.6`
+  (`npm audit --omit=dev`: 0 vulnerabilities).
+- **Parts through the function, not client uploads**: Vercel caps a function body at 4.5 MB; client
+  uploads need `@vercel/blob/client` in the browser, which is not checked against the Chrome 61
+  build target and cannot be used from the old-origin page. 3 MB parts work everywhere.
+- **Public store, served through `/api/media`**: the images are on a lobby screen; the proxy avoids
+  depending on Blob CORS headers and keeps the store host out of the client.
+- **Server copies are not deleted when a draft drops a file**: the published state may still point at
+  it. Orphans are small; `DELETE /api/media?id=…` (PIN) removes one by hand.
+- **CORS allow-list is the one known old origin**, from the facts given; every write still needs the PIN.
+- **No custom domain assumed** (see [Hosts](#hosts)).
 
 ## Needs Hen
 
-In order:
-
-1. **Log in to Vercel as `hen`** (personal account). Confirm the plan: Hobby is free but for
-   non-commercial use only; a building's lobby screen is personal/non-commercial in spirit, otherwise
-   Pro.
-2. **Import the GitHub repo** `HenEytan/lobby-display` into `hen` (Add New → Project; grant the
-   Vercel GitHub app access to the repo if asked). Project name `lobby-display`, preset Vite, root
-   `./`, production branch `main`. Note the production URL it gets.
-3. **Redis:** check in console.upstash.com (and in the peaku project's Storage tab, if it opens)
-   who owns the database holding `lobby_state:yesod9`. Either keep it (Upstash-owned) or create a new
-   one for `hen` (Vercel → Storage → Upstash for Redis, or console.upstash.com, region close to the
-   functions, e.g. `eu-central-1`/Frankfurt). Get both old and new REST URL + read-write token.
-4. **Env vars** on the new project (Production + Preview): the Redis pair and `LOBBY_ADMIN_PIN`
-   (value from the old project, or from Hen's password manager). See [Env vars](#env-vars).
-5. **Copy the state** with the [data migration commands](#data-migration-commands), then **Redeploy**
-   production and run the [verification checks](#verification-checks).
-6. Optional but recommended: **custom domain** — Settings → Domains on the new project, then add the
-   DNS record the dashboard shows at the domain's registrar/DNS host. Use that as the kiosk URL.
-7. **Ensure production is not behind Deployment Protection** (Settings → Deployment Protection).
-8. **On-site at the building:** change the Fully Kiosk Start URL, reload, re-upload device-local
-   images/MP3s through `/#admin` on the device ([details](#the-kiosk-screen-url)). Needs the Fully
-   settings password if one is set.
-9. Tell the building managers the new `/#admin` address.
-10. Later (phase 3): once stable, decide about the peaku project, the old Redis database, and the
-    Supabase project/table; update the published artifact in `docs/artifacts.json`.
+1. **Vercel dashboard, hen-projects1, project `lobby-display`**: Storage → create a **Blob** store
+   with **public** access and connect it (injects `BLOB_READ_WRITE_TOKEN`), and an Upstash Redis
+   database if the orchestrator has not created them. Turn off Deployment Protection for production
+   if the checks hit a login page.
+2. **The admin PIN value** for `LOBBY_ADMIN_PIN` and for the Fully snippet (from the old project's
+   records or Hen's password manager; the stored PIN is copied by the seed regardless).
+3. **On site at the kiosk**: [the Fully Kiosk step](#the-fully-kiosk-step). Needs the Fully settings
+   password if set; tells us whether the device has PLUS (else a laptop with `adb` for the DevTools
+   route).
+4. Optional: decide whether this app gets a custom hostname (e.g. `lobby.upeak.io`).
+5. Update the published artifact in [`docs/artifacts.json`](docs/artifacts.json) ("Architecture &
+   Review", a claude.ai artifact this session cannot edit) for media sync and the new host, and bump
+   its `asOf`.

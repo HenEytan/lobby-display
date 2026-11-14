@@ -11,7 +11,7 @@ import {
   useLobbyData, activeBanners, activeAnnouncements, urgentAnnouncement,
   BG_PRESETS, pullFromServer, SYNC_POLL_MS, isMusicHour,
 } from "./lib/store";
-import { mediaURL } from "./lib/media";
+import { mediaURL, syncLocalMedia } from "./lib/media";
 import Admin from "./admin/Admin.jsx";
 import "./App.css";
 
@@ -166,6 +166,9 @@ function Display({ previewMode }) {
     const t = setInterval(pullFromServer, SYNC_POLL_MS);
     return () => clearInterval(t);
   }, []);
+
+  // מדיה שהועלתה במכשיר הזה ועוד אין לה עותק בשרת — עולה פעם אחת בטעינה (רק כשהקוד ידוע במכשיר)
+  useEffect(() => { syncLocalMedia(); }, []);
 
   const [weather, setWeather] = useState(null);
   useEffect(() => {

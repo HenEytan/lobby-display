@@ -114,15 +114,26 @@ function redisEnv(prefix = "UPSTASH_REDIS_REST") {
 function clearRedisEnv() {
   for (const k of ["UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN", "KV_REST_API_URL", "KV_REST_API_TOKEN"]) delete process.env[k];
 }
-// A fake of both stores: `redisValue` is the key's value; a Supabase call is counted, and fails on demand.
-function bothStores({ redisValue = null, sbRow = null, sbFails = false } = {}) {
-  const state = { redisValue, sbReads: 0, sbWrites: 0, redisCalls: [] };
+// A fake of both stores: `redis` maps key → value (`redisValue` is the state key's); a Supabase call
+// is counted, and fails on demand.
+const STATE_KEY = "lobby_state:yesod9";
+const SEEDED_KEY = "lobby_state_seeded:yesod9";
+function bothStores({ redisValue = null, sbRow = null, sbFails = false, redis = {} } = {}) {
+  const state = {
+    redis: { ...redis },
+    sbReads: 0, sbWrites: 0, redisCalls: [],
+    get redisValue() { return this.redis[STATE_KEY] ?? null; },
+  };
+  if (redisValue != null) state.redis[STATE_KEY] = redisValue;
   globalThis.fetch = async (url, opts = {}) => {
     if (String(url).startsWith("https://redis.test")) {
-      const [cmd, key, value] = JSON.parse(opts.body);
-      state.redisCalls.push({ url: String(url), cmd, key, auth: opts.headers.Authorization });
-      if (cmd === "SET") state.redisValue = value;
-      return new Response(JSON.stringify({ result: cmd === "GET" ? state.redisValue : "OK" }), { status: 200 });
+      const [cmd, key, value, flag] = JSON.parse(opts.body);
+      state.redisCalls.push({ url: String(url), cmd, key, flag, auth: opts.headers.Authorization });
+      let result = "OK";
+      if (cmd === "GET") result = state.redis[key] ?? null;
+      else if (cmd === "SET" && flag === "NX" && state.redis[key] != null) result = null;
+      else if (cmd === "SET") state.redis[key] = value;
+      return new Response(JSON.stringify({ result }), { status: 200 });
     }
     if (opts.method === "POST") { state.sbWrites += 1; return new Response("[]", { status: 201 }); }
     state.sbReads += 1;
@@ -196,4 +207,94 @@ test("Redis alone counts as configured, under either set of variable names", asy
       assert.equal(s.sbReads, 0);
     } finally { clearRedisEnv(); }
   }
+});
+
+// ── The Supabase copy is a one-time seed: once Redis has been seeded, Supabase is never read again ──
+test("the seed runs once: a later empty Redis key does not bring the stale Supabase row back", async () => {
+  redisEnv();
+  try {
+    const s = bothStores({ sbRow: { data: screen({ pin: "2468", title: "old" }), updated_at: "t" } });
+    await getState();
+    delete s.redis[STATE_KEY];
+    const r = await getState();
+    assert.equal(r.body.ok, true);
+    assert.equal(r.body.data, null);
+    assert.equal(s.sbReads, 1);
+  } finally { clearRedisEnv(); }
+});
+
+test("an empty Supabase table still marks the seed as done", async () => {
+  redisEnv();
+  try {
+    const s = bothStores();
+    await getState();
+    await getState();
+    assert.equal(s.sbReads, 1);
+    assert.ok(s.redis[SEEDED_KEY]);
+  } finally { clearRedisEnv(); }
+});
+
+test("a marker left by scripts/seed-state.sh skips the Supabase read entirely", async () => {
+  redisEnv();
+  try {
+    const s = bothStores({ sbRow: { data: screen({ title: "old" }), updated_at: "t" }, redis: { [SEEDED_KEY]: "script" } });
+    const r = await getState();
+    assert.equal(r.body.data, null);
+    assert.equal(s.sbReads, 0);
+  } finally { clearRedisEnv(); }
+});
+
+test("the seed is written with NX, so it never overwrites a value another request wrote first", async () => {
+  redisEnv();
+  try {
+    const s = bothStores({ sbRow: { data: screen({ title: "old" }), updated_at: "t" } });
+    await getState();
+    const seedSet = s.redisCalls.find((c) => c.cmd === "SET" && c.key === STATE_KEY);
+    assert.equal(seedSet.flag, "NX");
+  } finally { clearRedisEnv(); }
+});
+
+// ── Carry-over: the old kiosk's last-pulled state can be newer than the seeded Supabase copy ──
+test("a carry-over write lands only when its stamp is newer than the server's", async () => {
+  redisEnv();
+  try {
+    const s = bothStores({ redisValue: JSON.stringify({ data: screen({ pin: "2468", title: "seeded" }), updated_at: "2026-11-05T10:00:00.000+00:00" }) });
+    const older = await post({ pin: "2468", carryOver: { stamp: "2026-11-01T00:00:00.000Z" }, data: screen({ title: "kiosk-old" }) });
+    assert.equal(older.status, 409);
+    assert.equal(JSON.parse(s.redisValue).data.settings.title, "seeded");
+    const newer = await post({ pin: "2468", carryOver: { stamp: "2026-11-12T08:00:00.000Z" }, data: screen({ title: "kiosk-new", pin: null }) });
+    assert.equal(newer.status, 200);
+    const saved = JSON.parse(s.redisValue);
+    assert.equal(saved.data.settings.title, "kiosk-new");
+    assert.equal(saved.data.settings.pin, "2468");
+  } finally { clearRedisEnv(); }
+});
+
+test("a carry-over write without a valid stamp is refused", async () => {
+  stored = { data: screen({ pin: "2468" }), updated_at: "2026-11-05T10:00:00Z" };
+  const r = await post({ pin: "2468", carryOver: { stamp: "not a date" }, data: screen({}) });
+  assert.equal(r.status, 400);
+  assert.equal(writes.length, 0);
+});
+
+// ── CORS: only the dead old origin may call in, for the one-time carry-over ──
+async function preflight(origin) {
+  const headers = {};
+  const out = {};
+  const res = {
+    setHeader(k, v) { headers[k.toLowerCase()] = v; },
+    status(c) { out.status = c; return this; },
+    json() { return this; },
+    end() { return this; },
+  };
+  await handler({ method: "OPTIONS", headers: { origin }, socket: {} }, res);
+  return { ...out, headers };
+}
+
+test("CORS admits the old kiosk origin and no other", async () => {
+  const ok = await preflight("https://lobby-display-theta.vercel.app");
+  assert.equal(ok.status, 204);
+  assert.equal(ok.headers["access-control-allow-origin"], "https://lobby-display-theta.vercel.app");
+  const other = await preflight("https://evil.example");
+  assert.equal(other.headers["access-control-allow-origin"], undefined);
 });

@@ -156,7 +156,7 @@ export function publishAll() {
 
 // ═══════════ סנכרון בין מכשירים (Supabase דרך /api/state) ═══════════
 // ההגדרות נשמרות מרכזית, כך שאותו תוכן מוצג מכל מכשיר.
-// הערה: תמונות וקבצי אודיו שהועלו נשמרים מקומית (IndexedDB) ואינם מסונכרנים.
+// תמונות וקבצי אודיו שהועלו מסונכרנים בנפרד, דרך /api/media (ראו lib/media.js).
 
 const SYNC_STAMP = "lobby_server_stamp";
 export const SYNC_POLL_MS = 60 * 1000;

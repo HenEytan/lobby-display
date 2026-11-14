@@ -5,7 +5,7 @@ import {
 } from "../lib/store";
 import {
   putMedia, deleteMedia, mediaURL, compressImage, newMediaId,
-  storageInfo, fmtBytes,
+  storageInfo, fmtBytes, syncLocalMedia,
 } from "../lib/media";
 import { VERSION } from "../version";
 import { THEMES, THEME_IDS, applyTheme } from "../lib/themes";
@@ -98,6 +98,8 @@ function AdminPanel({ onLogout }) {
 
   // טעינת התוכן העדכני מהשרת בכניסה לניהול, כדי לערוך על בסיס המצב האמיתי
   useEffect(() => { pullFromServer(); }, []);
+  // הכניסה אימתה את הקוד, ולכן כאן תמיד אפשר להעלות לשרת מדיה מקומית שעוד אין לה עותק שם
+  useEffect(() => { syncLocalMedia(); }, []);
 
   return (
     <div className="admin-root" dir="rtl">

@@ -14,15 +14,26 @@
   padding: 40px 44px; width: min(92vw, 380px); text-align: center;
   display: flex; flex-direction: column; gap: 14px;
 }
-.pin-logo { font-size: 34px; color: #b08d3e; }
+.pin-logo { font-size: 34px; color: #b08d3e; line-height: 1; }
 .pin-card h1 { font-size: 24px; }
-.pin-card p { color: #6d6355; font-size: 14px; }
+.pin-label { color: #6d6355; font-size: 14px; line-height: 1.5; margin-bottom: 6px; }
 .pin-card input {
   font-size: 26px; text-align: center; letter-spacing: 0.4em;
   padding: 10px; border: 1px solid #e8dfcc; border-radius: 12px; background: #fdfaf1;
 }
-.pin-err { color: #c0392b; font-size: 14px; }
-.pin-back { color: #6d6355; font-size: 13px; text-decoration: none; margin-top: 4px; }
+.pin-card input:focus { outline: none; border-color: #b08d3e; box-shadow: 0 0 0 3px rgba(176, 141, 62, 0.2); }
+.pin-card input[aria-invalid="true"] { border-color: #c0392b; box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.12); }
+.pin-err {
+  color: #a8321f; background: #fdf0ec; border: 1px solid #f0c9be;
+  border-radius: 10px; padding: 8px 12px; font-size: 14px; line-height: 1.5;
+}
+.pin-submit { justify-content: center; padding: 12px 18px; font-size: 15px; }
+.pin-note { color: #8a7f6d; font-size: 12px; line-height: 1.5; }
+.pin-back {
+  color: #6d6355; font-size: 13px; text-decoration: none;
+  border-top: 1px solid #eee5d1; padding-top: 14px; margin-top: 2px;
+}
+.pin-back:hover { color: #2c2620; }
 
 /* כותרת */
 .admin-head {

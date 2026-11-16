@@ -36,7 +36,16 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
   display: flex; justify-content: space-between; align-items: center;
   font-size: 15px;
 }
-.preview-bar a { color: var(--gold-soft); text-decoration: none; font-weight: 600; }
+.preview-bar.pending { box-shadow: inset 4px 0 0 var(--gold-soft); }
+.pv-sep { margin: 0 8px; opacity: 0.5; }
+.pv-actions { display: flex; align-items: center; flex-shrink: 0; margin-inline-start: 16px; }
+.pv-btn {
+  color: var(--gold-soft); text-decoration: none; font-weight: 600; font-size: 14px;
+  font-family: inherit; background: none; border: 1px solid transparent; cursor: pointer;
+  padding: 5px 12px; border-radius: 8px;
+}
+.pv-btn:hover { border-color: rgba(243, 233, 210, 0.35); }
+.pv-btn.primary { background: var(--gold-soft); color: #2c2620; margin-inline-start: 8px; }
 
 /* ─── סרגל מצב עליון — זהות הבניין, ברכה, שעון ומזג אוויר בשורה אחת ─── */
 
@@ -161,6 +170,7 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
   grid-template-columns: 1fr minmax(280px, 27vw);
   gap: 1.6vw;
 }
+.board-body.solo { grid-template-columns: 1fr; }
 
 /* ─── האזור הראשי ─── */
 

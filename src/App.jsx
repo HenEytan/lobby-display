@@ -9,7 +9,7 @@ import { applyTheme } from "./lib/themes";
 import { BuildingArt, OliveDivider, CategoryIcon, AnnouncementIcon, rotatingArt, ShabbatSceneArt } from "./lib/artwork.jsx";
 import {
   useLobbyData, activeBanners, activeAnnouncements, urgentAnnouncement,
-  BG_PRESETS, pullFromServer, SYNC_POLL_MS, isMusicHour,
+  BG_PRESETS, pullFromServer, SYNC_POLL_MS, isMusicHour, hasDrafts, publishAll,
 } from "./lib/store";
 import { mediaURL, syncLocalMedia } from "./lib/media";
 import Admin from "./admin/Admin.jsx";
@@ -194,6 +194,8 @@ function Display({ previewMode }) {
     [now.getDate(), alumaEvents]
   );
   const anns = activeAnnouncements(data.announcements, now);
+  const showRail = settings.showEvents && events.length > 0;
+  const hasSide = showRail || anns.length > 0;
   const urgent = urgentAnnouncement(data.announcements, now);
 
   // ─── מוזיקת רקע — מצב משותף כדי שגם שקופייה ייעודית תדע מה מתנגן ───
@@ -324,10 +326,7 @@ function Display({ previewMode }) {
       }}
     >
       {previewMode && (
-        <div className="preview-bar">
-          מצב תצוגה מקדימה — כך ייראה המסך לאחר פרסום
-          <a href="#admin">חזרה לניהול</a>
-        </div>
+        <PreviewBar />
       )}
 
       {/* סרגל מצב עליון — זהות הבניין, ברכה, שעון ומזג אוויר בשורה אחת */}
@@ -347,7 +346,8 @@ function Display({ previewMode }) {
         <WeatherStatus weather={weather} />
       </header>
 
-      <div className="board-body">
+      {/* בלי אירועים ובלי הודעות העמודה הצדדית ריקה — האזור הראשי תופס את כל הרוחב במקום להשאיר חור */}
+      <div className={"board-body" + (hasSide ? "" : " solo")}>
         <main className="main-area">
           <MainSlide slide={slide} holiday={holiday} name={settings.buildingName} currentTrack={currentTrack} isSaturday={now.getDay() === 6} />
           {slides.length > 1 && (
@@ -359,10 +359,12 @@ function Display({ previewMode }) {
           )}
         </main>
 
-        <aside className="side">
-          {settings.showEvents && events.length > 0 && <EventsRail events={events} />}
-          {anns.length > 0 && <AnnouncementsCard anns={anns} />}
-        </aside>
+        {hasSide && (
+          <aside className="side">
+            {showRail && <EventsRail events={events} />}
+            {anns.length > 0 && <AnnouncementsCard anns={anns} />}
+          </aside>
+        )}
       </div>
 
       {/* הרצועות מעוגנות לתחתית המסך — כך שגובה התוכן לעולם לא יכול לדחוף אותן החוצה */}
@@ -403,6 +405,31 @@ function Display({ previewMode }) {
       })()}
 
       {showVersion && <VersionPanel onClose={() => setShowVersion(false)} />}
+    </div>
+  );
+}
+
+// ─── סרגל התצוגה המקדימה ───
+// אומר למנהל אם יש בכלל מה לפרסם, ומאפשר לפרסם מכאן — בלי לחזור לניהול רק בשביל הכפתור.
+// הפרסום זמין רק בסשן ניהול מחובר, כי השידור לשרת נשען על הקוד שנשמר בכניסה.
+function PreviewBar() {
+  const pending = hasDrafts();
+  const canPublish = pending && sessionStorage.getItem("lobby_admin") === "1";
+  return (
+    <div className={"preview-bar" + (pending ? " pending" : "")} role="status">
+      <span className="pv-text">
+        <b>תצוגה מקדימה</b>
+        <span className="pv-sep" aria-hidden="true">·</span>
+        {pending
+          ? "יש שינויים שעוד לא פורסמו — כך ייראה המסך אחרי הפרסום"
+          : "אין שינויים שממתינים לפרסום — זה מה שמוצג עכשיו בלובי"}
+      </span>
+      <span className="pv-actions">
+        <a className="pv-btn" href="#admin">→ חזרה לעריכה</a>
+        {canPublish && (
+          <button className="pv-btn primary" onClick={publishAll}>פרסום למסך בלובי</button>
+        )}
+      </span>
     </div>
   );
 }

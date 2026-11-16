@@ -11,6 +11,7 @@ import { VERSION } from "../version";
 import { THEMES, THEME_IDS, applyTheme } from "../lib/themes";
 import { holidayBannerSchedule } from "../lib/hebrew";
 import { pullFromServer } from "../lib/store";
+import { classifyPinCheck, PIN_MESSAGES } from "../lib/pinCheck";
 import "./admin.css";
 
 // ═══════════════ כניסת מנהל (PIN) ═══════════════
@@ -23,20 +24,28 @@ export default function Admin() {
 
 function PinGate({ onOk }) {
   const [pin, setPin] = useState("");
-  const [err, setErr] = useState(false);
+  // null, או סוג הכשל מ-classifyPinCheck: wrong / offline / server
+  const [err, setErr] = useState(null);
   const [busy, setBusy] = useState(false);
   const accept = () => {
     // נשמר לסשן בלבד — משמש לאימות מול השרת בעת פרסום
     try { sessionStorage.setItem("lobby_admin_pin", pin); } catch { /* ignore */ }
     onOk();
   };
-  const check = async () => {
+  const fail = (kind) => {
+    setErr(kind);
+    // קוד שגוי נמחק כדי להקליד מחדש; בתקלת רשת הקוד כנראה נכון — משאירים אותו לניסיון חוזר
+    if (kind === "wrong") setPin("");
+  };
+  const check = async (e) => {
+    e.preventDefault();
+    if (!pin || busy) return;
     const settings = readDraft("settings");
     // הקוד ידוע מקומית רק במכשיר שבו הוא נקבע. מכשיר שסונכרן מהשרת מקבל null
     // (ה-GET מסתיר את הקוד), ואז הבדיקה היחידה שאפשר לסמוך עליה היא מול השרת.
     if (settings.pin != null) {
       if (pin === String(settings.pin)) accept();
-      else { setErr(true); setPin(""); }
+      else fail("wrong");
       return;
     }
     setBusy(true);
@@ -47,30 +56,36 @@ function PinGate({ onOk }) {
         body: JSON.stringify({ pin, verify: true, data: {} }),
       });
       const d = await res.json().catch(() => ({}));
-      if (res.ok && d.verified) accept();
-      else { setErr(true); setPin(""); }
+      const kind = classifyPinCheck(res.status, d);
+      if (kind === "ok") accept();
+      else fail(kind);
     } catch {
       // אין רשת: אין דרך לאמת, ואסור לפתוח את מסך הניהול על סמך ניחוש.
-      setErr(true); setPin("");
+      fail(classifyPinCheck(null, null));
     } finally { setBusy(false); }
   };
   return (
     <div className="admin-root pin-screen" dir="rtl">
-      <div className="pin-card">
-        <div className="pin-logo">✦</div>
-        <h1>כניסת מנהל</h1>
-        <p>הזינו קוד PIN לניהול מסך הלובי</p>
+      <form className="pin-card" onSubmit={check}>
+        <div className="pin-logo" aria-hidden="true">✦</div>
+        <h1>כניסת מנהלים</h1>
+        <label className="pin-label" htmlFor="pin-input">הזינו את קוד הכניסה כדי לערוך את מסך הלובי</label>
         <input
-          type="password" inputMode="numeric" autoFocus
+          id="pin-input"
+          type="password" inputMode="numeric" autoFocus autoComplete="current-password"
           value={pin}
-          onChange={(e) => { setPin(e.target.value); setErr(false); }}
-          onKeyDown={(e) => e.key === "Enter" && check()}
+          aria-invalid={err ? "true" : undefined}
+          aria-describedby={err ? "pin-err" : undefined}
+          onChange={(e) => { setPin(e.target.value); setErr(null); }}
           placeholder="••••"
         />
-        {err && <div className="pin-err">קוד שגוי — נסו שוב</div>}
-        <button className="btn primary" disabled={busy} onClick={check}>{busy ? "בודק..." : "כניסה"}</button>
-        <a className="pin-back" href="#">→ חזרה למסך</a>
-      </div>
+        {err && <div className="pin-err" id="pin-err" role="alert">{PIN_MESSAGES[err]}</div>}
+        <button type="submit" className="btn primary pin-submit" disabled={busy || !pin}>
+          {busy ? "בודקים את הקוד…" : "כניסה לניהול"}
+        </button>
+        <p className="pin-note">שכחתם את הקוד? פנו למי שמנהל את המסך בבניין.</p>
+        <a className="pin-back" href="#">→ חזרה למסך הלובי</a>
+      </form>
     </div>
   );
 }

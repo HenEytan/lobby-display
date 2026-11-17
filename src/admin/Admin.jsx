@@ -39,7 +39,9 @@ function PinGate({ onOk }) {
   };
   const check = async (e) => {
     e.preventDefault();
-    if (!pin || busy) return;
+    if (busy) return;
+    // כפתור מושבת נראה דהוי ולא אומר למה — עדיף להשאיר אותו פעיל ולהסביר מה חסר
+    if (!pin) { setErr("empty"); return; }
     const settings = readDraft("settings");
     // הקוד ידוע מקומית רק במכשיר שבו הוא נקבע. מכשיר שסונכרן מהשרת מקבל null
     // (ה-GET מסתיר את הקוד), ואז הבדיקה היחידה שאפשר לסמוך עליה היא מול השרת.
@@ -80,7 +82,7 @@ function PinGate({ onOk }) {
           placeholder="••••"
         />
         {err && <div className="pin-err" id="pin-err" role="alert">{PIN_MESSAGES[err]}</div>}
-        <button type="submit" className="btn primary pin-submit" disabled={busy || !pin}>
+        <button type="submit" className="btn primary pin-submit" disabled={busy}>
           {busy ? "בודקים את הקוד…" : "כניסה לניהול"}
         </button>
         <p className="pin-note">שכחתם את הקוד? פנו למי שמנהל את המסך בבניין.</p>

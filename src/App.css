@@ -371,16 +371,16 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
   position: fixed; bottom: 10px; font-size: 10.5px; font-weight: 500;
   color: var(--ink-soft); background: none; border: none;
   cursor: pointer; text-decoration: none; z-index: 50;
-  padding: 3px 8px; opacity: 0.35; transition: opacity 0.25s;
+  padding: 1px 8px; line-height: 1.4; opacity: 0.35; transition: opacity 0.25s;
 }
-.ver { inset-inline-start: 10px; }
+.ver { inset-inline-start: 2vw; }
 .admin-link { inset-inline-end: 10px; }
 .ver:hover { opacity: 0.85; }
 
 /* כפתור מסך מלא — עדין, בפינה הנגדית לתג הגרסה */
 .fs-btn {
-  position: fixed; bottom: 10px; inset-inline-end: 10px; z-index: 50;
-  width: 30px; height: 30px; padding: 6px;
+  position: fixed; bottom: 10px; inset-inline-end: 2vw; z-index: 50;
+  width: 20px; height: 20px; padding: 3px;
   display: flex; align-items: center; justify-content: center;
   color: var(--ink-soft); background: none; border: none; cursor: pointer;
   opacity: 0.28; transition: opacity 0.25s;

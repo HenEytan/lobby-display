@@ -311,6 +311,9 @@ function Display({ previewMode }) {
   const [showVersion, setShowVersion] = useState(false);
   const { isFs, supported: fsOk, toggle: toggleFs } = useFullscreen();
 
+  const showNewsStrip = settings.showNews && news.items.length > 0;
+  const stripsHeight = `max(${(settings.showTicker ? 6 : 0) + (showNewsStrip ? 7.2 : 0)}vh, ${(settings.showTicker ? 44 : 0) + (showNewsStrip ? 56 : 0)}px)`;
+
   // ─── מצבים שתופסים את המסך המלא ───
   if (urgent) return <UrgentScreen ann={urgent} now={now} />;
   // חג הנופל בשבת נשאר חג — מסך החג קודם למסך השבת
@@ -322,7 +325,8 @@ function Display({ previewMode }) {
       className="board"
       dir="rtl"
       style={{
-        paddingBottom: `max(${(settings.showTicker ? 6 : 0) + (settings.showNews && news.items.length > 0 ? 7.2 : 0)}vh, ${(settings.showTicker ? 44 : 0) + (settings.showNews && news.items.length > 0 ? 56 : 0)}px)`,
+        // גובה הרצועות התחתונות ועוד אותו מרווח כמו בראש המסך — הבמה לא נצמדת לטיקר
+        paddingBottom: `calc(${stripsHeight} + 2.2vh)`,
       }}
     >
       {previewMode && (
@@ -369,15 +373,15 @@ function Display({ previewMode }) {
 
       {/* הרצועות מעוגנות לתחתית המסך — כך שגובה התוכן לעולם לא יכול לדחוף אותן החוצה */}
       <div className="board-strips">
-        {settings.showTicker && <Ticker lines={data.ticker} speed={settings.tickerSpeed} now={now} name={settings.buildingName} />}
-        {settings.showNews && news.items.length > 0 && <NewsTicker items={news.items} speed={settings.newsSpeed} />}
+        {settings.showTicker && <Ticker lines={data.ticker} speed={settings.tickerSpeed} />}
+        {showNewsStrip && <NewsTicker items={news.items} speed={settings.newsSpeed} />}
       </div>
 
       <MusicPlayer music={data.music} trackIdx={trackIdx} setTrackIdx={setTrackIdx} allowed={musicHoursOk} />
 
       {(() => {
-        const tickerVh = (settings.showTicker ? 6 : 0) + (settings.showNews && news.items.length > 0 ? 7.2 : 0);
-        const floatStyle = tickerVh > 0 ? { bottom: `calc(${tickerVh}vh + 10px)` } : undefined;
+        // תג הגרסה וכפתור המסך המלא יושבים במרווח שבין הבמה לרצועות, לא על פינות הבמה
+        const floatStyle = { bottom: `calc(${stripsHeight} + 0.2vh)` };
         return (
           <>
             <button className="ver" style={floatStyle} onClick={() => setShowVersion((v) => !v)}>גרסה {VERSION}</button>
@@ -670,15 +674,14 @@ function AnnouncementsCard({ anns }) {
 
 // ─── טיקר תחתון ───
 
-function Ticker({ lines, speed, now, name }) {
+// שם הבניין והשעה כבר גדולים בסרגל העליון — התווית כאן אומרת ממי ההודעות הרצות
+function Ticker({ lines, speed }) {
   const active = lines.filter((l) => l.active).sort((a, b) => (a.order || 0) - (b.order || 0));
   const text = active.map((l) => l.text).join("   ✦   ");
-  const hh = String(now.getHours()).padStart(2, "0");
-  const mm = String(now.getMinutes()).padStart(2, "0");
   if (!text) return null;
   return (
     <footer className="ticker">
-      <div className="ticker-brand">{name} · {hh}:{mm}</div>
+      <div className="ticker-brand">עדכוני הוועד</div>
       <div className="ticker-viewport">
         <div className="ticker-track" style={{ animationDuration: `${Math.max(10, speed)}s` }}>
           <span>{text}</span>

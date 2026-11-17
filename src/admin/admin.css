@@ -73,7 +73,9 @@
   padding: 9px 18px; border-radius: 12px; font-size: 14px; cursor: pointer; text-decoration: none;
   display: inline-flex; align-items: center; gap: 6px;
 }
-.btn.primary { background: linear-gradient(120deg, #b08d3e, #cfa955); border: none; color: #fff; font-weight: 700; }
+/* זהב עמוק מספיק כדי שהטקסט הלבן ייקרא היטב (ניגודיות ≥ 4.5:1) */
+.btn.primary { background: linear-gradient(120deg, #8a6a24, #a07b2c); border: none; color: #fff; font-weight: 700; }
+.btn.primary:hover:not(:disabled) { background: linear-gradient(120deg, #7a5d1f, #8f6e27); }
 .btn.primary:disabled { opacity: 0.6; cursor: default; }
 .btn.ghost:hover { border-color: #b08d3e; }
 .btn.tiny { padding: 5px 12px; font-size: 13px; }

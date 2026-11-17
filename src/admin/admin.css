@@ -23,9 +23,11 @@
 }
 .pin-card h1 { font-size: 26px; }
 .pin-label { color: #5c5346; font-size: 15px; line-height: 1.5; margin-bottom: 6px; }
+/* הריווח בין הנקודות נוסף גם אחרי האחרונה — ריפוד נגדי מחזיר אותן למרכז השדה */
 .pin-card input {
   font-size: 26px; text-align: center; letter-spacing: 0.4em;
-  padding: 10px; border: 1px solid #e8dfcc; border-radius: 12px; background: #fdfaf1;
+  padding: 10px 10px 10px calc(10px + 0.4em);
+  border: 1px solid #e8dfcc; border-radius: 12px; background: #fdfaf1;
 }
 .pin-card input::placeholder { color: #8a7d68; opacity: 1; }
 .pin-card input:focus { outline: none; border-color: #b08d3e; box-shadow: 0 0 0 3px rgba(176, 141, 62, 0.2); }
@@ -34,7 +36,8 @@
   color: #a8321f; background: #fdf0ec; border: 1px solid #f0c9be;
   border-radius: 10px; padding: 8px 12px; font-size: 14px; line-height: 1.5;
 }
-.pin-submit { justify-content: center; padding: 12px 18px; font-size: 15px; }
+/* כפתור בגובה השדה שמעליו — שני הפקדים נקראים כזוג אחד. בורר כפול כדי לגבור על .btn שמוגדר בהמשך */
+.btn.pin-submit { justify-content: center; min-height: 50px; padding: 12px 18px; font-size: 16px; }
 .pin-note { color: #5c5346; font-size: 14px; line-height: 1.5; }
 .pin-back {
   color: #6d6355; font-size: 14px; font-weight: 600; text-decoration: none;

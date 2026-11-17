@@ -28,12 +28,15 @@
   border-radius: 10px; padding: 8px 12px; font-size: 14px; line-height: 1.5;
 }
 .pin-submit { justify-content: center; padding: 12px 18px; font-size: 15px; }
-.pin-note { color: #8a7f6d; font-size: 12px; line-height: 1.5; }
+.pin-note { color: #6d6355; font-size: 13px; line-height: 1.5; }
 .pin-back {
   color: #6d6355; font-size: 13px; text-decoration: none;
   border-top: 1px solid #eee5d1; padding-top: 14px; margin-top: 2px;
 }
 .pin-back:hover { color: #2c2620; }
+
+/* טבעת מיקוד אחידה בזהב במקום הכחול של הדפדפן. כלל נפרד — דפדפן ישן שלא מכיר את הבורר מדלג רק עליו */
+.admin-root :focus-visible { outline: 2px solid #8a6a24; outline-offset: 2px; }
 
 /* כותרת */
 .admin-head {

@@ -45,6 +45,7 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
   padding: 5px 12px; border-radius: 8px;
 }
 .pv-btn:hover { border-color: rgba(243, 233, 210, 0.35); }
+.pv-btn:focus-visible { outline: 2px solid var(--gold-soft); outline-offset: 2px; }
 .pv-btn.primary { background: var(--gold-soft); color: #2c2620; margin-inline-start: 8px; }
 
 /* ─── סרגל מצב עליון — זהות הבניין, ברכה, שעון ומזג אוויר בשורה אחת ─── */
@@ -59,8 +60,9 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
   position: relative; overflow: hidden;
 }
 .statusbar::before {
-  content: ""; position: absolute; top: 0; bottom: 0; inset-inline-start: 0;
-  width: 5px; background: linear-gradient(180deg, var(--gold), var(--gold-soft));
+  content: ""; position: absolute; top: 24%; bottom: 24%; inset-inline-start: 10px;
+  width: 4px; border-radius: 999px;
+  background: linear-gradient(180deg, var(--gold), var(--gold-soft));
 }
 
 .sb-brand {
@@ -72,15 +74,13 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 .sb-hello, .sb-name, .sb-city { line-height: 1.15; margin: 0; white-space: nowrap; }
 .sb-hello {
   font-size: clamp(13px, 1.15vw, 21px); font-weight: 700; color: #8a6a24;
-  letter-spacing: 0.08em;
 }
 .sb-name {
   font-size: clamp(20px, 2vw, 38px); font-weight: 800; color: #5f4712;
-  letter-spacing: 0.03em; overflow: hidden; text-overflow: ellipsis;
+  overflow: hidden; text-overflow: ellipsis;
 }
 .sb-city {
   font-size: clamp(12px, 1.1vw, 19px); font-weight: 600; color: #7d5f1d;
-  letter-spacing: 0.12em; text-indent: 0.12em;
   background: rgba(176, 141, 62, 0.12); border: 1px solid var(--gold-soft);
   padding: 4px 16px; border-radius: 999px;
 }
@@ -209,7 +209,7 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
   box-shadow: 0 14px 34px rgba(101, 84, 47, 0.18);
 }
 .vaad-eyebrow {
-  color: #a9884a; font-weight: 700; letter-spacing: 0.14em;
+  color: #8a6a24; font-weight: 700;
   font-size: clamp(13px, 1.15vw, 20px); margin-bottom: 8px;
 }
 .vaad-slide h2 { font-size: clamp(30px, 4vw, 64px); font-weight: 800; color: #6f5518; line-height: 1.2; }
@@ -348,6 +348,11 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
   font-size: clamp(14px, 1.3vw, 22px);
 }
 .ticker-viewport { flex: 1; overflow: hidden; display: flex; align-items: center; }
+/* הטקסט נכנס ויוצא בדהייה עדינה במקום להיחתך בחדות ליד התווית — מסכה, כך שמתאים לכל ערכת צבע */
+.ticker-viewport {
+  -webkit-mask-image: linear-gradient(to left, transparent, #000 2.5vw, #000 calc(100% - 2.5vw), transparent);
+  mask-image: linear-gradient(to left, transparent, #000 2.5vw, #000 calc(100% - 2.5vw), transparent);
+}
 .ticker-track {
   display: inline-flex; white-space: nowrap;
   animation: ticker linear infinite;
@@ -473,7 +478,6 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
   font-size: clamp(16px, 1.8vw, 28px);
   color: var(--gold);
   font-weight: 700;
-  letter-spacing: 0.22em;
 }
 .welcome-divider { width: min(30vw, 300px); height: 24px; margin: 1.2vh 0 0.4vh; opacity: 0.9; }
 

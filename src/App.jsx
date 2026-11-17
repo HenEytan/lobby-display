@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { VERSION, CHANGELOG } from "./version";
-import { gregDateHe, hebrewDate, dailyGreeting, todayHoliday, shabbatInfo, yomTovInfo, holidayBannerSchedule, isHolidayDay } from "./lib/hebrew";
+import { gregDateHe, hebrewDate, dailyGreeting, todayHoliday, shabbatInfo, nextShabbatTimes, yomTovInfo, holidayBannerSchedule, isHolidayDay } from "./lib/hebrew";
 import { eventsThisWeek, eventDayLabel, formatEventWhen, fetchAlumaEvents, EVENTS_REFRESH_MS, CATEGORY_BG } from "./lib/events";
 import { fetchWeather, weatherIcon, uvLevel } from "./lib/feeds";
 import { syncTime, israelNow, TIME_SYNC_MS } from "./lib/time";
@@ -9,7 +9,7 @@ import { applyTheme } from "./lib/themes";
 import { BuildingArt, OliveDivider, CategoryIcon, AnnouncementIcon, rotatingArt, ShabbatSceneArt } from "./lib/artwork.jsx";
 import {
   useLobbyData, activeBanners, activeAnnouncements, urgentAnnouncement,
-  BG_PRESETS, pullFromServer, SYNC_POLL_MS, isMusicHour,
+  BG_PRESETS, pullFromServer, SYNC_POLL_MS, isMusicHour, hasDrafts, publishAll,
 } from "./lib/store";
 import { mediaURL, syncLocalMedia } from "./lib/media";
 import Admin from "./admin/Admin.jsx";
@@ -194,6 +194,8 @@ function Display({ previewMode }) {
     [now.getDate(), alumaEvents]
   );
   const anns = activeAnnouncements(data.announcements, now);
+  const showRail = settings.showEvents && events.length > 0;
+  const hasSide = showRail || anns.length > 0;
   const urgent = urgentAnnouncement(data.announcements, now);
 
   // ─── מוזיקת רקע — מצב משותף כדי שגם שקופייה ייעודית תדע מה מתנגן ───
@@ -309,6 +311,9 @@ function Display({ previewMode }) {
   const [showVersion, setShowVersion] = useState(false);
   const { isFs, supported: fsOk, toggle: toggleFs } = useFullscreen();
 
+  const showNewsStrip = settings.showNews && news.items.length > 0;
+  const stripsHeight = `max(${(settings.showTicker ? 6 : 0) + (showNewsStrip ? 7.2 : 0)}vh, ${(settings.showTicker ? 44 : 0) + (showNewsStrip ? 56 : 0)}px)`;
+
   // ─── מצבים שתופסים את המסך המלא ───
   if (urgent) return <UrgentScreen ann={urgent} now={now} />;
   // חג הנופל בשבת נשאר חג — מסך החג קודם למסך השבת
@@ -320,34 +325,32 @@ function Display({ previewMode }) {
       className="board"
       dir="rtl"
       style={{
-        paddingBottom: `max(${(settings.showTicker ? 6 : 0) + (settings.showNews && news.items.length > 0 ? 7.2 : 0)}vh, ${(settings.showTicker ? 44 : 0) + (settings.showNews && news.items.length > 0 ? 56 : 0)}px)`,
+        // גובה הרצועות התחתונות ועוד אותו מרווח כמו בראש המסך — הבמה לא נצמדת לטיקר
+        paddingBottom: `calc(${stripsHeight} + 2.2vh)`,
       }}
     >
       {previewMode && (
-        <div className="preview-bar">
-          מצב תצוגה מקדימה — כך ייראה המסך לאחר פרסום
-          <a href="#admin">חזרה לניהול</a>
-        </div>
+        <PreviewBar />
       )}
 
-      {/* סרגל מצב עליון — זהות הבניין, ברכה, שעון ומזג אוויר בשורה אחת */}
+      {/* סרגל מצב עליון — זהות הבניין עם ברכת השעה, שעון ומזג אוויר בשורה אחת.
+          הברכה יושבת כשורת-על מעל שם הבניין ("ערב טוב / יסוד המעלה 9"), במקום
+          ברכה שנייה שריחפה לבד באמצע הסרגל ליד ״ברוכים הבאים״ */}
       <header className="statusbar">
         <div className="sb-brand">
           <div className="sb-id">
-            <span className="sb-hello">ברוכים הבאים</span>
+            <span className="sb-hello">{dailyGreeting(now, holiday)}</span>
             <h1 className="sb-name">{settings.buildingName}</h1>
           </div>
           {settings.city && <span className="sb-city">{settings.city}</span>}
-          <div className="sb-greet-wrap">
-            <OliveDivider className="sb-divider" />
-            <span className="sb-greet">{dailyGreeting(now, holiday)}</span>
-          </div>
         </div>
-        <ClockStatus now={now} shabbat={shabbat} />
+        <ShabbatTimes now={now} compact={!!weather} />
+        <ClockStatus now={now} />
         <WeatherStatus weather={weather} />
       </header>
 
-      <div className="board-body">
+      {/* בלי אירועים ובלי הודעות העמודה הצדדית ריקה — האזור הראשי תופס את כל הרוחב במקום להשאיר חור */}
+      <div className={"board-body" + (hasSide ? "" : " solo")}>
         <main className="main-area">
           <MainSlide slide={slide} holiday={holiday} name={settings.buildingName} currentTrack={currentTrack} isSaturday={now.getDay() === 6} />
           {slides.length > 1 && (
@@ -359,23 +362,25 @@ function Display({ previewMode }) {
           )}
         </main>
 
-        <aside className="side">
-          {settings.showEvents && events.length > 0 && <EventsRail events={events} />}
-          {anns.length > 0 && <AnnouncementsCard anns={anns} />}
-        </aside>
+        {hasSide && (
+          <aside className="side">
+            {showRail && <EventsRail events={events} />}
+            {anns.length > 0 && <AnnouncementsCard anns={anns} />}
+          </aside>
+        )}
       </div>
 
       {/* הרצועות מעוגנות לתחתית המסך — כך שגובה התוכן לעולם לא יכול לדחוף אותן החוצה */}
       <div className="board-strips">
-        {settings.showTicker && <Ticker lines={data.ticker} speed={settings.tickerSpeed} now={now} name={settings.buildingName} />}
-        {settings.showNews && news.items.length > 0 && <NewsTicker items={news.items} speed={settings.newsSpeed} />}
+        {settings.showTicker && <Ticker lines={data.ticker} speed={settings.tickerSpeed} />}
+        {showNewsStrip && <NewsTicker items={news.items} speed={settings.newsSpeed} />}
       </div>
 
       <MusicPlayer music={data.music} trackIdx={trackIdx} setTrackIdx={setTrackIdx} allowed={musicHoursOk} />
 
       {(() => {
-        const tickerVh = (settings.showTicker ? 6 : 0) + (settings.showNews && news.items.length > 0 ? 7.2 : 0);
-        const floatStyle = tickerVh > 0 ? { bottom: `calc(${tickerVh}vh + 10px)` } : undefined;
+        // תג הגרסה וכפתור המסך המלא יושבים במרווח שבין הבמה לרצועות, לא על פינות הבמה
+        const floatStyle = { bottom: `calc(${stripsHeight} + 0.2vh)` };
         return (
           <>
             <button className="ver" style={floatStyle} onClick={() => setShowVersion((v) => !v)}>גרסה {VERSION}</button>
@@ -403,6 +408,32 @@ function Display({ previewMode }) {
       })()}
 
       {showVersion && <VersionPanel onClose={() => setShowVersion(false)} />}
+    </div>
+  );
+}
+
+// ─── סרגל התצוגה המקדימה ───
+// אומר למנהל אם יש בכלל מה לפרסם, ומאפשר לפרסם מכאן — בלי לחזור לניהול רק בשביל הכפתור.
+// הפרסום זמין רק בסשן ניהול מחובר, כי השידור לשרת נשען על הקוד שנשמר בכניסה.
+function PreviewBar() {
+  const pending = hasDrafts();
+  const canPublish = pending && sessionStorage.getItem("lobby_admin") === "1";
+  return (
+    <div className={"preview-bar" + (pending ? " pending" : "")} role="status">
+      <span className="pv-text">
+        <b className="pv-badge">תצוגה מקדימה</b>
+        <span className="pv-msg">
+          {pending
+            ? "יש שינויים שעוד לא פורסמו — כך ייראה המסך אחרי הפרסום"
+            : "אין שינויים שממתינים לפרסום — כך נראה המסך בלובי עכשיו"}
+        </span>
+      </span>
+      <span className="pv-actions">
+        <a className="pv-btn" href="#admin">→ חזרה לעריכה</a>
+        {canPublish && (
+          <button className="pv-btn primary" onClick={publishAll}>פרסום למסך בלובי</button>
+        )}
+      </span>
     </div>
   );
 }
@@ -494,7 +525,24 @@ function WeekendSlide({ isSaturday }) {
 
 // ─── סרגל המצב העליון ───
 
-function ClockStatus({ now, shabbat }) {
+// זמני השבת הקרובה — במרכז הסרגל בכל ימות השבוע; בשישי מסומנת כ"שבת נכנסת היום"
+function ShabbatTimes({ now, compact }) {
+  const day = now.toDateString();
+  const hour = now.getHours();
+  const t = useMemo(() => nextShabbatTimes(now), [day, hour]); // eslint-disable-line react-hooks/exhaustive-deps
+  return (
+    <div className={"sb-shab" + (t.isToday ? " today" : "") + (compact ? " compact" : "")}>
+      <span className="sb-shab-label">{t.isToday ? "שבת נכנסת היום" : "זמני השבת הקרובה"}</span>
+      <span className="sb-shab-times">
+        <span className="sb-shab-item">הדלקת נרות <b>{t.candles}</b></span>
+        <span className="sb-shab-sep" aria-hidden="true" />
+        <span className="sb-shab-item">הבדלה <b>{t.havdalah}</b></span>
+      </span>
+    </div>
+  );
+}
+
+function ClockStatus({ now }) {
   const hh = String(now.getHours()).padStart(2, "0");
   const mm = String(now.getMinutes()).padStart(2, "0");
   return (
@@ -505,9 +553,6 @@ function ClockStatus({ now, shabbat }) {
       <div className="sb-dates">
         <div className="sb-hebdate">{hebrewDate(now)}</div>
         <div className="sb-gregdate">{gregDateHe(now)}</div>
-        {shabbat && !shabbat.active && (
-          <div className="sb-shabbat">🕯 הדלקת נרות {shabbat.candles} · הבדלה {shabbat.havdalah}</div>
-        )}
       </div>
     </div>
   );
@@ -643,15 +688,14 @@ function AnnouncementsCard({ anns }) {
 
 // ─── טיקר תחתון ───
 
-function Ticker({ lines, speed, now, name }) {
+// שם הבניין והשעה כבר גדולים בסרגל העליון — התווית כאן אומרת ממי ההודעות הרצות
+function Ticker({ lines, speed }) {
   const active = lines.filter((l) => l.active).sort((a, b) => (a.order || 0) - (b.order || 0));
   const text = active.map((l) => l.text).join("   ✦   ");
-  const hh = String(now.getHours()).padStart(2, "0");
-  const mm = String(now.getMinutes()).padStart(2, "0");
   if (!text) return null;
   return (
     <footer className="ticker">
-      <div className="ticker-brand">{name} · {hh}:{mm}</div>
+      <div className="ticker-brand">עדכוני הוועד</div>
       <div className="ticker-viewport">
         <div className="ticker-track" style={{ animationDuration: `${Math.max(10, speed)}s` }}>
           <span>{text}</span>

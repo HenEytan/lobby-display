@@ -26,6 +26,8 @@ export function dailyGreeting(d, holiday) {
   if (day === 5) return "שבת שלום וסופ״ש נעים";
   if (day === 0) return "שבוע טוב";
   const h = d.getHours();
+  // אחרי חצות ולפני הזריחה — "בוקר טוב" בשתיים בלילה נשמע כמו טעות
+  if (h < 5) return "לילה טוב";
   if (h < 12) return "בוקר טוב";
   if (h < 18) return "צהריים טובים";
   return "ערב טוב";
@@ -164,6 +166,18 @@ export function shabbatInfo(now = new Date()) {
     return { active: false, candles: HE_TIME(candles), havdalah: HE_TIME(havdalah) };
   }
   return null;
+}
+
+// זמני השבת הקרובה — לכל יום בשבוע (בשבת עצמה: השבת הנוכחית), לסרגל העליון של המסך
+export function nextShabbatTimes(now = new Date()) {
+  let { candles, havdalah } = shabbatWindow(now);
+  // במוצאי שבת עוברים כבר לשבת של השבוע הבא
+  if (now > havdalah) {
+    const sun = new Date(now);
+    sun.setDate(sun.getDate() + 1);
+    ({ candles, havdalah } = shabbatWindow(sun));
+  }
+  return { candles: HE_TIME(candles), havdalah: HE_TIME(havdalah), isToday: now.getDay() === 5 };
 }
 
 // ─── לוח חגים, מועדים וצומות לשנה הקרובה ───

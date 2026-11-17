@@ -14,15 +14,39 @@
   padding: 40px 44px; width: min(92vw, 380px); text-align: center;
   display: flex; flex-direction: column; gap: 14px;
 }
-.pin-logo { font-size: 34px; color: #b08d3e; }
-.pin-card h1 { font-size: 24px; }
-.pin-card p { color: #6d6355; font-size: 14px; }
+.pin-logo { font-size: 34px; color: #b08d3e; line-height: 1; }
+.pin-place {
+  align-self: center;
+  font-size: 14px; font-weight: 700; color: #7d5f1d;
+  background: rgba(176, 141, 62, 0.12); border: 1px solid #d8c391;
+  padding: 4px 14px; border-radius: 999px;
+}
+.pin-card h1 { font-size: 26px; }
+.pin-label { color: #5c5346; font-size: 15px; line-height: 1.5; margin-bottom: 6px; }
+/* הריווח בין הנקודות נוסף גם אחרי האחרונה — ריפוד נגדי מחזיר אותן למרכז השדה */
 .pin-card input {
   font-size: 26px; text-align: center; letter-spacing: 0.4em;
-  padding: 10px; border: 1px solid #e8dfcc; border-radius: 12px; background: #fdfaf1;
+  padding: 10px 10px 10px calc(10px + 0.4em);
+  border: 1px solid #e8dfcc; border-radius: 12px; background: #fdfaf1;
 }
-.pin-err { color: #c0392b; font-size: 14px; }
-.pin-back { color: #6d6355; font-size: 13px; text-decoration: none; margin-top: 4px; }
+.pin-card input::placeholder { color: #8a7d68; opacity: 1; }
+.pin-card input:focus { outline: none; border-color: #b08d3e; box-shadow: 0 0 0 3px rgba(176, 141, 62, 0.2); }
+.pin-card input[aria-invalid="true"] { border-color: #c0392b; box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.12); }
+.pin-err {
+  color: #a8321f; background: #fdf0ec; border: 1px solid #f0c9be;
+  border-radius: 10px; padding: 8px 12px; font-size: 14px; line-height: 1.5;
+}
+/* כפתור בגובה השדה שמעליו — שני הפקדים נקראים כזוג אחד. בורר כפול כדי לגבור על .btn שמוגדר בהמשך */
+.btn.pin-submit { justify-content: center; min-height: 50px; padding: 12px 18px; font-size: 16px; }
+.pin-note { color: #5c5346; font-size: 14px; line-height: 1.5; }
+.pin-back {
+  color: #6d6355; font-size: 14px; font-weight: 600; text-decoration: none;
+  border-top: 1px solid #eee5d1; padding-top: 14px; margin-top: 2px;
+}
+.pin-back:hover { color: #2c2620; }
+
+/* טבעת מיקוד אחידה בזהב במקום הכחול של הדפדפן. כלל נפרד — דפדפן ישן שלא מכיר את הבורר מדלג רק עליו */
+.admin-root :focus-visible { outline: 2px solid #8a6a24; outline-offset: 2px; }
 
 /* כותרת */
 .admin-head {
@@ -62,7 +86,9 @@
   padding: 9px 18px; border-radius: 12px; font-size: 14px; cursor: pointer; text-decoration: none;
   display: inline-flex; align-items: center; gap: 6px;
 }
-.btn.primary { background: linear-gradient(120deg, #b08d3e, #cfa955); border: none; color: #fff; font-weight: 700; }
+/* זהב עמוק מספיק כדי שהטקסט הלבן ייקרא היטב (ניגודיות ≥ 4.5:1) */
+.btn.primary { background: linear-gradient(120deg, #8a6a24, #a07b2c); border: none; color: #fff; font-weight: 700; }
+.btn.primary:hover:not(:disabled) { background: linear-gradient(120deg, #7a5d1f, #8f6e27); }
 .btn.primary:disabled { opacity: 0.6; cursor: default; }
 .btn.ghost:hover { border-color: #b08d3e; }
 .btn.tiny { padding: 5px 12px; font-size: 13px; }

@@ -147,22 +147,34 @@ const POOL_SVG = `
     </linearGradient>
   </defs>
   <rect width="800" height="450" fill="url(#p)"/>
-  <circle cx="670" cy="80" r="46" fill="#fff3c2" opacity="0.95"/>
+  <circle cx="690" cy="98" r="40" fill="#fff3c2" opacity="0.95"/>
   <g fill="#ffffff" opacity="0.75">
     <ellipse cx="130" cy="120" rx="55" ry="20"/><ellipse cx="175" cy="130" rx="40" ry="16"/>
-    <ellipse cx="560" cy="150" rx="60" ry="22"/><ellipse cx="610" cy="160" rx="38" ry="15"/>
+    <ellipse cx="640" cy="130" rx="56" ry="20"/><ellipse cx="688" cy="140" rx="36" ry="14"/>
   </g>
-  <rect y="300" width="800" height="150" fill="#2f9fc4" opacity="0.55"/>
-  <path d="M0 300 Q 40 285 80 300 T 160 300 T 240 300 T 320 300 T 400 300 T 480 300 T 560 300 T 640 300 T 720 300 T 800 300 V450 H0 Z" fill="#3badd0" opacity="0.5"/>
+  <rect y="284" width="800" height="20" fill="#f0dcb4"/>
+  <rect y="284" width="800" height="3" fill="#f8ecd2"/>
+  <rect y="304" width="800" height="146" fill="#2f9fc4" opacity="0.55"/>
+  <rect y="304" width="800" height="6" fill="#1f86a8" opacity="0.35"/>
+  <path d="M0 322 Q 40 314 80 322 T 160 322 T 240 322 T 320 322 T 400 322 T 480 322 T 560 322 T 640 322 T 720 322 T 800 322 V450 H0 Z" fill="#3badd0" opacity="0.5"/>
   <g>
-    <line x1="120" y1="300" x2="120" y2="180" stroke="#c94f4f" stroke-width="8" stroke-linecap="round"/>
-    <path d="M120 180 A70 70 0 0 1 190 250 L120 250 Z" fill="#e2665f"/>
-    <path d="M120 180 A70 70 0 0 0 50 250 L120 250 Z" fill="#f2f2f2"/>
-    <path d="M120 180 A70 70 0 0 1 50 180 L120 180 Z" fill="#e2665f" transform="rotate(180 120 215)"/>
+    <line x1="120" y1="290" x2="120" y2="180" stroke="#c94f4f" stroke-width="8" stroke-linecap="round"/>
+    <ellipse cx="120" cy="292" rx="16" ry="4" fill="#d8bf8f"/>
+    <path d="M120 182 Q60 190 50 250 q17.5 10 35 0 Q95 202 120 182 Z" fill="#e2665f"/>
+    <path d="M120 182 Q95 202 85 250 q17.5 10 35 0 Z" fill="#f6f3ee"/>
+    <path d="M120 182 L120 250 q17.5 10 35 0 Q145 202 120 182 Z" fill="#e2665f"/>
+    <path d="M120 182 Q145 202 155 250 q17.5 10 35 0 Q180 190 120 182 Z" fill="#f6f3ee"/>
+    <circle cx="120" cy="180" r="5" fill="#c94f4f"/>
   </g>
-  <g fill="#e8f6fb" opacity="0.9">
-    <path d="M330 320 q10 -22 20 0 q10 -22 20 0 q10 -22 20 0 v20 h-60 z"/>
-    <path d="M600 340 q12 -26 24 0 q12 -26 24 0 v20 h-48 z"/>
+  <g fill="none" stroke="#dfe7ea" stroke-width="5" stroke-linecap="round">
+    <path d="M684 340 V282 q0 -14 14 -14"/>
+    <path d="M712 340 V282 q0 -14 14 -14"/>
+    <path d="M684 312 H712 M684 330 H712" stroke-width="4" opacity="0.8"/>
+  </g>
+  <g fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" opacity="0.55">
+    <path d="M300 352 q20 -8 40 0 t40 0"/>
+    <path d="M520 384 q16 -7 32 0 t32 0"/>
+    <path d="M170 380 q14 -6 28 0 t28 0"/>
   </g>
 </svg>`;
 

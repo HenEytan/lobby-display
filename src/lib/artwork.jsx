@@ -147,10 +147,10 @@ const POOL_SVG = `
     </linearGradient>
   </defs>
   <rect width="800" height="450" fill="url(#p)"/>
-  <circle cx="660" cy="122" r="42" fill="#fff3c2" opacity="0.95"/>
+  <circle cx="690" cy="98" r="40" fill="#fff3c2" opacity="0.95"/>
   <g fill="#ffffff" opacity="0.75">
     <ellipse cx="130" cy="120" rx="55" ry="20"/><ellipse cx="175" cy="130" rx="40" ry="16"/>
-    <ellipse cx="560" cy="150" rx="60" ry="22"/><ellipse cx="610" cy="160" rx="38" ry="15"/>
+    <ellipse cx="640" cy="130" rx="56" ry="20"/><ellipse cx="688" cy="140" rx="36" ry="14"/>
   </g>
   <rect y="284" width="800" height="20" fill="#f0dcb4"/>
   <rect y="284" width="800" height="3" fill="#f8ecd2"/>
@@ -160,9 +160,11 @@ const POOL_SVG = `
   <g>
     <line x1="120" y1="290" x2="120" y2="180" stroke="#c94f4f" stroke-width="8" stroke-linecap="round"/>
     <ellipse cx="120" cy="292" rx="16" ry="4" fill="#d8bf8f"/>
-    <path d="M120 180 A70 70 0 0 1 190 250 L120 250 Z" fill="#e2665f"/>
-    <path d="M120 180 A70 70 0 0 0 50 250 L120 250 Z" fill="#f2f2f2"/>
-    <path d="M120 180 A70 70 0 0 1 50 180 L120 180 Z" fill="#e2665f" transform="rotate(180 120 215)"/>
+    <path d="M120 182 Q60 190 50 250 q17.5 10 35 0 Q95 202 120 182 Z" fill="#e2665f"/>
+    <path d="M120 182 Q95 202 85 250 q17.5 10 35 0 Z" fill="#f6f3ee"/>
+    <path d="M120 182 L120 250 q17.5 10 35 0 Q145 202 120 182 Z" fill="#e2665f"/>
+    <path d="M120 182 Q145 202 155 250 q17.5 10 35 0 Q180 190 120 182 Z" fill="#f6f3ee"/>
+    <circle cx="120" cy="180" r="5" fill="#c94f4f"/>
   </g>
   <g fill="none" stroke="#dfe7ea" stroke-width="5" stroke-linecap="round">
     <path d="M684 340 V282 q0 -14 14 -14"/>

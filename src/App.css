@@ -173,7 +173,8 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 
 .slide { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 4vh 3vw; }
 
-.banner-slide { justify-content: center; align-items: center; text-align: center; }
+/* הכרטיס יושב מעט מעל המרכז (מרכז אופטי) — מרווח מקו האופק של האיור ומנקודות השקופיות */
+.banner-slide { justify-content: center; align-items: center; text-align: center; padding-bottom: 10vh; }
 .banner-slide.has-img { background-size: cover; background-position: center; }
 .banner-text {
   position: relative; z-index: 1; padding: 3.4vh 4.5vw; max-width: min(78%, 880px);
@@ -367,10 +368,11 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 /* ─── כפתורים צפים ─── */
 
 .ver, .admin-link {
-  position: fixed; bottom: 10px; font-size: 10.5px; font-weight: 500;
+  position: fixed; bottom: 10px; font-size: 12px; font-weight: 500;
   color: var(--ink-soft); background: none; border: none;
   cursor: pointer; text-decoration: none; z-index: 50;
-  padding: 1px 8px; line-height: 1.4; opacity: 0.35; transition: opacity 0.25s;
+  padding: 1px 8px; line-height: 1.4; opacity: 0.6; transition: opacity 0.25s;
+  font-variant-numeric: tabular-nums;
 }
 .ver { inset-inline-start: 2vw; }
 .admin-link { inset-inline-end: 10px; }
@@ -382,7 +384,7 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
   width: 20px; height: 20px; padding: 3px;
   display: flex; align-items: center; justify-content: center;
   color: var(--ink-soft); background: none; border: none; cursor: pointer;
-  opacity: 0.28; transition: opacity 0.25s;
+  opacity: 0.45; transition: opacity 0.25s;
 }
 .fs-btn svg { width: 100%; height: 100%; }
 .fs-btn:hover { opacity: 0.9; color: var(--gold); }

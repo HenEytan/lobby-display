@@ -333,18 +333,16 @@ function Display({ previewMode }) {
         <PreviewBar />
       )}
 
-      {/* סרגל מצב עליון — זהות הבניין, ברכה, שעון ומזג אוויר בשורה אחת */}
+      {/* סרגל מצב עליון — זהות הבניין עם ברכת השעה, שעון ומזג אוויר בשורה אחת.
+          הברכה יושבת כשורת-על מעל שם הבניין ("ערב טוב / יסוד המעלה 9"), במקום
+          ברכה שנייה שריחפה לבד באמצע הסרגל ליד ״ברוכים הבאים״ */}
       <header className="statusbar">
         <div className="sb-brand">
           <div className="sb-id">
-            <span className="sb-hello">ברוכים הבאים</span>
+            <span className="sb-hello">{dailyGreeting(now, holiday)}</span>
             <h1 className="sb-name">{settings.buildingName}</h1>
           </div>
           {settings.city && <span className="sb-city">{settings.city}</span>}
-          <div className="sb-greet-wrap">
-            <OliveDivider className="sb-divider" />
-            <span className="sb-greet">{dailyGreeting(now, holiday)}</span>
-          </div>
         </div>
         <ClockStatus now={now} shabbat={shabbat} />
         <WeatherStatus weather={weather} />

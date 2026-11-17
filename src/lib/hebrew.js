@@ -26,6 +26,8 @@ export function dailyGreeting(d, holiday) {
   if (day === 5) return "שבת שלום וסופ״ש נעים";
   if (day === 0) return "שבוע טוב";
   const h = d.getHours();
+  // אחרי חצות ולפני הזריחה — "בוקר טוב" בשתיים בלילה נשמע כמו טעות
+  if (h < 5) return "לילה טוב";
   if (h < 12) return "בוקר טוב";
   if (h < 18) return "צהריים טובים";
   return "ערב טוב";

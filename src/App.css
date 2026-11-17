@@ -67,20 +67,16 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
   display: flex; align-items: center; gap: clamp(10px, 1.3vw, 26px);
   flex: 1; min-width: 0; flex-wrap: wrap;
 }
-/* זהות הבניין — ״ברוכים הבאים״ כשורת-על קטנה מעל שם הבניין */
-.sb-id { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.sb-hello, .sb-name, .sb-city, .sb-greet { line-height: 1.15; margin: 0; white-space: nowrap; }
+/* זהות הבניין — ברכת השעה כשורת-על מעל שם הבניין */
+.sb-id { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.sb-hello, .sb-name, .sb-city { line-height: 1.15; margin: 0; white-space: nowrap; }
 .sb-hello {
-  font-size: clamp(10px, 0.95vw, 16px); font-weight: 600; color: var(--gold);
-  letter-spacing: 0.3em; text-indent: 0.3em;
+  font-size: clamp(13px, 1.15vw, 21px); font-weight: 700; color: #8a6a24;
+  letter-spacing: 0.08em;
 }
 .sb-name {
-  font-size: clamp(17px, 1.75vw, 31px); font-weight: 800; color: #5f4712;
-  letter-spacing: 0.05em; overflow: hidden; text-overflow: ellipsis;
-}
-.sb-greet {
-  font-size: clamp(14px, 1.3vw, 23px); font-weight: 700; color: #5f4712;
-  letter-spacing: 0.12em; text-indent: 0.12em;
+  font-size: clamp(20px, 2vw, 38px); font-weight: 800; color: #5f4712;
+  letter-spacing: 0.03em; overflow: hidden; text-overflow: ellipsis;
 }
 .sb-city {
   font-size: clamp(12px, 1.1vw, 19px); font-weight: 600; color: #7d5f1d;
@@ -88,13 +84,6 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
   background: rgba(176, 141, 62, 0.12); border: 1px solid var(--gold-soft);
   padding: 4px 16px; border-radius: 999px;
 }
-/* הברכה נדחפת לקצה אזור הזהות — צמודה למפריד של השעון */
-.sb-greet-wrap {
-  display: flex; align-items: center; gap: clamp(10px, 1.2vw, 24px);
-  margin-inline-start: auto;
-}
-.sb-divider { width: clamp(30px, 3vw, 62px); height: 10px; opacity: 0.5; flex-shrink: 0; }
-
 /* בלוקים — שעון ומזג אוויר, מופרדים בקו עדין */
 .sb-block {
   display: flex; align-items: center; flex-shrink: 0;
@@ -104,14 +93,14 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 }
 
 .sb-time {
-  font-size: clamp(32px, 3.4vw, 64px); font-weight: 800; line-height: 1;
+  font-size: clamp(38px, 4.2vw, 80px); font-weight: 800; line-height: 1;
   letter-spacing: 0.02em; font-variant-numeric: tabular-nums;
 }
 .sb-time .colon { color: var(--gold); animation: blink 2s step-end infinite; }
 @keyframes blink { 50% { opacity: 0.25; } }
-.sb-dates { display: flex; flex-direction: column; gap: 2px; }
-.sb-hebdate { font-size: clamp(14px, 1.3vw, 23px); font-weight: 700; color: #7d5f1d; white-space: nowrap; }
-.sb-gregdate { font-size: clamp(11px, 1vw, 17px); color: var(--ink-soft); white-space: nowrap; }
+.sb-dates { display: flex; flex-direction: column; gap: 3px; }
+.sb-hebdate { font-size: clamp(15px, 1.45vw, 27px); font-weight: 700; color: #7d5f1d; white-space: nowrap; }
+.sb-gregdate { font-size: clamp(12px, 1.1vw, 20px); color: var(--ink-soft); white-space: nowrap; }
 .sb-shabbat {
   margin-top: 3px; font-size: clamp(10px, 0.9vw, 15px); color: var(--ink-soft);
   background: #faf3df; border-radius: 9px; padding: 3px 9px; white-space: nowrap;
@@ -152,11 +141,7 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 }
 .sb-wx-day-icon { font-size: clamp(14px, 1.2vw, 21px); }
 
-/* מסכים צרים יותר — מוותרים קודם על הקישוט, רק אחר כך על המידע */
-@media (max-width: 1600px) {
-  .sb-divider { display: none; }
-  .sb-greet-wrap { gap: 0; }
-}
+/* מסכים צרים — מוותרים קודם על פרטי המשנה של מזג האוויר, לא על השעה */
 @media (max-width: 1100px) {
   .statusbar { flex-wrap: wrap; row-gap: 1vh; }
   .sb-block { border-inline-start: none; padding-inline-start: 0; }
@@ -259,8 +244,14 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
   50% { height: 56px; }
 }
 
-.slide-dots { position: absolute; bottom: 12px; inset-inline-start: 0; inset-inline-end: 0; display: flex; justify-content: center; gap: 8px; z-index: 2; }
-.dot { width: 9px; height: 9px; border-radius: 50%; background: rgba(101, 84, 47, 0.25); transition: 0.3s; }
+/* הנקודות יושבות על כמוסה בהירה משלהן — קריאות על כל איור או תמונה */
+.slide-dots {
+  position: absolute; bottom: 1.6vh; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 8px; z-index: 2;
+  padding: 7px 12px; border-radius: 999px;
+  background: rgba(255, 253, 248, 0.88); box-shadow: 0 4px 14px rgba(60, 45, 15, 0.18);
+}
+.dot { width: 9px; height: 9px; border-radius: 50%; background: rgba(101, 84, 47, 0.32); transition: 0.3s; }
 .dot.on { background: var(--gold); width: 22px; border-radius: 999px; }
 .dot.small { width: 7px; height: 7px; }
 .dot.small.on { width: 16px; }

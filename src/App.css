@@ -111,9 +111,32 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
 .sb-dates { display: flex; flex-direction: column; gap: 3px; }
 .sb-hebdate { font-size: clamp(15px, 1.45vw, 27px); font-weight: 700; color: #7d5f1d; white-space: nowrap; }
 .sb-gregdate { font-size: clamp(12px, 1.1vw, 20px); color: var(--ink-soft); white-space: nowrap; }
-.sb-shabbat {
-  margin-top: 3px; font-size: clamp(10px, 0.9vw, 15px); color: var(--ink-soft);
-  background: #faf3df; border-radius: 9px; padding: 3px 9px; white-space: nowrap;
+/* זמני השבת הקרובה — במרכז הסרגל, בין זהות הבניין לשעון, במקום רווח ריק */
+.sb-shab {
+  flex: 1; min-width: 0;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  text-align: center;
+}
+.sb-shab-label {
+  font-size: clamp(13px, 1vw, 18px); font-weight: 700; color: #8a6a24;
+  letter-spacing: 0.01em; white-space: nowrap;
+}
+.sb-shab-times {
+  display: flex; align-items: center; gap: clamp(10px, 1vw, 18px);
+  padding: clamp(5px, 0.55vh, 9px) clamp(14px, 1.3vw, 24px);
+  background: rgba(176, 141, 62, 0.08); border: 1px solid var(--line); border-radius: 999px;
+  font-size: clamp(13px, 1.1vw, 20px); color: var(--ink-soft); white-space: nowrap;
+}
+.sb-shab-item b {
+  color: var(--ink); font-weight: 800; font-variant-numeric: tabular-nums;
+  font-size: 1.18em; margin-inline-start: 4px;
+}
+.sb-shab-sep { width: 1px; align-self: stretch; background: var(--gold-soft); }
+/* בשישי — שבת היום: מסגרת זהב מלאה */
+.sb-shab.today .sb-shab-times { background: #fbf4e0; border-color: var(--gold-soft); }
+/* עם מזג אוויר בסרגל ובמסך צר — השעון ומזג האוויר קודמים */
+@media (max-width: 1500px) {
+  .sb-shab.compact { display: none; }
 }
 
 .sb-wx-now { display: flex; align-items: center; gap: 10px; }
@@ -156,6 +179,7 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
   .statusbar { flex-wrap: wrap; row-gap: 1vh; }
   .sb-block { border-inline-start: none; padding-inline-start: 0; }
   .uv-advice, .sb-wx-days { display: none; }
+  .sb-shab { display: none; }
 }
 
 /* גוף: אזור ראשי + עמודה */

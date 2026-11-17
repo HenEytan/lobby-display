@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { VERSION, CHANGELOG } from "./version";
-import { gregDateHe, hebrewDate, dailyGreeting, todayHoliday, shabbatInfo, yomTovInfo, holidayBannerSchedule, isHolidayDay } from "./lib/hebrew";
+import { gregDateHe, hebrewDate, dailyGreeting, todayHoliday, shabbatInfo, nextShabbatTimes, yomTovInfo, holidayBannerSchedule, isHolidayDay } from "./lib/hebrew";
 import { eventsThisWeek, eventDayLabel, formatEventWhen, fetchAlumaEvents, EVENTS_REFRESH_MS, CATEGORY_BG } from "./lib/events";
 import { fetchWeather, weatherIcon, uvLevel } from "./lib/feeds";
 import { syncTime, israelNow, TIME_SYNC_MS } from "./lib/time";
@@ -344,7 +344,8 @@ function Display({ previewMode }) {
           </div>
           {settings.city && <span className="sb-city">{settings.city}</span>}
         </div>
-        <ClockStatus now={now} shabbat={shabbat} />
+        <ShabbatTimes now={now} compact={!!weather} />
+        <ClockStatus now={now} />
         <WeatherStatus weather={weather} />
       </header>
 
@@ -524,7 +525,24 @@ function WeekendSlide({ isSaturday }) {
 
 // ─── סרגל המצב העליון ───
 
-function ClockStatus({ now, shabbat }) {
+// זמני השבת הקרובה — במרכז הסרגל בכל ימות השבוע; בשישי מסומנת כ"שבת נכנסת היום"
+function ShabbatTimes({ now, compact }) {
+  const day = now.toDateString();
+  const hour = now.getHours();
+  const t = useMemo(() => nextShabbatTimes(now), [day, hour]); // eslint-disable-line react-hooks/exhaustive-deps
+  return (
+    <div className={"sb-shab" + (t.isToday ? " today" : "") + (compact ? " compact" : "")}>
+      <span className="sb-shab-label">{t.isToday ? "שבת נכנסת היום" : "זמני השבת הקרובה"}</span>
+      <span className="sb-shab-times">
+        <span className="sb-shab-item">הדלקת נרות <b>{t.candles}</b></span>
+        <span className="sb-shab-sep" aria-hidden="true" />
+        <span className="sb-shab-item">הבדלה <b>{t.havdalah}</b></span>
+      </span>
+    </div>
+  );
+}
+
+function ClockStatus({ now }) {
   const hh = String(now.getHours()).padStart(2, "0");
   const mm = String(now.getMinutes()).padStart(2, "0");
   return (
@@ -535,9 +553,6 @@ function ClockStatus({ now, shabbat }) {
       <div className="sb-dates">
         <div className="sb-hebdate">{hebrewDate(now)}</div>
         <div className="sb-gregdate">{gregDateHe(now)}</div>
-        {shabbat && !shabbat.active && (
-          <div className="sb-shabbat">🕯 הדלקת נרות {shabbat.candles} · הבדלה {shabbat.havdalah}</div>
-        )}
       </div>
     </div>
   );

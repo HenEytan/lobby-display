@@ -168,6 +168,18 @@ export function shabbatInfo(now = new Date()) {
   return null;
 }
 
+// זמני השבת הקרובה — לכל יום בשבוע (בשבת עצמה: השבת הנוכחית), לסרגל העליון של המסך
+export function nextShabbatTimes(now = new Date()) {
+  let { candles, havdalah } = shabbatWindow(now);
+  // במוצאי שבת עוברים כבר לשבת של השבוע הבא
+  if (now > havdalah) {
+    const sun = new Date(now);
+    sun.setDate(sun.getDate() + 1);
+    ({ candles, havdalah } = shabbatWindow(sun));
+  }
+  return { candles: HE_TIME(candles), havdalah: HE_TIME(havdalah), isToday: now.getDay() === 5 };
+}
+
 // ─── לוח חגים, מועדים וצומות לשנה הקרובה ───
 // חישוב מקומי מלא (ללא רשת) עבור 12 החודשים הבאים, לפי מנהג ישראל.
 

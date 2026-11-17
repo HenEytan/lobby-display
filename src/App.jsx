@@ -420,11 +420,12 @@ function PreviewBar() {
   return (
     <div className={"preview-bar" + (pending ? " pending" : "")} role="status">
       <span className="pv-text">
-        <b>תצוגה מקדימה</b>
-        <span className="pv-sep" aria-hidden="true">·</span>
-        {pending
-          ? "יש שינויים שעוד לא פורסמו — כך ייראה המסך אחרי הפרסום"
-          : "אין שינויים שממתינים לפרסום — זה מה שמוצג עכשיו בלובי"}
+        <b className="pv-badge">תצוגה מקדימה</b>
+        <span className="pv-msg">
+          {pending
+            ? "יש שינויים שעוד לא פורסמו — כך ייראה המסך אחרי הפרסום"
+            : "אין שינויים שממתינים לפרסום — כך נראה המסך בלובי עכשיו"}
+        </span>
       </span>
       <span className="pv-actions">
         <a className="pv-btn" href="#admin">→ חזרה לעריכה</a>

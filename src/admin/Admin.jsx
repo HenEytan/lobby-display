@@ -27,6 +27,11 @@ function PinGate({ onOk }) {
   // null, או סוג הכשל מ-classifyPinCheck: wrong / offline / server
   const [err, setErr] = useState(null);
   const [busy, setBusy] = useState(false);
+  // זהות הבניין — שהמנהל יידע לאיזה מסך הוא נכנס
+  const [place] = useState(() => {
+    const st = readLive("settings");
+    return [st.buildingName, st.city].filter(Boolean).join(" · ");
+  });
   const accept = () => {
     // נשמר לסשן בלבד — משמש לאימות מול השרת בעת פרסום
     try { sessionStorage.setItem("lobby_admin_pin", pin); } catch { /* ignore */ }
@@ -70,6 +75,7 @@ function PinGate({ onOk }) {
     <div className="admin-root pin-screen" dir="rtl">
       <form className="pin-card" onSubmit={check}>
         <div className="pin-logo" aria-hidden="true">✦</div>
+        {place && <p className="pin-place">{place}</p>}
         <h1>כניסת מנהלים</h1>
         <label className="pin-label" htmlFor="pin-input">הזינו את קוד הכניסה כדי לערוך את מסך הלובי</label>
         <input

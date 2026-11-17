@@ -96,8 +96,9 @@ body { background: var(--bg); color: var(--ink); overflow: hidden; }
   font-size: clamp(38px, 4.2vw, 80px); font-weight: 800; line-height: 1;
   letter-spacing: 0.02em; font-variant-numeric: tabular-nums;
 }
-.sb-time .colon { color: var(--gold); animation: blink 2s step-end infinite; }
-@keyframes blink { 50% { opacity: 0.25; } }
+.sb-time .colon { color: #8a6a24; margin: 0 0.04em; animation: blink 2s step-end infinite; }
+/* הבהוב עדין בלבד — נקודתיים שנעלמות כמעט נקראות כרווח בין הספרות */
+@keyframes blink { 50% { opacity: 0.7; } }
 .sb-dates { display: flex; flex-direction: column; gap: 3px; }
 .sb-hebdate { font-size: clamp(15px, 1.45vw, 27px); font-weight: 700; color: #7d5f1d; white-space: nowrap; }
 .sb-gregdate { font-size: clamp(12px, 1.1vw, 20px); color: var(--ink-soft); white-space: nowrap; }

@@ -147,7 +147,7 @@ const POOL_SVG = `
     </linearGradient>
   </defs>
   <rect width="800" height="450" fill="url(#p)"/>
-  <circle cx="670" cy="80" r="46" fill="#fff3c2" opacity="0.95"/>
+  <circle cx="660" cy="122" r="42" fill="#fff3c2" opacity="0.95"/>
   <g fill="#ffffff" opacity="0.75">
     <ellipse cx="130" cy="120" rx="55" ry="20"/><ellipse cx="175" cy="130" rx="40" ry="16"/>
     <ellipse cx="560" cy="150" rx="60" ry="22"/><ellipse cx="610" cy="160" rx="38" ry="15"/>
